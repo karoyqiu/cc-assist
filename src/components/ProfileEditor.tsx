@@ -86,8 +86,6 @@ export function ProfileEditor({ profile, onSave, onDelete, onDuplicate, onLaunch
     );
   }
 
-  const isBuiltIn = profile.is_built_in;
-
   function updateModel(field: keyof ProfileConfig['models'], value: string) {
     setDraft((d) => {
       if (!d) return d;
@@ -135,62 +133,40 @@ export function ProfileEditor({ profile, onSave, onDelete, onDuplicate, onLaunch
           <div style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>
             {draft.name}
           </div>
-          {isBuiltIn && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: '0.06em',
-                color: '#737373',
-                textTransform: 'uppercase',
-                backgroundColor: '#1A1A1A',
-                padding: '1px 6px',
-                borderRadius: 3,
-                marginTop: 2,
-                display: 'inline-block',
-              }}
-            >
-              {t('profileEditor.builtIn')}
-            </span>
-          )}
         </div>
 
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 6 }}>
-          {!isBuiltIn && (
-            <>
-              <button
-                onClick={() => onDuplicate(draft)}
-                style={{
-                  height: 28,
-                  padding: '0 10px',
-                  fontSize: 12,
-                  color: '#737373',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #2A2A2A',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                }}
-              >
-                {t('profileEditor.duplicate')}
-              </button>
-              <button
-                onClick={() => onDelete(draft.id)}
-                style={{
-                  height: 28,
-                  padding: '0 10px',
-                  fontSize: 12,
-                  color: '#FF6B6B',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #2A2A2A',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                }}
-              >
-                {t('profileEditor.delete')}
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => onDuplicate(draft)}
+            style={{
+              height: 28,
+              padding: '0 10px',
+              fontSize: 12,
+              color: '#737373',
+              backgroundColor: 'transparent',
+              border: '1px solid #2A2A2A',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
+          >
+            {t('profileEditor.duplicate')}
+          </button>
+          <button
+            onClick={() => onDelete(draft.id)}
+            style={{
+              height: 28,
+              padding: '0 10px',
+              fontSize: 12,
+              color: '#FF6B6B',
+              backgroundColor: 'transparent',
+              border: '1px solid #2A2A2A',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
+          >
+            {t('profileEditor.delete')}
+          </button>
         </div>
       </div>
 
@@ -210,7 +186,7 @@ export function ProfileEditor({ profile, onSave, onDelete, onDuplicate, onLaunch
         <Field
           label={t('profileEditor.baseUrl')}
           value={draft.base_url}
-          readOnly={isBuiltIn}
+          onChange={(v) => update('base_url', v)}
           mono
         />
 

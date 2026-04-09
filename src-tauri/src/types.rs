@@ -18,7 +18,22 @@ pub struct ModelConfig {
     pub opus: Option<String>,
 }
 
-/// A single profile — built-in or custom.
+/// A built-in provider preset — templates for profile creation.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ProviderConfig {
+    /// Stable kebab-case identifier, e.g. "anthropic", "deepseek"
+    pub id: String,
+    /// Display name, e.g. "Claude Official"
+    pub name: String,
+    /// Icon identifier e.g. "anthropic", "zhipu", "minimax", "kimi", "deepseek"
+    pub icon: String,
+    /// Hex color e.g. "#D4915D"
+    pub icon_color: String,
+    /// → ANTHROPIC_BASE_URL
+    pub base_url: String,
+}
+
+/// A user profile — owns all fields independently after creation.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProfileConfig {
     pub id: String,
@@ -32,8 +47,6 @@ pub struct ProfileConfig {
     /// → ANTHROPIC_AUTH_TOKEN
     pub api_key: String,
     pub models: ModelConfig,
-    #[serde(default)]
-    pub is_built_in: bool,
 }
 
 /// Recent directories per profile — last 10 per profile, LRU ordering (most recent first).
@@ -44,6 +57,9 @@ pub type RecentDirectories = HashMap<String, Vec<String>>;
 pub struct ProfilesStore {
     pub active_profile_id: String,
     pub profiles: Vec<ProfileConfig>,
+    /// Built-in providers, populated from built_in_providers() on every load.
+    #[serde(default)]
+    pub providers: Vec<ProviderConfig>,
     #[serde(default)]
     pub recent_directories: RecentDirectories,
     #[serde(default = "default_locale")]

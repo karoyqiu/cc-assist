@@ -10,7 +10,10 @@
   "profileList": {
     "title": "Profiles",
     "addProfile": "Add Profile",
-    "emptyState": "No profiles"
+    "emptyState": "No profiles",
+    "chooseProvider": "Choose Provider",
+    "cancel": "Cancel",
+    "customProvider": "Other / Custom"
   },
   "profileEditor": {
     "apiKey": "API Key",

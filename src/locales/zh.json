@@ -10,7 +10,10 @@
   "profileList": {
     "title": "配置",
     "addProfile": "添加配置",
-    "emptyState": "暂无配置"
+    "emptyState": "暂无配置",
+    "chooseProvider": "选择服务商",
+    "cancel": "取消",
+    "customProvider": "其他 / 自定义"
   },
   "profileEditor": {
     "apiKey": "API 密钥",

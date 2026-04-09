@@ -68,10 +68,22 @@ pub fn run() {
         Ok(s) => s,
         Err(e) => {
             log::error!("Failed to load config: {}", e);
-            // Use defaults on error
+            // Use defaults on error — a single default profile using the anthropic provider
+            let providers = config::built_in_providers();
+            let anthropic = providers.iter().find(|p| p.id == "anthropic").unwrap();
+            let default_profile = crate::types::ProfileConfig {
+                id: "default".to_string(),
+                name: anthropic.name.clone(),
+                icon: anthropic.icon.clone(),
+                icon_color: anthropic.icon_color.clone(),
+                base_url: anthropic.base_url.clone(),
+                api_key: String::new(),
+                models: Default::default(),
+            };
             crate::types::ProfilesStore {
-                active_profile_id: "anthropic-official".to_string(),
-                profiles: config::built_in_presets(),
+                active_profile_id: "default".to_string(),
+                profiles: vec![default_profile],
+                providers,
                 recent_directories: Default::default(),
                 locale: "en".to_string(),
             }
@@ -120,5 +132,3 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-// Re-export built_in_presets for internal use
-pub use config::built_in_presets;

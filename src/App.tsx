@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useTranslation } from 'react-i18next';
 import './lib/i18n';
-import type { ProfilesStore, ProfileConfig } from './types';
+import type { ProfilesStore, ProfileConfig, ProviderConfig } from './types';
 import { ProfileList } from './components/ProfileList';
 import { ProfileEditor } from './components/ProfileEditor';
 import { DirectoryPicker } from './components/DirectoryPicker';
@@ -82,18 +82,27 @@ function App() {
     handleSaveProfiles(updated);
   }
 
-  function handleAddProfile() {
+  function handleAddWithProvider(provider: ProviderConfig | null) {
     if (!store) return;
-    const newProfile: ProfileConfig = {
-      id: crypto.randomUUID(),
-      name: 'New Profile',
-      icon: 'custom',
-      icon_color: '#737373',
-      base_url: '',
-      api_key: '',
-      models: {},
-      is_built_in: false,
-    };
+    const newProfile: ProfileConfig = provider
+      ? {
+          id: crypto.randomUUID(),
+          name: provider.name,
+          icon: provider.icon,
+          icon_color: provider.icon_color,
+          base_url: provider.base_url,
+          api_key: '',
+          models: {},
+        }
+      : {
+          id: crypto.randomUUID(),
+          name: 'New Profile',
+          icon: 'custom',
+          icon_color: '#737373',
+          base_url: '',
+          api_key: '',
+          models: {},
+        };
     const updated = [...store.profiles, newProfile];
     handleSaveProfiles(updated);
     setSelectedId(newProfile.id);
@@ -105,7 +114,6 @@ function App() {
       ...profile,
       id: crypto.randomUUID(),
       name: `Copy of ${profile.name}`,
-      is_built_in: false,
       models: { ...profile.models },
     };
     const updated = [...store.profiles, copy];
@@ -195,9 +203,10 @@ function App() {
       {/* Left: profile list */}
       <ProfileList
         profiles={store.profiles}
+        providers={store.providers}
         activeId={store.active_profile_id}
         onSelect={handleSelectProfile}
-        onAdd={handleAddProfile}
+        onAdd={handleAddWithProvider}
       />
 
       {/* Right: profile editor */}

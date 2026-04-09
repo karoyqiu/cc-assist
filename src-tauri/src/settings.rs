@@ -144,7 +144,6 @@ mod tests {
             base_url: "".into(),
             api_key: "".into(),
             models: Default::default(),
-            is_built_in: false,
         };
         let map = build_env_map(&profile);
         assert!(map.is_empty());
@@ -160,7 +159,6 @@ mod tests {
             base_url: "https://api.example.com".into(),
             api_key: "".into(),
             models: Default::default(),
-            is_built_in: false,
         };
         let map = build_env_map(&profile);
         assert_eq!(map.len(), 1);
@@ -182,7 +180,6 @@ mod tests {
                 sonnet: Some("claude-3-5-sonnet".into()),
                 opus: Some("claude-3-opus".into()),
             },
-            is_built_in: false,
         };
         let map = build_env_map(&profile);
         assert_eq!(map.len(), 6);
@@ -207,7 +204,6 @@ mod tests {
                 sonnet: None,
                 opus: None,
             },
-            is_built_in: false,
         };
         let map = build_env_map(&profile);
         // Only base_url + main model
@@ -233,7 +229,6 @@ mod tests {
             base_url: "https://api.example.com".into(),
             api_key: "secret".into(),
             models: Default::default(),
-            is_built_in: false,
         };
 
         merge_profile_into_settings(&profile, &mut settings);
@@ -266,7 +261,6 @@ mod tests {
             base_url: "https://api.example.com".into(),
             api_key: "".into(),
             models: Default::default(),
-            is_built_in: false,
         };
 
         merge_profile_into_settings(&profile, &mut settings);
