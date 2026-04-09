@@ -29,8 +29,7 @@ function App() {
         console.error('get_config failed:', e);
         setError(t('errors.loadConfigFailed'));
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [i18n, t, setStore, setSelectedId]);
 
   // Listen for locale-changed events from tray menu
   useEffect(() => {
@@ -39,8 +38,7 @@ function App() {
       setStore((s) => (s ? { ...s, locale: event.payload } : s));
     });
     return () => { unlisten.then((fn) => fn()); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [i18n, setStore]);
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
 
