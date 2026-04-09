@@ -8,7 +8,6 @@ import { ProfileList } from './components/ProfileList';
 import { ProfileEditor } from './components/ProfileEditor';
 import { DirectoryPicker } from './components/DirectoryPicker';
 import './App.css';
-import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const { i18n, t } = useTranslation();
@@ -78,7 +77,7 @@ function App() {
   function handleAddProfile() {
     if (!store) return;
     const newProfile: ProfileConfig = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       name: 'New Profile',
       icon: 'custom',
       icon_color: '#737373',
@@ -96,7 +95,7 @@ function App() {
     if (!store) return;
     const copy: ProfileConfig = {
       ...profile,
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       name: `Copy of ${profile.name}`,
       is_built_in: false,
       models: { ...profile.models },
