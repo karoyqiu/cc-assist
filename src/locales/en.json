@@ -1,0 +1,49 @@
+{
+  "app": {
+    "title": "cc-assist"
+  },
+  "tray": {
+    "launchClaude": "Launch Claude",
+    "settings": "Settings",
+    "quit": "Quit"
+  },
+  "profileList": {
+    "title": "Profiles",
+    "addProfile": "Add Profile",
+    "emptyState": "No profiles"
+  },
+  "profileEditor": {
+    "apiKey": "API Key",
+    "baseUrl": "Base URL",
+    "models": "Models",
+    "modelMain": "Main Model",
+    "modelHaiku": "Haiku",
+    "modelSonnet": "Sonnet",
+    "modelOpus": "Opus",
+    "builtIn": "Built-in",
+    "custom": "Custom",
+    "saveChanges": "Save Changes",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "launchClaude": "Launch Claude",
+    "noProfileSelected": "Select a profile to edit"
+  },
+  "directoryPicker": {
+    "title": "Launch Claude",
+    "recentDirectories": "Recent directories",
+    "noRecentDirectories": "No recent directories",
+    "browse": "Browse...",
+    "launch": "Launch",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "claudeNotOnPath": "Claude CLI not found on PATH. Please install Claude Code.",
+    "settingsNotFound": "Claude has not been configured yet. Please run Claude Code first.",
+    "launchFailed": "Failed to launch Claude: {{message}}",
+    "loadConfigFailed": "Failed to load configuration"
+  },
+  "languages": {
+    "en": "English",
+    "zh": "中文"
+  }
+}

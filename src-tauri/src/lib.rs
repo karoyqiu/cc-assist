@@ -1,14 +1,124 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use std::io::Write;
+use std::sync::Mutex;
+
+mod commands;
+mod config;
+mod settings;
+mod spawn;
+mod state;
+mod tray;
+mod types;
+mod window;
+
+use state::AppState;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Determine app data dir early for logging
+    let app_data_dir = dirs::data_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("cc-assist");
+    std::fs::create_dir_all(&app_data_dir).ok();
+    let log_path = app_data_dir.join("app.log");
+
+    // Panic handler — log and keep app alive (don't crash to tray)
+    std::panic::set_hook(Box::new(|panic_info| {
+        let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            "Unknown panic".to_string()
+        };
+        let location = panic_info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
+        let log_msg = format!("PANIC at {}: {}", location, msg);
+        eprintln!("{}", log_msg);
+        // Try to write to log file
+        if let Ok(mut f) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)
+        {
+            let _ = writeln!(f, "{}", log_msg);
+        }
+    }));
+
+    simplelog::WriteLogger::init(
+        simplelog::LevelFilter::Info,
+        simplelog::Config::default(),
+        simplelog::WriteLogger::new(
+            std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&log_path)
+                .unwrap_or_else(|_| {
+                    std::fs::File::create(&log_path).expect("Failed to create log file")
+                }),
+        ),
+    )
+    .ok();
+
+    log::info!("cc-assist starting");
+
+    // Load config
+    let store = match config::load_config(&app_data_dir) {
+        Ok(s) => s,
+        Err(e) => {
+            log::error!("Failed to load config: {}", e);
+            // Use defaults on error
+            crate::types::ProfilesStore {
+                active_profile_id: "anthropic-official".to_string(),
+                profiles: config::built_in_presets(),
+                recent_directories: Default::default(),
+                locale: "en".to_string(),
+            }
+        }
+    };
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            window::show_settings_window(app);
+        }))
+        .manage(AppState {
+            store: Mutex::new(store),
+            app_data_dir,
+        })
+        .setup(|app| {
+            // Set up tray
+            if let Err(e) = tray::setup_tray(app.handle()) {
+                log::error!("Failed to setup tray: {}", e);
+            }
+
+            // Show settings window on startup
+            window::show_settings_window(app.handle());
+
+            // Keep app alive after window is closed — tray icon keeps it running
+            app.listen_once::<tauri::RunEvent>(|event| {
+                if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                    api.prevent_exit();
+                }
+            });
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::get_config,
+            commands::set_active_profile,
+            commands::save_profiles,
+            commands::launch_claude,
+            commands::pick_directory,
+            commands::set_locale,
+            commands::check_claude_on_path,
+            commands::toggle_settings_window,
+            commands::show_settings_window_cmd,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+// Re-export built_in_presets for internal use
+pub use config::built_in_presets;

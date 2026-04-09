@@ -1,0 +1,49 @@
+{
+  "app": {
+    "title": "cc-assist"
+  },
+  "tray": {
+    "launchClaude": "启动 Claude",
+    "settings": "设置",
+    "quit": "退出"
+  },
+  "profileList": {
+    "title": "配置",
+    "addProfile": "添加配置",
+    "emptyState": "暂无配置"
+  },
+  "profileEditor": {
+    "apiKey": "API 密钥",
+    "baseUrl": "Base URL",
+    "models": "模型",
+    "modelMain": "主模型",
+    "modelHaiku": "Haiku",
+    "modelSonnet": "Sonnet",
+    "modelOpus": "Opus",
+    "builtIn": "内置",
+    "custom": "自定义",
+    "saveChanges": "保存更改",
+    "duplicate": "复制",
+    "delete": "删除",
+    "launchClaude": "启动 Claude",
+    "noProfileSelected": "选择一个配置进行编辑"
+  },
+  "directoryPicker": {
+    "title": "启动 Claude",
+    "recentDirectories": "最近目录",
+    "noRecentDirectories": "暂无最近目录",
+    "browse": "浏览...",
+    "launch": "启动",
+    "cancel": "取消"
+  },
+  "errors": {
+    "claudeNotOnPath": "未找到 Claude CLI。请先安装 Claude Code。",
+    "settingsNotFound": "Claude 尚未配置。请先运行 Claude Code。",
+    "launchFailed": "启动 Claude 失败：{{message}}",
+    "loadConfigFailed": "加载配置失败"
+  },
+  "languages": {
+    "en": "English",
+    "zh": "中文"
+  }
+}
