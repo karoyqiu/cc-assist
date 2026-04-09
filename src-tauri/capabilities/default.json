@@ -6,6 +6,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "event:default"
+    "core:event:default"
   ]
 }

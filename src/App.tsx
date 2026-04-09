@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useTranslation } from 'react-i18next';
-import './i18n';
+import './lib/i18n';
 import type { ProfilesStore, ProfileConfig } from './types';
 import { ProfileList } from './components/ProfileList';
 import { ProfileEditor } from './components/ProfileEditor';

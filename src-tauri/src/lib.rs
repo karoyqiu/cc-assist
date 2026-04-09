@@ -11,7 +11,6 @@ mod types;
 mod window;
 
 use state::AppState;
-use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -21,9 +20,10 @@ pub fn run() {
         .join("cc-assist");
     std::fs::create_dir_all(&app_data_dir).ok();
     let log_path = app_data_dir.join("app.log");
+    let log_path_for_panic = log_path.clone();
 
     // Panic handler — log and keep app alive (don't crash to tray)
-    std::panic::set_hook(Box::new(|panic_info| {
+    std::panic::set_hook(Box::new(move |panic_info| {
         let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             s.to_string()
         } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
@@ -41,24 +41,23 @@ pub fn run() {
         if let Ok(mut f) = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
-            .open(&log_path)
+            .open(&log_path_for_panic)
         {
             let _ = writeln!(f, "{}", log_msg);
         }
     }));
 
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+        .unwrap_or_else(|_| {
+            std::fs::File::create(&log_path).expect("Failed to create log file")
+        });
     simplelog::WriteLogger::init(
         simplelog::LevelFilter::Info,
         simplelog::Config::default(),
-        simplelog::WriteLogger::new(
-            std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&log_path)
-                .unwrap_or_else(|_| {
-                    std::fs::File::create(&log_path).expect("Failed to create log file")
-                }),
-        ),
+        log_file,
     )
     .ok();
 
@@ -96,12 +95,13 @@ pub fn run() {
             // Show settings window on startup
             window::show_settings_window(app.handle());
 
-            // Keep app alive after window is closed — tray icon keeps it running
-            app.listen_once::<tauri::RunEvent>(|event| {
-                if let tauri::RunEvent::ExitRequested { api, .. } = event {
-                    api.prevent_exit();
-                }
+            // Register menu event handler (for tray menu item clicks)
+            app.on_menu_event(|app, event| {
+                tray::handle_menu_event(app, event.id().as_ref());
             });
+
+            // Keep app alive after window is closed — tray icon keeps it running.
+            // The app will only truly exit when the user clicks "Quit" in the tray menu.
 
             Ok(())
         })

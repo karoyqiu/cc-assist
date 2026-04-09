@@ -3,7 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::config;
 use crate::spawn;
 use crate::state::AppState;
-use crate::types::{AppError, ProfileConfig, ProfilesStore};
+use crate::types::{ProfileConfig, ProfilesStore};
 use crate::window;
 
 /// Get the full config store.
@@ -62,26 +62,25 @@ pub fn launch_claude(
     directory: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let store = state.store.lock().map_err(|e| e.to_string())?;
-
-    let profile = store
-        .profiles
-        .iter()
-        .find(|p| p.id == store.active_profile_id)
-        .ok_or_else(|| "No active profile".to_string())?;
+    let (profile, active_id) = {
+        let store = state.store.lock().map_err(|e| e.to_string())?;
+        let profile = store
+            .profiles
+            .iter()
+            .find(|p| p.id == store.active_profile_id)
+            .ok_or_else(|| "No active profile".to_string())?
+            .clone();
+        (profile, store.active_profile_id.clone())
+    };
 
     let dir = std::path::PathBuf::from(&directory);
-
-    // Release lock before spawn
-    drop(store);
-
-    spawn::launch_claude_in_directory(profile, &dir).map_err(|e| e.to_string())?;
+    spawn::launch_claude_in_directory(&profile, &dir).map_err(|e| e.to_string())?;
 
     // Record recent directory
     let mut store = state.store.lock().map_err(|e| e.to_string())?;
     let entries = store
         .recent_directories
-        .entry(store.active_profile_id.clone())
+        .entry(active_id)
         .or_insert_with(Vec::new);
 
     // Remove if already exists (will re-add at front)
@@ -98,8 +97,8 @@ pub fn launch_claude(
 #[tauri::command]
 pub fn pick_directory() -> Result<Option<String>, String> {
     let result = rfd::FileDialog::new()
-        .title("Select directory to launch Claude")
-        .blocking_pick_folder();
+        .set_title("Select directory to launch Claude")
+        .pick_folder();
     Ok(result.map(|p| p.to_string_lossy().to_string()))
 }
 

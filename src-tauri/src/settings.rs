@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::io::{self, Write};
+use std::io::Write;
 use std::path::PathBuf;
 
 use serde_json::Value;
@@ -70,7 +70,7 @@ pub fn merge_profile_into_settings(profile: &ProfileConfig, settings: &mut Value
     }
 
     // Ensure env object exists
-    if !settings.get("env").and_then(|v| v.as_object()).is_some() {
+    if settings.get("env").and_then(|v| v.as_object()).is_none() {
         settings["env"] = Value::Object(serde_json::Map::new());
     }
 
@@ -85,8 +85,10 @@ pub fn write_settings_atomically(settings: &Value) -> Result<(), AppError> {
     let path = settings_path();
     let json = serde_json::to_string_pretty(settings).map_err(AppError::ConfigParseError)?;
 
-    // Write to a temp file in the system temp dir, then atomically move to target
-    let temp_file = tempfile::NamedTempFile::new()
+    // Create temp file in the same directory as the target so persist()
+    // does a same-filesystem rename (guaranteed atomic on Windows)
+    let parent_dir = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let mut temp_file = tempfile::NamedTempFile::with_prefix_in(".settings.json.", parent_dir)
         .map_err(AppError::IoError)?;
 
     temp_file.write_all(json.as_bytes()).map_err(AppError::IoError)?;
@@ -94,7 +96,7 @@ pub fn write_settings_atomically(settings: &Value) -> Result<(), AppError> {
 
     // Atomically replace the original with the temp file
     // persist() renames the temp file to the target path
-    temp_file.persist(&path).map_err(AppError::IoError)?;
+    temp_file.persist(&path).map_err(|e| AppError::IoError(std::io::Error::other(e)))?;
     Ok(())
 }
 
@@ -281,7 +283,7 @@ mod tests {
         });
 
         // Use a temp file in the same dir, write, then persist
-        let temp_file = tempfile::NamedTempFile::with_prefix(".settings.json.", "", tmp.path()).unwrap();
+        let temp_file = tempfile::NamedTempFile::with_prefix_in(".settings.json.", tmp.path()).unwrap();
         let mut f = temp_file;
         let json_str = serde_json::to_string_pretty(&settings_json).unwrap();
         std::io::Write::write_all(&mut f, json_str.as_bytes()).unwrap();

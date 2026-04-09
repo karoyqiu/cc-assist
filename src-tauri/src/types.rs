@@ -55,6 +55,7 @@ fn default_locale() -> String {
 }
 
 /// App-wide errors.
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum AppError {
     IoError(std::io::Error),
