@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -26,13 +26,16 @@ pub fn read_settings_json() -> Result<Value, AppError> {
     if !path.exists() {
         return Err(AppError::SettingsNotFound);
     }
-    let content = fs::read_to_string(&path).map_err(|e| AppError::SettingsReadError(e.to_string()))?;
+    // Preserve the original IO error so callers can distinguish NotFound from
+    // PermissionDenied etc.
+    let content = fs::read_to_string(&path).map_err(AppError::IoError)?;
     serde_json::from_str(&content).map_err(AppError::ConfigParseError)
 }
 
 /// Build a map of ANTHROPIC_* env vars from a profile — only non-empty fields.
-pub fn build_env_map(profile: &ProfileConfig) -> HashMap<String, String> {
-    let mut map = HashMap::new();
+/// Uses BTreeMap for deterministic (sorted) iteration order.
+pub fn build_env_map(profile: &ProfileConfig) -> BTreeMap<String, String> {
+    let mut map = BTreeMap::new();
     if !profile.base_url.is_empty() {
         map.insert("ANTHROPIC_BASE_URL".to_string(), profile.base_url.clone());
     }
@@ -96,7 +99,7 @@ pub fn write_settings_atomically(settings: &Value) -> Result<(), AppError> {
 
     // Atomically replace the original with the temp file
     // persist() renames the temp file to the target path
-    temp_file.persist(&path).map_err(|e| AppError::IoError(std::io::Error::other(e)))?;
+    temp_file.persist(&path).map_err(|e| AppError::IoError(e.error))?;
     Ok(())
 }
 
@@ -113,10 +116,11 @@ pub fn backup_settings() -> Result<(), AppError> {
 pub fn restore_settings_backup() -> Result<(), AppError> {
     let backup = settings_backup_path();
     let path = settings_path();
-    if backup.exists() {
-        fs::copy(&backup, &path).map_err(AppError::IoError)?;
-        fs::remove_file(&backup).ok();
+    if !backup.exists() {
+        return Err(AppError::SettingsNotFound);
     }
+    fs::copy(&backup, &path).map_err(AppError::IoError)?;
+    fs::remove_file(&backup).ok();
     Ok(())
 }
 

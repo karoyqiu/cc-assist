@@ -120,7 +120,7 @@ pub fn save_config(app_data_dir: &Path, store: &ProfilesStore) -> Result<(), App
     let json = serde_json::to_string_pretty(store).map_err(AppError::ConfigParseError)?;
     temp_file.write_all(json.as_bytes()).map_err(AppError::IoError)?;
     temp_file.flush().map_err(AppError::IoError)?;
-    temp_file.persist(&config_path).map_err(|e| AppError::IoError(std::io::Error::other(e)))?;
+    temp_file.persist(&config_path).map_err(|e| AppError::IoError(e.error))?;
 
     Ok(())
 }

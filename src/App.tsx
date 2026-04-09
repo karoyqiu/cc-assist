@@ -39,6 +39,14 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, [i18n, setStore]);
 
+  // Listen for show-directory-picker events from tray menu "Launch Claude"
+  useEffect(() => {
+    const unlisten = listen('show-directory-picker', () => {
+      setShowDirectoryPicker(true);
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [setShowDirectoryPicker]);
+
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
 
   const recentDirs = store?.recent_directories[store.active_profile_id] ?? [];
@@ -47,7 +55,7 @@ function App() {
     try {
       await invoke('set_active_profile', { id });
       setStore((s) => (s ? { ...s, active_profile_id: id } : s));
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('set_active_profile failed:', e);
     }
   }
@@ -63,7 +71,7 @@ function App() {
           : profiles[0]?.id ?? '';
         return { ...s, profiles, active_profile_id: newActive };
       });
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('save_profiles failed:', e);
     }
   }
@@ -126,9 +134,9 @@ function App() {
       // Refresh config to get updated recent_directories
       const updated = await invoke<ProfilesStore>('get_config');
       setStore(updated);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('launch_claude failed:', e);
-      setError(String(e));
+      setError(e instanceof Error ? e.message : String(e));
       setTimeout(() => setError(null), 5000);
     }
   }
@@ -205,6 +213,7 @@ function App() {
       {showDirectoryPicker && (
         <DirectoryPicker
           recentDirectories={recentDirs}
+          accentColor={selectedProfile?.icon_color ?? '#D4915D'}
           onLaunch={handleLaunch}
           onCancel={() => setShowDirectoryPicker(false)}
         />

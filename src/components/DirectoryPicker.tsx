@@ -4,11 +4,12 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface Props {
   recentDirectories: string[];
+  accentColor: string;
   onLaunch: (directory: string) => void;
   onCancel: () => void;
 }
 
-export function DirectoryPicker({ recentDirectories, onLaunch, onCancel }: Props) {
+export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCancel }: Props) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
@@ -19,7 +20,7 @@ export function DirectoryPicker({ recentDirectories, onLaunch, onCancel }: Props
       if (dir) {
         setSelected(dir);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('pick_directory failed:', e);
     }
   }
@@ -214,7 +215,7 @@ export function DirectoryPicker({ recentDirectories, onLaunch, onCancel }: Props
                 fontSize: 13,
                 fontWeight: 500,
                 color: selected ? '#0F0F0F' : '#737373',
-                backgroundColor: selected ? '#D4915D' : '#1A1A1A',
+                backgroundColor: selected ? accentColor : '#1A1A1A',
                 border: 'none',
                 borderRadius: 4,
                 cursor: selected ? 'pointer' : 'not-allowed',

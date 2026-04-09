@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProfileConfig } from '../types';
+import { Avatar } from './Avatar';
 
 interface Props {
   profile: ProfileConfig | null;
@@ -8,31 +9,6 @@ interface Props {
   onDelete: (id: string) => void;
   onDuplicate: (profile: ProfileConfig) => void;
   onLaunch: () => void;
-}
-
-function Avatar({ profile, size = 40 }: { profile: ProfileConfig; size?: number }) {
-  const initial = profile.name.charAt(0).toUpperCase();
-  const sizePx = `${size}px`;
-  return (
-    <div
-      style={{
-        width: sizePx,
-        height: sizePx,
-        borderRadius: '50%',
-        backgroundColor: profile.icon_color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: `${size * 0.4}px`,
-        fontWeight: 600,
-        color: '#0F0F0F',
-        flexShrink: 0,
-        fontFamily: 'Noto Sans, sans-serif',
-      }}
-    >
-      {initial}
-    </div>
-  );
 }
 
 interface FieldProps {

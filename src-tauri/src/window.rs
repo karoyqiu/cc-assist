@@ -31,11 +31,19 @@ pub fn show_settings_window<R: Runtime>(app: &AppHandle<R>) {
 /// Toggle the settings window (show if hidden, hide if shown).
 pub fn toggle_settings_window<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window(WINDOW_LABEL) {
-        if window.is_visible().unwrap_or(false) {
-            let _ = window.hide();
-        } else {
-            let _ = window.show();
-            let _ = window.set_focus();
+        match window.is_visible() {
+            Ok(true) => {
+                let _ = window.hide();
+            }
+            Ok(false) => {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+            Err(e) => {
+                log::warn!("is_visible check failed: {}, treating as hidden", e);
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }
     } else {
         show_settings_window(app);

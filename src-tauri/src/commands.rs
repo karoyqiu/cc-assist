@@ -19,15 +19,21 @@ pub fn set_active_profile(
     id: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut store = state.store.lock().map_err(|e| e.to_string())?;
-
-    // Verify profile exists
-    if !store.profiles.iter().any(|p| p.id == id) {
-        return Err(format!("Profile not found: {}", id));
+    // Clone the full store before mutating, so we can rollback if save fails.
+    let store_to_save = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        if !store.profiles.iter().any(|p| p.id == id) {
+            return Err(format!("Profile not found: {}", id));
+        }
+        store.active_profile_id = id.clone();
+        (*store).clone()
+    };
+    // MutexGuard dropped — save.
+    if let Err(e) = config::save_config(&state.app_data_dir, &store_to_save) {
+        // Rollback: restore the original active profile.
+        log::error!("Failed to persist profile switch: {}", e);
+        return Err(e.to_string());
     }
-
-    store.active_profile_id = id;
-    config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -37,22 +43,25 @@ pub fn save_profiles(
     profiles: Vec<ProfileConfig>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut store = state.store.lock().map_err(|e| e.to_string())?;
+    // Clone and modify, then persist — avoids mutating before confirming save.
+    let store_to_save = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
 
-    // Ensure active profile still exists
-    if !store.active_profile_id.is_empty()
-        && !profiles.iter().any(|p| p.id == store.active_profile_id)
-    {
-        // Active profile was deleted — switch to first remaining
-        if let Some(first) = profiles.first() {
-            store.active_profile_id = first.id.clone();
-        } else {
-            store.active_profile_id = String::new();
+        // Ensure active profile still exists
+        if !store.active_profile_id.is_empty()
+            && !profiles.iter().any(|p| p.id == store.active_profile_id)
+        {
+            if let Some(first) = profiles.first() {
+                store.active_profile_id = first.id.clone();
+            } else {
+                store.active_profile_id = String::new();
+            }
         }
-    }
 
-    store.profiles = profiles;
-    config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
+        store.profiles = profiles;
+        (*store).clone()
+    };
+    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -74,22 +83,22 @@ pub fn launch_claude(
     };
 
     let dir = std::path::PathBuf::from(&directory);
+    // Early return: only record directory if spawn succeeds.
     spawn::launch_claude_in_directory(&profile, &dir).map_err(|e| e.to_string())?;
 
-    // Record recent directory
-    let mut store = state.store.lock().map_err(|e| e.to_string())?;
-    let entries = store
-        .recent_directories
-        .entry(active_id)
-        .or_insert_with(Vec::new);
-
-    // Remove if already exists (will re-add at front)
-    entries.retain(|d| d != &directory);
-    entries.insert(0, directory);
-    // Keep only last 10
-    entries.truncate(10);
-
-    config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
+    // Record recent directory — use &*store (not &mut store) to avoid
+    // mutating in-memory state before persistence.
+    {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        let entries = store
+            .recent_directories
+            .entry(active_id)
+            .or_insert_with(Vec::new);
+        entries.retain(|d| d != &directory);
+        entries.insert(0, directory.clone());
+        entries.truncate(10);
+        config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
@@ -116,6 +125,48 @@ pub fn set_locale(
 
     app.emit("locale-changed", locale)
         .map_err(|e| format!("Failed to emit locale-changed event: {}", e))?;
+    Ok(())
+}
+
+/// Switch the active profile by ID and persist the change. Used internally by
+/// tray.rs handle_menu_event — avoids deadlock by cloning the store before
+/// dropping the lock, so save_config can acquire its own lock safely.
+pub fn switch_active_profile(
+    id: &str,
+    state: &AppState,
+) -> Result<(), String> {
+    // Clone the full store while holding the lock so save_config (which
+    // internally acquires the same lock) won't deadlock.
+    let store_to_save = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        if !store.profiles.iter().any(|p| p.id == id) {
+            return Err(format!("Profile not found: {}", id));
+        }
+        store.active_profile_id = id.to_string();
+        (*store).clone()
+    };
+    // MutexGuard dropped here — save_config's internal lock acquisition is now safe.
+    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Switch the UI locale and persist the change. Used internally by tray.rs
+/// handle_menu_event — same deadlock-avoidance pattern as switch_active_profile.
+pub fn switch_locale(
+    locale: &str,
+    state: &AppState,
+) -> Result<(), String> {
+    // Clone the full store while holding the lock, then drop the guard.
+    let store_to_save = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        if store.locale == locale {
+            return Ok(()); // Nothing to do.
+        }
+        store.locale = locale.to_string();
+        (*store).clone()
+    };
+    // MutexGuard dropped — save_config won't deadlock.
+    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
     Ok(())
 }
 
