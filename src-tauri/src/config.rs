@@ -226,4 +226,56 @@ mod tests {
         assert_eq!(store.profiles[0].base_url, "https://my-custom.endpoint.com");
         assert_eq!(store.providers.len(), 7);
     }
+
+    #[test]
+    fn test_migration_profile_without_provider_id_is_custom() {
+        // Profile created before provider_id field was added — should deserialize as None (custom)
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("config.json");
+        let old_json = serde_json::json!({
+            "active_profile_id": "old-profile",
+            "profiles": [
+                {
+                    "id": "old-profile",
+                    "name": "Old Custom Profile",
+                    "icon": "custom",
+                    "icon_color": "#123456",
+                    "base_url": "https://api.anthropic.com",
+                    "api_key": "sk-old",
+                    "models": {}
+                }
+            ],
+            "recent_directories": {},
+            "locale": "en"
+        });
+        std::fs::write(&path, old_json.to_string()).unwrap();
+
+        let store = load_config(tmp.path()).unwrap();
+        assert_eq!(store.profiles.len(), 1);
+        // Absent provider_id field → None (custom, editable)
+        assert_eq!(store.profiles[0].provider_id, None);
+    }
+
+    #[test]
+    fn test_profile_with_provider_id_round_trips() {
+        // Profile with provider_id="anthropic" survives save → load round-trip
+        let tmp = TempDir::new().unwrap();
+        let mut store = default_store();
+        store.profiles.push(crate::types::ProfileConfig {
+            id: "official".into(),
+            name: "Claude Official".into(),
+            icon: "anthropic".into(),
+            icon_color: "#D4915D".into(),
+            base_url: "https://api.anthropic.com".into(),
+            api_key: "sk-ant".into(),
+            models: Default::default(),
+            provider_id: Some("anthropic".into()),
+        });
+        save_config(tmp.path(), &store).unwrap();
+
+        let loaded = load_config(tmp.path()).unwrap();
+        assert_eq!(loaded.profiles.len(), 1); // only the official profile we added
+        let official = loaded.profiles.iter().find(|p| p.id == "official").unwrap();
+        assert_eq!(official.provider_id, Some("anthropic".into()));
+    }
 }

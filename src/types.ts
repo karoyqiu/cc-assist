@@ -21,6 +21,8 @@ export interface ProfileConfig {
   base_url: string;
   api_key: string;
   models: ModelConfig;
+  /** Provider ID this profile was created from, e.g. "anthropic". None = custom profile. */
+  provider_id?: string;
 }
 
 export type RecentDirectories = Record<string, string[]>;

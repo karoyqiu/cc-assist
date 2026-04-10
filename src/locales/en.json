@@ -29,7 +29,13 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "launchClaude": "Launch Claude",
-    "noProfileSelected": "Select a profile to edit"
+    "noProfileSelected": "Select a profile to edit",
+    "deleteConfirmTitle": "Delete Profile",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmDelete": "Delete",
+    "deleting": "Deleting...",
+    "deleteFailed": "Failed to delete profile. Please try again."
   },
   "directoryPicker": {
     "title": "Launch Claude",

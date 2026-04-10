@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import './lib/i18n';
 import type { ProfilesStore, ProfileConfig, ProviderConfig } from './types';
-import { ProfileList } from './components/ProfileList';
-import { ProfileEditor } from './components/ProfileEditor';
+
 import { DirectoryPicker } from './components/DirectoryPicker';
+import { ProfileEditor } from './components/ProfileEditor';
+import { ProfileList } from './components/ProfileList';
 import './App.css';
 
 function App() {
@@ -36,7 +38,9 @@ function App() {
       i18n.changeLanguage(event.payload);
       setStore((s) => (s ? { ...s, locale: event.payload } : s));
     });
-    return () => { unlisten.then((fn) => fn()); };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [i18n, setStore]);
 
   // Listen for show-directory-picker events from tray menu "Launch Claude"
@@ -44,7 +48,9 @@ function App() {
     const unlisten = listen('show-directory-picker', () => {
       setShowDirectoryPicker(true);
     });
-    return () => { unlisten.then((fn) => fn()); };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [setShowDirectoryPicker]);
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
@@ -60,29 +66,29 @@ function App() {
     }
   }
 
-  async function handleSaveProfiles(profiles: ProfileConfig[]) {
+  async function handleSaveProfiles(profiles: ProfileConfig[]): Promise<boolean> {
     try {
       await invoke('save_profiles', { profiles });
       setStore((s) => {
         if (!s) return s;
         const active = s.active_profile_id;
-        const newActive = profiles.some((p) => p.id === active)
-          ? active
-          : profiles[0]?.id ?? '';
+        const newActive = profiles.some((p) => p.id === active) ? active : (profiles[0]?.id ?? '');
         return { ...s, profiles, active_profile_id: newActive };
       });
+      return true;
     } catch (e: unknown) {
       console.error('save_profiles failed:', e);
+      return false;
     }
   }
 
-  function handleSaveProfile(profile: ProfileConfig) {
+  async function handleSaveProfile(profile: ProfileConfig) {
     if (!store) return;
     const updated = store.profiles.map((p) => (p.id === profile.id ? profile : p));
-    handleSaveProfiles(updated);
+    await handleSaveProfiles(updated);
   }
 
-  function handleAddWithProvider(provider: ProviderConfig | null) {
+  async function handleAddWithProvider(provider: ProviderConfig | null) {
     if (!store) return;
     const newProfile: ProfileConfig = provider
       ? {
@@ -93,6 +99,7 @@ function App() {
           base_url: provider.base_url,
           api_key: '',
           models: {},
+          provider_id: provider.id,
         }
       : {
           id: crypto.randomUUID(),
@@ -102,32 +109,38 @@ function App() {
           base_url: '',
           api_key: '',
           models: {},
+          provider_id: undefined,
         };
     const updated = [...store.profiles, newProfile];
-    handleSaveProfiles(updated);
+    await handleSaveProfiles(updated);
     setSelectedId(newProfile.id);
   }
 
-  function handleDuplicateProfile(profile: ProfileConfig) {
+  async function handleDuplicateProfile(profile: ProfileConfig) {
     if (!store) return;
     const copy: ProfileConfig = {
       ...profile,
       id: crypto.randomUUID(),
       name: `Copy of ${profile.name}`,
       models: { ...profile.models },
+      provider_id: undefined,
     };
     const updated = [...store.profiles, copy];
-    handleSaveProfiles(updated);
+    await handleSaveProfiles(updated);
     setSelectedId(copy.id);
   }
 
-  function handleDeleteProfile(id: string) {
-    if (!store) return;
+  async function handleDeleteProfile(id: string): Promise<boolean> {
+    if (!store) return false;
+    if (!store.profiles.some((p) => p.id === id)) return false;
     const remaining = store.profiles.filter((p) => p.id !== id);
-    if (remaining.length === 0) return;
+    if (remaining.length === 0) return false;
     const newActive = store.active_profile_id === id ? remaining[0].id : store.active_profile_id;
-    handleSaveProfiles(remaining);
-    setSelectedId(newActive);
+    const ok = await handleSaveProfiles(remaining);
+    if (ok) {
+      setSelectedId(newActive);
+    }
+    return ok;
   }
 
   function handleSelectProfile(id: string) {
@@ -212,6 +225,7 @@ function App() {
       {/* Right: profile editor */}
       <ProfileEditor
         profile={selectedProfile}
+        official={selectedProfile?.provider_id === 'anthropic'}
         onSave={handleSaveProfile}
         onDelete={handleDeleteProfile}
         onDuplicate={handleDuplicateProfile}

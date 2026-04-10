@@ -34,6 +34,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml
 - **`src-tauri/src/`** — Rust backend. `main.rs` is the entry point, `lib.rs` registers Tauri commands and plugins. Add new commands with `#[tauri::command]` and register them in `generate_handler![]`.
 - **`src-tauri/capabilities/`** — Tauri security permissions per window. New capabilities must be declared here.
 - **`src-tauri/tauri.conf.json`** — App config (window size, CSP, build commands, bundle settings). Note: build commands reference `ppnpm` despite using `pnpm`.
+- **`docs/solutions/`** — Documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`).
 
 ## Key Conventions
 

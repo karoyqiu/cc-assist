@@ -79,6 +79,7 @@ pub fn run() {
                 base_url: anthropic.base_url.clone(),
                 api_key: String::new(),
                 models: Default::default(),
+                provider_id: Some("anthropic".into()),
             };
             crate::types::ProfilesStore {
                 active_profile_id: "default".to_string(),
@@ -112,9 +113,6 @@ pub fn run() {
                 tray::handle_menu_event(app, event.id().as_ref());
             });
 
-            // Keep app alive after window is closed — tray icon keeps it running.
-            // The app will only truly exit when the user clicks "Quit" in the tray menu.
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -128,7 +126,12 @@ pub fn run() {
             commands::toggle_settings_window,
             commands::show_settings_window_cmd,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 }
 

@@ -47,6 +47,9 @@ pub struct ProfileConfig {
     /// → ANTHROPIC_AUTH_TOKEN
     pub api_key: String,
     pub models: ModelConfig,
+    /// Provider ID this profile was created from, e.g. "anthropic". None = custom profile.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_id: Option<String>,
 }
 
 /// Recent directories per profile — last 10 per profile, LRU ordering (most recent first).

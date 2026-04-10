@@ -1,5 +1,5 @@
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder},
+    menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager, Runtime,
 };
@@ -13,7 +13,6 @@ const ID_LAUNCH_CLAUDE: &str = "launch-claude";
 const ID_SETTINGS: &str = "settings";
 const ID_LANG_EN: &str = "lang-en";
 const ID_LANG_ZH: &str = "lang-zh";
-const ID_QUIT: &str = "quit";
 
 /// Build the tray icon and menu.
 pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
@@ -70,13 +69,8 @@ pub fn build_tray_menu<R: Runtime>(
     // Profile items
     for profile in &store.profiles {
         let is_active = profile.id == store.active_profile_id;
-        let label = if is_active {
-            format!("✓ {}", profile.name)
-        } else {
-            profile.name.clone()
-        };
-
-        let item = MenuItemBuilder::with_id(profile.id.clone(), label)
+        let item = CheckMenuItemBuilder::with_id(profile.id.clone(), profile.name.clone())
+            .checked(is_active)
             .build(app)?;
 
         menu_builder = menu_builder.item(&item);
@@ -100,23 +94,22 @@ pub fn build_tray_menu<R: Runtime>(
 
     // Language: English
     let lang_en_checked = store.locale == "en";
-    let lang_en_label = if lang_en_checked { "✓ English" } else { "English" };
-    let lang_en_item = MenuItemBuilder::with_id(ID_LANG_EN, lang_en_label)
+    let lang_en_item = CheckMenuItemBuilder::with_id(ID_LANG_EN, "English")
+        .checked(lang_en_checked)
         .build(app)?;
     menu_builder = menu_builder.item(&lang_en_item);
 
     // Language: Chinese
     let lang_zh_checked = store.locale == "zh";
-    let lang_zh_label = if lang_zh_checked { "✓ 中文" } else { "中文" };
-    let lang_zh_item = MenuItemBuilder::with_id(ID_LANG_ZH, lang_zh_label)
+    let lang_zh_item = CheckMenuItemBuilder::with_id(ID_LANG_ZH, "中文")
+        .checked(lang_zh_checked)
         .build(app)?;
     menu_builder = menu_builder.item(&lang_zh_item);
 
     menu_builder = menu_builder.separator();
 
-    // Quit
-    let quit_item = MenuItemBuilder::with_id(ID_QUIT, "Quit")
-        .build(app)?;
+    // Quit — uses Tauri's built-in quit to properly exit even with ExitRequested prevention
+    let quit_item = PredefinedMenuItem::quit(app, None)?;
     menu_builder = menu_builder.item(&quit_item);
 
     Ok(menu_builder.build()?)
@@ -157,7 +150,6 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     if !id.starts_with("lang-")
         && id != ID_LAUNCH_CLAUDE
         && id != ID_SETTINGS
-        && id != ID_QUIT
     {
         let id_clone = id.to_string();
         let app_data_dir = app.state::<AppState>().app_data_dir.clone();
@@ -206,9 +198,6 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
                 let _ = app_clone.emit("locale-changed", "zh");
                 rebuild_menu(&app_clone, &app_data_dir);
             });
-        }
-        ID_QUIT => {
-            app.exit(0);
         }
         _ => {}
     }

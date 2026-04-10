@@ -29,7 +29,13 @@
     "duplicate": "复制",
     "delete": "删除",
     "launchClaude": "启动 Claude",
-    "noProfileSelected": "选择一个配置进行编辑"
+    "noProfileSelected": "选择一个配置进行编辑",
+    "deleteConfirmTitle": "删除配置",
+    "deleteConfirmMessage": "确定要删除\"{{name}}\"吗？此操作无法撤销。",
+    "deleteConfirmCancel": "取消",
+    "deleteConfirmDelete": "删除",
+    "deleting": "删除中...",
+    "deleteFailed": "删除配置失败，请重试。"
   },
   "directoryPicker": {
     "title": "启动 Claude",
