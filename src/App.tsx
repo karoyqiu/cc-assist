@@ -104,7 +104,7 @@ function App() {
     const newProfile: ProfileConfig = provider
       ? {
           id: crypto.randomUUID(),
-          name: provider.name,
+          name: provider.name_key ? t(provider.name_key) : provider.name,
           icon: provider.icon,
           icon_color: provider.icon_color,
           base_url: provider.base_url,

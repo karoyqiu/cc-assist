@@ -58,8 +58,8 @@
   },
   "providers": {
     "anthropic": "Claude 官方",
-    "zai-international": "z.ai 国际版",
-    "zai-cn": "z.ai 国内版",
+    "zai-international": "智谱国际版",
+    "zai-cn": "智谱国内版",
     "minimax-cn": "MiniMax 国内版",
     "minimax-international": "MiniMax 国际版",
     "kimi": "Kimi",
