@@ -56,7 +56,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 setShowPicker(false);
                 onAdd(provider);
               }}
-              className="flex w-full cursor-pointer items-center gap-2.5 px-2.5 py-5 text-left"
+              className="flex w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-5 text-left"
             >
               <Avatar
                 profile={{
@@ -84,7 +84,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
               setShowPicker(false);
               onAdd(null);
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 px-2.5 py-6 text-left"
+            className="flex w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-6 text-left"
           >
             <div className="bg-subtle text-muted flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
               +
