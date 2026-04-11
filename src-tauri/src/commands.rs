@@ -31,7 +31,8 @@ pub fn set_active_profile(
         (*store).clone()
     };
     // MutexGuard dropped — save.
-    if let Err(e) = config::save_config(&state.app_data_dir, &store_to_save) {
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    if let Err(e) = config::save_config(&app_data_dir, &store_to_save) {
         // Rollback: restore the original active profile.
         log::error!("Failed to persist profile switch: {}", e);
         return Err(e.to_string());
@@ -64,10 +65,11 @@ pub fn use_profile(
     settings::apply_profile_to_settings(&profile).map_err(|e| e.to_string())?;
 
     // 3. Persist config (active_profile_id changed)
-    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
 
     // 4. Rebuild tray menu to sync checkmark
-    tray::rebuild_menu(&app, &state.app_data_dir);
+    tray::rebuild_menu(&app, &app_data_dir);
 
     Ok(())
 }
@@ -96,7 +98,8 @@ pub fn save_profiles(
         store.profiles = profiles;
         (*store).clone()
     };
-    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -133,7 +136,8 @@ pub fn launch_claude(
         entries.retain(|d| d != &directory);
         entries.insert(0, directory.clone());
         entries.truncate(10);
-        config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
+        let app_data_dir = state.app_data_dir.lock().unwrap();
+        config::save_config(&app_data_dir, &store).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -156,7 +160,8 @@ pub fn set_locale(
 ) -> Result<(), String> {
     let mut store = state.store.lock().map_err(|e| e.to_string())?;
     store.locale = locale.clone();
-    config::save_config(&state.app_data_dir, &store).map_err(|e| e.to_string())?;
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    config::save_config(&app_data_dir, &store).map_err(|e| e.to_string())?;
     drop(store);
 
     app.emit("locale-changed", locale)
@@ -180,7 +185,8 @@ pub fn switch_locale(
         (*store).clone()
     };
     // MutexGuard dropped — save_config won't deadlock.
-    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -211,7 +217,7 @@ pub fn rebuild_tray_menu(
     lang_zh_label: String,
     quit_label: String,
 ) -> Result<(), String> {
-    let app_data_dir = app.state::<AppState>().app_data_dir.clone();
+    let app_data_dir = app.state::<AppState>().app_data_dir.lock().unwrap().clone();
     tray::rebuild_menu_with_strings(
         &app,
         &app_data_dir,

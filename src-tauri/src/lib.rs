@@ -11,19 +11,50 @@ mod types;
 mod window;
 
 use state::AppState;
+use tauri::Manager;
+
+fn default_store() -> crate::types::ProfilesStore {
+    let providers = config::built_in_providers();
+    let anthropic = providers.iter().find(|p| p.id == "anthropic").unwrap();
+    let default_profile = crate::types::ProfileConfig {
+        id: "default".to_string(),
+        name: anthropic.name.clone(),
+        icon: anthropic.icon.clone(),
+        icon_color: anthropic.icon_color.clone(),
+        base_url: anthropic.base_url.clone(),
+        api_key: String::new(),
+        models: Default::default(),
+        provider_id: Some("anthropic".into()),
+    };
+    crate::types::ProfilesStore {
+        active_profile_id: "default".to_string(),
+        profiles: vec![default_profile],
+        providers,
+        recent_directories: Default::default(),
+        locale: "en".to_string(),
+    }
+}
+
+fn init_logging(log_dir: &std::path::Path) {
+    std::fs::create_dir_all(log_dir).ok();
+    let log_path = log_dir.join("app.log");
+
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+        .unwrap_or_else(|_| std::fs::File::create(&log_path).expect("Failed to create log file"));
+    simplelog::WriteLogger::init(simplelog::LevelFilter::Info, simplelog::Config::default(), log_file).ok();
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Determine app data dir early for logging
-    let app_data_dir = dirs::data_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("cc-assist");
-    std::fs::create_dir_all(&app_data_dir).ok();
+    // Use temp dir for early panic logging — we'll get proper dir from Tauri in setup
+    let early_log_dir = std::env::temp_dir().join("cc-assist");
+    std::fs::create_dir_all(&early_log_dir).ok();
 
-    let log_path = app_data_dir.join("app.log");
-    let log_path_for_panic = log_path.clone();
-
-    // Panic handler — log and keep app alive (don't crash to tray)
+    // Set up panic handler early
+    let panic_log_path = early_log_dir.join("app.log");
     std::panic::set_hook(Box::new(move |panic_info| {
         let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             s.to_string()
@@ -32,67 +63,23 @@ pub fn run() {
         } else {
             "Unknown panic".to_string()
         };
-
         let location = panic_info
             .location()
             .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
             .unwrap_or_else(|| "unknown".to_string());
         let log_msg = format!("PANIC at {}: {}", location, msg);
         eprintln!("{}", log_msg);
-
-        // Try to write to log file
-        if let Ok(mut f) = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&log_path_for_panic)
-        {
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&panic_log_path) {
             let _ = writeln!(f, "{}", log_msg);
         }
     }));
 
-    let log_file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&log_path)
-        .unwrap_or_else(|_| {
-            std::fs::File::create(&log_path).expect("Failed to create log file")
-        });
-    simplelog::WriteLogger::init(
-        simplelog::LevelFilter::Info,
-        simplelog::Config::default(),
-        log_file,
-    )
-    .ok();
-
+    // Init logging with temp dir initially
+    init_logging(&early_log_dir);
     log::info!("cc-assist starting");
 
-    // Load config
-    let store = match config::load_config(&app_data_dir) {
-        Ok(s) => s,
-        Err(e) => {
-            log::error!("Failed to load config: {}", e);
-            // Use defaults on error — a single default profile using the anthropic provider
-            let providers = config::built_in_providers();
-            let anthropic = providers.iter().find(|p| p.id == "anthropic").unwrap();
-            let default_profile = crate::types::ProfileConfig {
-                id: "default".to_string(),
-                name: anthropic.name.clone(),
-                icon: anthropic.icon.clone(),
-                icon_color: anthropic.icon_color.clone(),
-                base_url: anthropic.base_url.clone(),
-                api_key: String::new(),
-                models: Default::default(),
-                provider_id: Some("anthropic".into()),
-            };
-            crate::types::ProfilesStore {
-                active_profile_id: "default".to_string(),
-                profiles: vec![default_profile],
-                providers,
-                recent_directories: Default::default(),
-                locale: "en".to_string(),
-            }
-        }
-    };
+    // Create builder with default store — will be replaced in setup with proper config
+    let store = default_store();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -100,9 +87,38 @@ pub fn run() {
         }))
         .manage(AppState {
             store: Mutex::new(store),
-            app_data_dir,
+            app_data_dir: Mutex::new(early_log_dir.clone()),
         })
         .setup(|app| {
+            // Get proper app data dir from Tauri using Manager trait
+            let app_data_dir = match app.path().app_data_dir() {
+                Ok(dir) => {
+                    log::info!("Using app data dir: {:?}", dir);
+                    dir
+                }
+                Err(e) => {
+                    log::error!("Failed to get app data dir: {}, using fallback", e);
+                    std::env::temp_dir().join("cc-assist")
+                }
+            };
+
+            // Re-init logging with proper dir
+            init_logging(&app_data_dir);
+
+            // Update state with proper app_data_dir
+            let state = app.state::<AppState>();
+            *state.app_data_dir.lock().unwrap() = app_data_dir.clone();
+
+            // Load config from proper app data dir
+            let store = match config::load_config(&app_data_dir) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("Failed to load config: {}", e);
+                    default_store()
+                }
+            };
+            *state.store.lock().unwrap() = store;
+
             // Set up tray
             if let Err(e) = tray::setup_tray(app.handle()) {
                 log::error!("Failed to setup tray: {}", e);

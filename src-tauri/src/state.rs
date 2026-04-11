@@ -5,5 +5,5 @@ use crate::types::ProfilesStore;
 
 pub struct AppState {
     pub store: Mutex<ProfilesStore>,
-    pub app_data_dir: PathBuf,
+    pub app_data_dir: Mutex<PathBuf>,
 }

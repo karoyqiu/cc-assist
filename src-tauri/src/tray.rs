@@ -16,7 +16,7 @@ const ID_LANG_ZH: &str = "lang-zh";
 
 /// Build the tray icon and menu.
 pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
-    let app_data_dir = app.state::<AppState>().app_data_dir.clone();
+    let app_data_dir = app.state::<AppState>().app_data_dir.lock().unwrap().clone();
 
     // Get active profile name for initial tooltip.
     let tooltip = {
@@ -245,7 +245,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     {
         let id_string = id.to_string();
         let state = app.state::<AppState>();
-        let app_data_dir = state.app_data_dir.clone();
+        let app_data_dir = state.app_data_dir.lock().unwrap().clone();
 
         // Find profile, update active, persist config
         let profile = {
@@ -281,7 +281,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
         ID_LANG_EN => {
             let app_clone = app.clone();
-            let app_data_dir = app.state::<AppState>().app_data_dir.clone();
+            let app_data_dir = app.state::<AppState>().app_data_dir.lock().unwrap().clone();
             tauri::async_runtime::spawn(async move {
                 let result = commands::switch_locale("en", &app_clone.state::<AppState>());
                 if result.is_err() {
@@ -294,7 +294,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
         ID_LANG_ZH => {
             let app_clone = app.clone();
-            let app_data_dir = app.state::<AppState>().app_data_dir.clone();
+            let app_data_dir = app.state::<AppState>().app_data_dir.lock().unwrap().clone();
             tauri::async_runtime::spawn(async move {
                 let result = commands::switch_locale("zh", &app_clone.state::<AppState>());
                 if result.is_err() {
