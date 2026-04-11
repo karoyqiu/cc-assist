@@ -14,7 +14,7 @@
 
 ## Typography
 - **System default:** Uses the OS/system default sans-serif font for all text.
-- **Scale:** 10px (label/muted) / 12px (small body) / 13px (body/default) / 14px (input) / 15px (heading) / 20px (window title)
+- **Scale:** Uses Tailwind relative text classes — `text-xs` (labels/muted) / `text-sm` (body/default) / `text-base` (headings).
 
 ## Color
 - **Approach:** Restrained neutral with per-provider accent. The active profile's accent color is the ONLY color in an otherwise monochrome UI — switching profiles switches the one color on screen.
@@ -39,7 +39,7 @@
 ## Layout
 - **Approach:** Two-panel — left panel (profile list, 240px fixed), right panel (editor, fills remaining space). Clean vertical split.
 - **Window:** 700x500, resizable, centered on open, min-width prevents panel collapse.
-- **Directory picker:** Modal overlay (centered, 500px wide).
+- **Directory picker:** Modal overlay (centered, 512px / w-128 wide).
 - **Border radius:** sm: 4px, md: 6px. No large radius anywhere.
 
 ## Motion
@@ -49,16 +49,17 @@
 ## Component Inventory
 
 ### Profile List (left panel)
-- Fixed 240px width, full height, border-right divider
-- Header: "Profiles" label + "+" add button
-- Items: avatar circle (provider color, 28px) + name + checkmark (visible only on active)
+- Fixed `w-60` (240px) width, full height, border-right divider
+- Header: "Profiles" label + "+" add button (shadcn `size="icon"`)
+- Items: avatar circle (provider color, 28px) + name + checkmark (visible only on active), `py-6` vertical padding
+- Provider picker: left-aligned (`justify-start`), `py-5`/`py-6` per item
 - Hover state: background shifts to surface color
 - Active item: surface background + checkmark visible
 
 ### Profile Editor (right panel)
-- Header: large avatar (40px, provider color) + profile name + preset badge (built-in) + duplicate/delete actions
+- Header: large avatar (40px, provider color) + profile name + preset badge (built-in) + duplicate/delete actions (shadcn `default` button size)
 - Fields: API Key (password, monospace), Base URL (read-only for built-in, monospace), model fields in 2-column grid (Main/Opus, Sonnet/Haiku)
-- Actions: "Launch Claude" (primary accent) + "Save Changes" (secondary)
+- Actions: "Launch Claude" (primary accent) + "Save Changes" (secondary) — shadcn `default` button size, no explicit overrides
 
 ### Directory Picker Modal
 - Centered overlay with dark scrim
@@ -84,3 +85,6 @@
 | 2026-04-09 | Active profile = only colored element in UI | Color-as-identity approach makes switching profile visually unmistakable |
 | 2026-04-11 | Removed custom font, use system default | Cleaner, no font loading overhead |
 | 2026-04-11 | Removed explicit button sizing, use shadcn defaults | Buttons inherit size from component variants |
+| 2026-04-11 | All pixel sizes → Tailwind canonical classes | Consistency, smaller output, design alignment |
+| 2026-04-11 | Provider picker: left-aligned buttons, taller touch targets | Better usability and alignment with design |
+| 2026-04-11 | Directory picker: 500px → w-128 (512px) | Use Tailwind width scale for layout values |
