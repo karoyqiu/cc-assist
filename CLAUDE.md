@@ -43,6 +43,22 @@ cargo clippy --manifest-path src-tauri/Cargo.toml
 - Vite dev server runs on port 1420 with strict port mode; HMR on 1421 when `TAURI_DEV_HOST` is set.
 - `src-tauri/` is excluded from Vite file watching to avoid unnecessary reloads during Rust compilation.
 
+## Tauri Permissions
+
+Permissions in `src-tauri/capabilities/default.json` control what the **frontend** can do via Tauri APIs. Rust backend code has unrestricted access to all Tauri APIs — it bypasses the capability system entirely.
+
+**Rule: Never use `default` permissions.** They bundle dozens of permissions and dramatically expand the attack surface.
+
+**Before adding any permission, inspect the frontend code** (`src/`) to find which Tauri APIs are actually called:
+- `window.*` → window control (show, hide, focus, etc.)
+- `tray.*` → tray icon/menu control
+- `event.*` / `listen()` / `emit()` → event system
+- `dialog.*` / `fs.*` / `shell.*` → plugin APIs
+
+`invoke()` calls to Rust commands do **not** need individual permissions — only direct Tauri API calls (window, tray, event, etc.) do.
+
+Only grant the specific permissions the frontend actually uses. Example: if the frontend only calls `listen()`, the capability needs only `core:event:allow-listen`, not `core:event:default`.
+
 ## Design System
 
 Always read DESIGN.md before making any visual or UI decisions.

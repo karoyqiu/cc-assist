@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { ProfileConfig } from '@/types';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,10 +16,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
-import type { ProfileConfig } from '../types';
-
-import { cn } from '../lib/utils';
 import { Avatar } from './Avatar';
 
 interface Props {
@@ -121,7 +121,7 @@ export function ProfileEditor({
   return (
     <div className="bg-app flex flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-subtle flex items-center gap-3 border-b px-5 pt-4 pb-3">
+      <div className="border-subtle flex items-center gap-3 border-b px-5 py-2">
         <Avatar profile={profile} size={40} />
         <div className="flex-1">
           {official ? (

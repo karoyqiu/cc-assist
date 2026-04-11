@@ -30,3 +30,13 @@ log = "0.4"
 simplelog = "0.12"
 tempfile = "3"
 
+[profile.dev]
+incremental = true
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+

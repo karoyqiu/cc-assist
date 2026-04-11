@@ -7,12 +7,13 @@
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build",
-    "frontendDist": "../dist"
+    "frontendDist": "../dist",
+    "removeUnusedCommands": true
   },
   "app": {
     "windows": [
       {
-        "title": "cc-assist",
+        "title": "CC Assist",
         "label": "main",
         "width": 700,
         "height": 500,
