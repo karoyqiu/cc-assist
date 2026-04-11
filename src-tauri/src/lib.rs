@@ -19,6 +19,7 @@ pub fn run() {
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join("cc-assist");
     std::fs::create_dir_all(&app_data_dir).ok();
+
     let log_path = app_data_dir.join("app.log");
     let log_path_for_panic = log_path.clone();
 
@@ -31,12 +32,14 @@ pub fn run() {
         } else {
             "Unknown panic".to_string()
         };
+
         let location = panic_info
             .location()
             .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
             .unwrap_or_else(|| "unknown".to_string());
         let log_msg = format!("PANIC at {}: {}", location, msg);
         eprintln!("{}", log_msg);
+
         // Try to write to log file
         if let Ok(mut f) = std::fs::OpenOptions::new()
             .create(true)
@@ -132,4 +135,3 @@ pub fn run() {
             }
         });
 }
-
