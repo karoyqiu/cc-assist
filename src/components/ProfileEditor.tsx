@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -75,7 +75,7 @@ export function ProfileEditor({
 }: Props) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<ProfileConfig | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function ProfileEditor({
     if (profile?.id !== prevProfileId.current) {
       prevProfileId.current = profile?.id ?? null;
       setDraft(profile ? { ...profile, models: { ...profile.models } } : null);
-      setSaved(false);
+      setSaved(true);
     }
   }, [profile]);
 
@@ -140,11 +140,7 @@ export function ProfileEditor({
         {/* Action buttons */}
         {!official && (
           <div className="flex gap-1.5">
-            <Button
-              variant="outline"
-              onClick={() => onDuplicate(draft)}
-              className="text-muted h-7 px-2.5 text-[12px]"
-            >
+            <Button variant="outline" onClick={() => onDuplicate(draft)} className="text-muted">
               {t('profileEditor.duplicate')}
             </Button>
             <Button
@@ -154,7 +150,7 @@ export function ProfileEditor({
                 setShowDeleteConfirm(true);
                 setDeleteError(null);
               }}
-              className="h-7 px-2.5 text-[12px]"
+              className=""
             >
               {t('profileEditor.delete')}
             </Button>
@@ -230,21 +226,21 @@ export function ProfileEditor({
       <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
         <Button
           onClick={onLaunch}
-          className="text-app h-7.5 px-3.5 text-[13px] font-medium"
+          className="text-app font-medium"
           style={{ backgroundColor: profile.icon_color }}
         >
           {t('profileEditor.launchClaude')}
         </Button>
         {/* Use / In Use button */}
         {profile.id === activeId ? (
-          <Button variant="secondary" disabled className="h-7.5 px-3.5 text-[13px] font-medium">
+          <Button variant="secondary" disabled className="font-medium">
             {t('profileEditor.inUse')}
           </Button>
         ) : (
           <Button
             variant="outline"
             onClick={() => onUse(profile.id)}
-            className="text-primary hover:bg-hover h-7.5 px-3.5 text-[13px] font-medium"
+            className="text-primary hover:bg-hover font-medium"
           >
             {t('profileEditor.useProfile')}
           </Button>
@@ -253,12 +249,9 @@ export function ProfileEditor({
           <Button
             variant="outline"
             onClick={handleSave}
-            className={cn(
-              'h-7.5 px-3.5 text-[13px] font-medium hover:bg-hover',
-              saved ? 'text-muted' : 'text-primary',
-            )}
+            className={cn('font-medium hover:bg-hover', saved ? 'text-muted' : 'text-primary')}
           >
-            {saved ? '\u2713' : t('profileEditor.saveChanges')}
+            {t('profileEditor.saveChanges')}
           </Button>
         )}
       </div>
@@ -284,12 +277,12 @@ export function ProfileEditor({
           </AlertDialogHeader>
           {deleteError && <div className="text-danger text-xs">{deleteError}</div>}
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-7.5 px-3.5 text-[13px]" disabled={deleting}>
+            <AlertDialogCancel disabled={deleting}>
               {t('profileEditor.deleteConfirmCancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="text-app h-7.5 px-3.5 text-[13px] font-medium"
+              className="text-app font-medium"
               onClick={async () => {
                 const targetId = deleteTargetId.current;
                 if (!targetId) return;

@@ -109,7 +109,7 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
           <Button
             variant="outline"
             onClick={handleBrowse}
-            className="text-primary h-[30px] px-3.5 text-[13px]"
+            className="text-primary"
           >
             {t('directoryPicker.browse')}
           </Button>
@@ -117,7 +117,7 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
             <Button
               variant="outline"
               onClick={onCancel}
-              className="text-muted h-[30px] px-3.5 text-[13px]"
+              className="text-muted"
             >
               {t('directoryPicker.cancel')}
             </Button>
@@ -125,7 +125,7 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
               onClick={handleLaunch}
               disabled={!selected || launching}
               className={cn(
-                'h-[30px] px-3.5 text-[13px] font-medium',
+                'font-medium',
                 selected ? 'text-app cursor-pointer' : 'cursor-not-allowed text-muted',
               )}
               style={{ backgroundColor: selected ? accentColor : undefined }}

@@ -39,7 +39,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
           <Button
             variant="outline"
             onClick={() => setShowPicker(false)}
-            className="h-5.5 w-5.5 p-0 text-[16px] leading-none"
+            size="icon"
             title={t('profileList.cancel')}
           >
             {'\u00d7'}
@@ -56,7 +56,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 setShowPicker(false);
                 onAdd(provider);
               }}
-              className="flex w-full cursor-pointer items-center gap-2.5 px-2.5 py-6 text-left"
+              className="flex w-full cursor-pointer items-center gap-2.5 px-2.5 py-5 text-left"
             >
               <Avatar
                 profile={{
@@ -106,7 +106,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
         <Button
           variant="outline"
           onClick={() => setShowPicker(true)}
-          className="h-5.5 w-5.5 p-0 text-[16px] leading-none"
+          size="icon"
           title={t('profileList.addProfile')}
         >
           +

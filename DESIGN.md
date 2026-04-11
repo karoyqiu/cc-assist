@@ -13,11 +13,7 @@
 - **Reference:** Terminal meets native macOS app.
 
 ## Typography
-- **Display/Hero:** Noto Sans 600 — window title, section headings
-- **Body/UI:** Noto Sans 400/500 — all labels, buttons, body text
-- **UI/Labels:** Noto Sans 500 — field labels (uppercase, letter-spaced)
-- **Data/Credentials:** Noto Sans Mono 400/500 — API keys, base URLs, model names, directory paths
-- **Loading:** `@fontsource-variable/noto-sans` (bundled, no network) + Noto Sans Mono via Google Fonts (desktop app can fetch)
+- **System default:** Uses the OS/system default sans-serif font for all text.
 - **Scale:** 10px (label/muted) / 12px (small body) / 13px (body/default) / 14px (input) / 15px (heading) / 20px (window title)
 
 ## Color
@@ -86,3 +82,5 @@
 | 2026-04-09 | Initial design system created | Created by /design-consultation |
 | 2026-04-09 | Fonts: Noto Sans + Noto Sans Mono | User preference — already in project deps as @fontsource-variable/noto-sans |
 | 2026-04-09 | Active profile = only colored element in UI | Color-as-identity approach makes switching profile visually unmistakable |
+| 2026-04-11 | Removed custom font, use system default | Cleaner, no font loading overhead |
+| 2026-04-11 | Removed explicit button sizing, use shadcn defaults | Buttons inherit size from component variants |
