@@ -158,6 +158,10 @@ function App() {
     setSelectedId(id);
   }
 
+  async function handleReorderProfiles(profiles: ProfileConfig[]) {
+    await handleSaveProfiles(profiles);
+  }
+
   async function handleUseProfile(id: string) {
     try {
       await invoke('use_profile', { id });
@@ -207,6 +211,7 @@ function App() {
         selectedId={selectedId}
         onSelect={handleSelectProfile}
         onAdd={handleAddWithProvider}
+        onReorder={handleReorderProfiles}
       />
 
       {/* Right: profile editor */}
