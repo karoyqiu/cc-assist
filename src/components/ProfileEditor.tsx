@@ -190,7 +190,7 @@ export function ProfileEditor({
               onChange={official ? undefined : (v) => updateModel('main', v)}
               readOnly={official}
               mono
-              placeholder="claude-3-5-sonnet"
+              placeholder="claude-sonnet-4-6"
             />
             <Field
               label={t('profileEditor.modelHaiku')}
@@ -198,7 +198,7 @@ export function ProfileEditor({
               onChange={official ? undefined : (v) => updateModel('haiku', v)}
               readOnly={official}
               mono
-              placeholder="claude-3-haiku"
+              placeholder="claude-haiku-4-5"
             />
             <Field
               label={t('profileEditor.modelSonnet')}
@@ -206,7 +206,7 @@ export function ProfileEditor({
               onChange={official ? undefined : (v) => updateModel('sonnet', v)}
               readOnly={official}
               mono
-              placeholder="claude-3-5-sonnet"
+              placeholder="claude-sonnet-4-6"
             />
             <Field
               label={t('profileEditor.modelOpus')}
@@ -214,7 +214,7 @@ export function ProfileEditor({
               onChange={official ? undefined : (v) => updateModel('opus', v)}
               readOnly={official}
               mono
-              placeholder="claude-3-opus"
+              placeholder="claude-opus-4-6"
             />
           </div>
         </div>
