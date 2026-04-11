@@ -259,7 +259,24 @@ export function ProfileEditor({
       >
         <Avatar profile={profile} size={40} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>{draft.name}</div>
+          {official ? (
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>{draft.name}</div>
+          ) : (
+            <input
+              value={draft.name}
+              onChange={(e) => update('name', e.target.value)}
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#E5E5E5',
+                backgroundColor: 'transparent',
+                border: 'none',
+                outline: 'none',
+                width: '100%',
+                padding: 0,
+              }}
+            />
+          )}
         </div>
 
         {/* Action buttons */}

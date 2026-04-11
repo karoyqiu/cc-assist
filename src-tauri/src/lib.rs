@@ -105,9 +105,6 @@ pub fn run() {
                 log::error!("Failed to setup tray: {}", e);
             }
 
-            // Show settings window on startup
-            window::show_settings_window(app.handle());
-
             // Register menu event handler (for tray menu item clicks)
             app.on_menu_event(|app, event| {
                 tray::handle_menu_event(app, event.id().as_ref());

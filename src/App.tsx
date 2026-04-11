@@ -1,15 +1,15 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import './lib/i18n';
-import type { ProfilesStore, ProfileConfig, ProviderConfig } from './types';
+import type { ProfileConfig, ProfilesStore, ProviderConfig } from './types';
 
+import './App.css';
 import { DirectoryPicker } from './components/DirectoryPicker';
 import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
-import './App.css';
 
 function App() {
   const { i18n, t } = useTranslation();
@@ -56,6 +56,11 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, [setShowDirectoryPicker]);
+
+  // Show window once the page is ready
+  useEffect(() => {
+    invoke('show_settings_window_cmd');
+  }, []);
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
 

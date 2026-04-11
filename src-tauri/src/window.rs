@@ -1,9 +1,6 @@
 use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
 
 const WINDOW_LABEL: &str = "main";
-const WINDOW_TITLE: &str = "cc-assist";
-const WINDOW_WIDTH: f64 = 700.0;
-const WINDOW_HEIGHT: f64 = 500.0;
 
 /// Show the settings window, creating it if it doesn't exist.
 pub fn show_settings_window<R: Runtime>(app: &AppHandle<R>) {
@@ -13,14 +10,26 @@ pub fn show_settings_window<R: Runtime>(app: &AppHandle<R>) {
         return;
     }
 
-    // Create new window
-    match WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
-        .title(WINDOW_TITLE)
-        .inner_size(WINDOW_WIDTH, WINDOW_HEIGHT)
-        .resizable(true)
-        .center()
-        .build()
-    {
+    // Create new window from config (hidden until frontend signals ready)
+    let window_config = app
+        .config()
+        .app
+        .windows
+        .iter()
+        .find(|w| w.label == WINDOW_LABEL);
+
+    let builder = match window_config {
+        Some(config) => {
+            WebviewWindowBuilder::from_config(app, config).unwrap_or_else(|_| {
+                WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
+            })
+        }
+        None => {
+            WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
+        }
+    };
+
+    match builder.visible(false).build() {
         Ok(_) => {}
         Err(e) => {
             log::error!("Failed to create settings window: {}", e);
