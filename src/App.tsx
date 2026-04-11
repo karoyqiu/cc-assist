@@ -162,21 +162,7 @@ function App() {
 
   if (error) {
     return (
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-          padding: '10px 16px',
-          backgroundColor: '#FF6B6B',
-          color: '#0F0F0F',
-          borderRadius: 4,
-          fontSize: 13,
-          fontWeight: 500,
-          zIndex: 2000,
-          maxWidth: 360,
-        }}
-      >
+      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-[360px] rounded px-4 py-2.5 text-[13px] font-medium">
         {error}
       </div>
     );
@@ -184,33 +170,14 @@ function App() {
 
   if (!store) {
     return (
-      <div
-        style={{
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: '#0F0F0F',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#737373',
-          fontSize: 13,
-        }}
-      >
+      <div className="bg-app text-muted flex h-screen w-screen items-center justify-center text-[13px]">
         {t('errors.loadConfigFailed')}
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: '#0F0F0F',
-        display: 'flex',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="bg-app flex h-screen w-screen overflow-hidden">
       {/* Left: profile list */}
       <ProfileList
         profiles={store.profiles}

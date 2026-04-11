@@ -2,6 +2,17 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+import { cn } from '../lib/utils';
+
 interface Props {
   recentDirectories: string[];
   accentColor: string;
@@ -36,108 +47,47 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        animation: 'fadeIn 0.15s ease-out',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onCancel();
       }}
     >
-      <div
-        style={{
-          width: 500,
-          backgroundColor: '#1A1A1A',
-          border: '1px solid #2A2A2A',
-          borderRadius: 6,
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '80vh',
-          overflow: 'hidden',
-        }}
+      <DialogContent
+        className="border-subtle bg-surface flex max-h-[80vh] w-[500px] flex-col overflow-hidden"
+        showCloseButton={false}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '16px 16px 12px',
-            borderBottom: '1px solid #2A2A2A',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>
+        <DialogHeader className="border-subtle flex flex-row items-center justify-between border-b px-4 pt-4 pb-3">
+          <DialogTitle className="text-primary text-[15px] font-semibold">
             {t('directoryPicker.title')}
-          </span>
-          <button
-            onClick={onCancel}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#737373',
-              cursor: 'pointer',
-              fontSize: 18,
-              lineHeight: 1,
-              padding: 0,
-            }}
-          >
-            ×
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+        <div className="flex-1 overflow-y-auto px-4 py-3">
           {/* Recent directories */}
-          <div style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                color: '#737373',
-                textTransform: 'uppercase',
-                marginBottom: 6,
-              }}
-            >
+          <div className="mb-3">
+            <div className="text-muted mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase">
               {t('directoryPicker.recentDirectories')}
             </div>
             {recentDirectories.length === 0 ? (
-              <div style={{ color: '#737373', fontSize: 13, padding: '8px 0' }}>
+              <div className="text-muted py-2 text-[13px]">
                 {t('directoryPicker.noRecentDirectories')}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div className="flex flex-col gap-0.5">
                 {recentDirectories.map((dir) => (
                   <div
                     key={dir}
                     onClick={() => setSelected(dir)}
-                    style={{
-                      padding: '6px 8px',
-                      borderRadius: 4,
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      fontFamily: 'Noto Sans Mono, monospace',
-                      color: selected === dir ? '#E5E5E5' : '#737373',
-                      backgroundColor: selected === dir ? '#2A2A2A' : 'transparent',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selected !== dir)
-                        (e.currentTarget as HTMLElement).style.backgroundColor = '#252525';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selected !== dir)
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                    }}
+                    className={cn(
+                      'cursor-pointer overflow-hidden rounded px-2 py-1.5 font-mono text-[12px]',
+                      'text-ellipsis whitespace-nowrap',
+                      selected === dir
+                        ? 'bg-subtle text-primary'
+                        : 'bg-transparent text-muted hover:bg-hover',
+                    )}
                   >
                     {dir}
                   </div>
@@ -148,86 +98,43 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
 
           {/* Selected path display */}
           {selected && (
-            <div
-              style={{
-                padding: '8px',
-                backgroundColor: '#0F0F0F',
-                border: '1px solid #2A2A2A',
-                borderRadius: 4,
-                fontSize: 12,
-                fontFamily: 'Noto Sans Mono, monospace',
-                color: '#E5E5E5',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <div className="border-subtle bg-app text-primary overflow-hidden rounded border p-2 font-mono text-[12px] text-ellipsis whitespace-nowrap">
               {selected}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            padding: '12px 16px',
-            borderTop: '1px solid #2A2A2A',
-            display: 'flex',
-            gap: 8,
-            justifyContent: 'space-between',
-          }}
-        >
-          <button
+        <DialogFooter className="border-subtle flex flex-row items-center justify-between border-t px-4 py-3">
+          <Button
+            variant="outline"
             onClick={handleBrowse}
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              color: '#E5E5E5',
-              backgroundColor: 'transparent',
-              border: '1px solid #2A2A2A',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className="text-primary h-[30px] px-3.5 text-[13px]"
           >
             {t('directoryPicker.browse')}
-          </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
               onClick={onCancel}
-              style={{
-                height: 30,
-                padding: '0 14px',
-                fontSize: 13,
-                color: '#737373',
-                backgroundColor: 'transparent',
-                border: '1px solid #2A2A2A',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
+              className="text-muted h-[30px] px-3.5 text-[13px]"
             >
               {t('directoryPicker.cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleLaunch}
               disabled={!selected || launching}
-              style={{
-                height: 30,
-                padding: '0 14px',
-                fontSize: 13,
-                fontWeight: 500,
-                color: selected ? '#0F0F0F' : '#737373',
-                backgroundColor: selected ? accentColor : '#1A1A1A',
-                border: 'none',
-                borderRadius: 4,
-                cursor: selected ? 'pointer' : 'not-allowed',
-              }}
+              className={cn(
+                'h-[30px] px-3.5 text-[13px] font-medium',
+                selected ? 'text-app cursor-pointer' : 'cursor-not-allowed text-muted',
+              )}
+              style={{ backgroundColor: selected ? accentColor : undefined }}
             >
               {t('directoryPicker.launch')}
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

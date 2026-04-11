@@ -5,13 +5,74 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Custom design system colors */
+  --color-app: var(--app);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+}
+
+/* Dark-only app — design system colors mapped to shadcn semantic tokens */
 :root {
+  --radius: 0.625rem;
+  --background: #0f0f0f;
+  --foreground: #e5e5e5;
+  --card: #1a1a1a;
+  --card-foreground: #e5e5e5;
+  --popover: #1a1a1a;
+  --popover-foreground: #e5e5e5;
+  --primary: #e5e5e5;
+  --primary-foreground: #0f0f0f;
+  --secondary: #252525;
+  --secondary-foreground: #e5e5e5;
+  --muted: #737373;
+  --muted-foreground: #a3a3a3;
+  --accent: #252525;
+  --accent-foreground: #e5e5e5;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --ring: #d4915d;
+  /* Custom design system */
+  --app: #0f0f0f;
+  --surface: #1a1a1a;
+  --subtle: #2a2a2a;
+  --hover: #252525;
+  /* Base styles */
   font-family: 'Noto Sans Variable', 'Noto Sans', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   font-weight: 400;
-  color: #e5e5e5;
-  background-color: #0f0f0f;
+  color: var(--foreground);
+  background-color: var(--app);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,10 +80,14 @@
   -webkit-text-size-adjust: 100%;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 @keyframes fadeIn {
@@ -41,11 +106,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f0f0f;
+  background: var(--app);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: var(--subtle);
   border-radius: 3px;
 }
 
@@ -55,15 +120,6 @@
 
 /* Focus visible */
 :focus-visible {
-  outline: 1px solid #d4915d;
+  outline: 1px solid var(--ring);
   outline-offset: 1px;
-}
-
-/* Remove default button styles */
-button {
-  font-family: inherit;
-}
-
-input {
-  font-family: inherit;
 }

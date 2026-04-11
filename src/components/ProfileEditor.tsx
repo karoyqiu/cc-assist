@@ -1,8 +1,23 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 import type { ProfileConfig } from '../types';
 
+import { cn } from '../lib/utils';
 import { Avatar } from './Avatar';
 
 interface Props {
@@ -28,144 +43,22 @@ interface FieldProps {
 
 function Field({ label, value, onChange, readOnly, placeholder, mono, password }: FieldProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label
-        style={{
-          fontSize: 10,
-          fontWeight: 500,
-          letterSpacing: '0.08em',
-          color: '#737373',
-          textTransform: 'uppercase',
-        }}
-      >
+    <div className="flex flex-col gap-1">
+      <Label className="text-muted text-[10px] font-medium tracking-[0.08em] uppercase">
         {label}
-      </label>
-      <input
+      </Label>
+      <Input
         type={password ? 'password' : 'text'}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         readOnly={readOnly}
         placeholder={placeholder}
-        style={{
-          height: 30,
-          padding: '0 8px',
-          fontSize: 13,
-          fontFamily: mono ? 'Noto Sans Mono, monospace' : 'Noto Sans, sans-serif',
-          color: readOnly ? '#737373' : '#E5E5E5',
-          backgroundColor: readOnly ? 'transparent' : '#1A1A1A',
-          border: readOnly ? 'none' : '1px solid #2A2A2A',
-          borderRadius: 4,
-          outline: 'none',
-          width: '100%',
-          boxSizing: 'border-box',
-        }}
+        className={cn(
+          'h-[30px] w-full text-[13px]',
+          mono && 'font-mono',
+          readOnly ? 'bg-transparent text-muted border-transparent' : 'text-primary',
+        )}
       />
-    </div>
-  );
-}
-
-function DeleteConfirmDialog({
-  profileName,
-  deleting,
-  deleteError,
-  cancelBtnRef,
-  onConfirm,
-  onCancel,
-}: {
-  profileName: string;
-  deleting: boolean;
-  deleteError: string | null;
-  cancelBtnRef: React.RefObject<HTMLButtonElement | null>;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    },
-    [onCancel],
-  );
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    cancelBtnRef.current?.focus();
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown, cancelBtnRef]);
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !deleting) onCancel();
-      }}
-    >
-      <div
-        style={{
-          width: 380,
-          backgroundColor: '#1A1A1A',
-          border: '1px solid #2A2A2A',
-          borderRadius: 6,
-          padding: 20,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>
-          {t('profileEditor.deleteConfirmTitle')}
-        </div>
-        <div style={{ fontSize: 13, color: '#A3A3A3', lineHeight: 1.5 }}>
-          {t('profileEditor.deleteConfirmMessage', { name: profileName })}
-        </div>
-        {deleteError && <div style={{ fontSize: 12, color: '#FF6B6B' }}>{deleteError}</div>}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            ref={cancelBtnRef}
-            onClick={onCancel}
-            disabled={deleting}
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              color: '#737373',
-              backgroundColor: 'transparent',
-              border: '1px solid #2A2A2A',
-              borderRadius: 4,
-              cursor: deleting ? 'not-allowed' : 'pointer',
-              opacity: deleting ? 0.5 : 1,
-            }}
-          >
-            {t('profileEditor.deleteConfirmCancel')}
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={deleting}
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: '#0F0F0F',
-              backgroundColor: deleting ? '#737373' : '#FF6B6B',
-              border: 'none',
-              borderRadius: 4,
-              cursor: deleting ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {deleting ? t('profileEditor.deleting') : t('profileEditor.deleteConfirmDelete')}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -186,7 +79,6 @@ export function ProfileEditor({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const cancelBtnRef = useRef<HTMLButtonElement>(null);
   const deleteTargetId = useRef<string | null>(null);
   const prevProfileId = useRef<string | null>(null);
 
@@ -200,16 +92,7 @@ export function ProfileEditor({
 
   if (!profile || !draft) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#737373',
-          fontSize: 13,
-        }}
-      >
+      <div className="text-muted flex flex-1 items-center justify-center text-[13px]">
         {t('profileEditor.noProfileSelected')}
       </div>
     );
@@ -238,99 +121,49 @@ export function ProfileEditor({
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#0F0F0F',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="bg-app flex flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div
-        style={{
-          padding: '16px 20px 12px',
-          borderBottom: '1px solid #2A2A2A',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
+      <div className="border-subtle flex items-center gap-3 border-b px-5 pt-4 pb-3">
         <Avatar profile={profile} size={40} />
-        <div style={{ flex: 1 }}>
+        <div className="flex-1">
           {official ? (
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#E5E5E5' }}>{draft.name}</div>
+            <div className="text-primary text-[15px] font-semibold">{draft.name}</div>
           ) : (
-            <input
+            <Input
               value={draft.name}
               onChange={(e) => update('name', e.target.value)}
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                color: '#E5E5E5',
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                width: '100%',
-                padding: 0,
-              }}
+              className="text-primary w-full border-none bg-transparent text-[15px] font-semibold outline-none"
             />
           )}
         </div>
 
         {/* Action buttons */}
         {!official && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
+          <div className="flex gap-1.5">
+            <Button
+              variant="outline"
               onClick={() => onDuplicate(draft)}
-              style={{
-                height: 28,
-                padding: '0 10px',
-                fontSize: 12,
-                color: '#737373',
-                backgroundColor: 'transparent',
-                border: '1px solid #2A2A2A',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
+              className="text-muted h-[28px] px-2.5 text-[12px]"
             >
               {t('profileEditor.duplicate')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
               onClick={() => {
                 deleteTargetId.current = draft.id;
                 setShowDeleteConfirm(true);
                 setDeleteError(null);
               }}
-              style={{
-                height: 28,
-                padding: '0 10px',
-                fontSize: 12,
-                color: '#FF6B6B',
-                backgroundColor: 'transparent',
-                border: '1px solid #2A2A2A',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
+              className="h-[28px] px-2.5 text-[12px]"
             >
               {t('profileEditor.delete')}
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {/* Fields */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
         {/* API Key */}
         <Field
           label={t('profileEditor.apiKey')}
@@ -353,25 +186,10 @@ export function ProfileEditor({
 
         {/* Models */}
         <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              letterSpacing: '0.08em',
-              color: '#737373',
-              textTransform: 'uppercase',
-              marginBottom: 8,
-            }}
-          >
+          <div className="text-muted mb-2 text-[10px] font-medium tracking-[0.08em] uppercase">
             {t('profileEditor.models')}
           </div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 8,
-            }}
-          >
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t('profileEditor.modelMain')}
               value={draft.models.main ?? ''}
@@ -409,115 +227,89 @@ export function ProfileEditor({
       </div>
 
       {/* Footer actions */}
-      <div
-        style={{
-          padding: '12px 20px',
-          borderTop: '1px solid #2A2A2A',
-          display: 'flex',
-          gap: 8,
-          justifyContent: 'flex-end',
-        }}
-      >
-        <button
+      <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
+        <Button
           onClick={onLaunch}
-          style={{
-            height: 30,
-            padding: '0 14px',
-            fontSize: 13,
-            fontWeight: 500,
-            color: '#0F0F0F',
-            backgroundColor: profile.icon_color,
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
+          className="text-app h-[30px] px-3.5 text-[13px] font-medium"
+          style={{ backgroundColor: profile.icon_color }}
         >
           {t('profileEditor.launchClaude')}
-        </button>
+        </Button>
         {/* Use / In Use button */}
         {profile.id === activeId ? (
-          <button
-            disabled
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: '#737373',
-              backgroundColor: '#1A1A1A',
-              border: '1px solid #2A2A2A',
-              borderRadius: 4,
-              cursor: 'default',
-            }}
-          >
+          <Button variant="secondary" disabled className="h-[30px] px-3.5 text-[13px] font-medium">
             {t('profileEditor.inUse')}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="outline"
             onClick={() => onUse(profile.id)}
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: '#E5E5E5',
-              backgroundColor: '#1A1A1A',
-              border: '1px solid #2A2A2A',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className="text-primary hover:bg-hover h-[30px] px-3.5 text-[13px] font-medium"
           >
             {t('profileEditor.useProfile')}
-          </button>
+          </Button>
         )}
         {!official && (
-          <button
+          <Button
+            variant="outline"
             onClick={handleSave}
-            style={{
-              height: 30,
-              padding: '0 14px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: saved ? '#737373' : '#E5E5E5',
-              backgroundColor: '#1A1A1A',
-              border: '1px solid #2A2A2A',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className={cn(
+              'h-[30px] px-3.5 text-[13px] font-medium hover:bg-hover',
+              saved ? 'text-muted' : 'text-primary',
+            )}
           >
-            {saved ? '✓' : t('profileEditor.saveChanges')}
-          </button>
+            {saved ? '\u2713' : t('profileEditor.saveChanges')}
+          </Button>
         )}
       </div>
 
       {/* Delete confirmation dialog */}
-      {showDeleteConfirm && (
-        <DeleteConfirmDialog
-          profileName={draft.name}
-          deleting={deleting}
-          deleteError={deleteError}
-          cancelBtnRef={cancelBtnRef}
-          onConfirm={async () => {
-            const targetId = deleteTargetId.current;
-            if (!targetId) return;
-            setDeleting(true);
+      <AlertDialog
+        open={showDeleteConfirm}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setShowDeleteConfirm(false);
             setDeleteError(null);
-            const ok = await onDelete(targetId);
-            setDeleting(false);
-            if (ok) {
-              setShowDeleteConfirm(false);
-            } else {
-              setDeleteError(t('profileEditor.deleteFailed'));
-            }
-          }}
-          onCancel={() => {
-            if (!deleting) {
-              setShowDeleteConfirm(false);
-              setDeleteError(null);
-            }
-          }}
-        />
-      )}
+          }
+        }}
+      >
+        <AlertDialogContent className="border-subtle bg-surface w-[380px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-primary text-[15px] font-semibold">
+              {t('profileEditor.deleteConfirmTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted text-[13px] leading-relaxed">
+              {t('profileEditor.deleteConfirmMessage', { name: draft.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && <div className="text-danger text-xs">{deleteError}</div>}
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-[30px] px-3.5 text-[13px]" disabled={deleting}>
+              {t('profileEditor.deleteConfirmCancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              className="text-app h-[30px] px-3.5 text-[13px] font-medium"
+              onClick={async () => {
+                const targetId = deleteTargetId.current;
+                if (!targetId) return;
+                setDeleting(true);
+                setDeleteError(null);
+                const ok = await onDelete(targetId);
+                setDeleting(false);
+                if (ok) {
+                  setShowDeleteConfirm(false);
+                } else {
+                  setDeleteError(t('profileEditor.deleteFailed'));
+                }
+              }}
+              disabled={deleting}
+            >
+              {deleting ? t('profileEditor.deleting') : t('profileEditor.deleteConfirmDelete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
