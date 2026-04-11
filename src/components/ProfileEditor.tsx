@@ -44,9 +44,7 @@ interface FieldProps {
 function Field({ label, value, onChange, readOnly, placeholder, mono, password }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-muted text-xs font-medium tracking-[0.08em] uppercase">
-        {label}
-      </Label>
+      <Label className="text-muted text-xs uppercase">{label}</Label>
       <Input
         type={password ? 'password' : 'text'}
         value={value}
@@ -54,7 +52,7 @@ function Field({ label, value, onChange, readOnly, placeholder, mono, password }
         readOnly={readOnly}
         placeholder={placeholder}
         className={cn(
-          'h-7.5 w-full text-sm',
+          'w-full text-sm',
           mono && 'font-mono',
           readOnly ? 'bg-transparent text-muted border-transparent' : 'text-primary',
         )}
@@ -127,12 +125,12 @@ export function ProfileEditor({
         <Avatar profile={profile} size={40} />
         <div className="flex-1">
           {official ? (
-            <div className="text-primary text-base font-semibold">{draft.name}</div>
+            <div className="text-primary font-semibold">{draft.name}</div>
           ) : (
             <Input
               value={draft.name}
               onChange={(e) => update('name', e.target.value)}
-              className="text-primary w-full border-none bg-transparent text-base font-semibold outline-none"
+              className="text-primary w-full border-none bg-transparent font-semibold outline-none"
             />
           )}
         </div>
@@ -226,31 +224,23 @@ export function ProfileEditor({
       <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
         <Button
           onClick={onLaunch}
-          className="text-app font-medium"
+          className="text-app"
           style={{ backgroundColor: profile.icon_color }}
         >
           {t('profileEditor.launchClaude')}
         </Button>
         {/* Use / In Use button */}
         {profile.id === activeId ? (
-          <Button variant="secondary" disabled className="font-medium">
+          <Button variant="secondary" disabled>
             {t('profileEditor.inUse')}
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            onClick={() => onUse(profile.id)}
-            className="text-primary hover:bg-hover font-medium"
-          >
+          <Button variant="outline" onClick={() => onUse(profile.id)}>
             {t('profileEditor.useProfile')}
           </Button>
         )}
         {!official && (
-          <Button
-            variant="outline"
-            onClick={handleSave}
-            className={cn('font-medium hover:bg-hover', saved ? 'text-muted' : 'text-primary')}
-          >
+          <Button variant="outline" onClick={handleSave} disabled={saved}>
             {t('profileEditor.saveChanges')}
           </Button>
         )}
@@ -268,7 +258,7 @@ export function ProfileEditor({
       >
         <AlertDialogContent className="border-subtle bg-surface w-95">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-primary text-base font-semibold">
+            <AlertDialogTitle className="text-primary font-semibold">
               {t('profileEditor.deleteConfirmTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted text-sm leading-relaxed">
@@ -282,7 +272,7 @@ export function ProfileEditor({
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="text-app font-medium"
+              className="text-app"
               onClick={async () => {
                 const targetId = deleteTargetId.current;
                 if (!targetId) return;

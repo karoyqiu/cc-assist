@@ -125,7 +125,6 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
               onClick={handleLaunch}
               disabled={!selected || launching}
               className={cn(
-                'font-medium',
                 selected ? 'text-app cursor-pointer' : 'cursor-not-allowed text-muted',
               )}
               style={{ backgroundColor: selected ? accentColor : undefined }}
