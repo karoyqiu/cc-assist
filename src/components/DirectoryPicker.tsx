@@ -10,8 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface Props {
   recentDirectories: string[];
@@ -106,27 +105,17 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
 
         {/* Footer */}
         <DialogFooter className="border-subtle flex flex-row items-center justify-between border-t px-4 py-3">
-          <Button
-            variant="outline"
-            onClick={handleBrowse}
-            className="text-primary"
-          >
+          <Button variant="outline" onClick={handleBrowse} className="text-primary">
             {t('directoryPicker.browse')}
           </Button>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              className="text-muted"
-            >
+            <Button variant="outline" onClick={onCancel} className="text-muted">
               {t('directoryPicker.cancel')}
             </Button>
             <Button
               onClick={handleLaunch}
               disabled={!selected || launching}
-              className={cn(
-                selected ? 'text-app cursor-pointer' : 'cursor-not-allowed text-muted',
-              )}
+              className={cn(selected ? 'text-app cursor-pointer' : 'cursor-not-allowed text-muted')}
               style={{ backgroundColor: selected ? accentColor : undefined }}
             >
               {t('directoryPicker.launch')}

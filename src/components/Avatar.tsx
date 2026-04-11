@@ -1,6 +1,6 @@
-import { Avatar as AvatarRoot, AvatarFallback } from '@/components/ui/avatar';
+import type { ProfileConfig } from '@/types';
 
-import type { ProfileConfig } from '../types';
+import { AvatarFallback, Avatar as AvatarRoot } from '@/components/ui/avatar';
 
 interface AvatarProps {
   profile: ProfileConfig;
