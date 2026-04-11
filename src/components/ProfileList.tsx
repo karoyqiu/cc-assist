@@ -30,7 +30,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
 
   if (showPicker) {
     return (
-      <div className="border-subtle bg-app flex h-full w-[240px] flex-col border-r">
+      <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
         {/* Header */}
         <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
           <span className="text-muted text-[11px] font-medium tracking-wider uppercase">
@@ -39,7 +39,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
           <Button
             variant="outline"
             onClick={() => setShowPicker(false)}
-            className="h-[22px] w-[22px] p-0 text-[16px] leading-none"
+            className="h-5.5 w-5.5 p-0 text-[16px] leading-none"
             title={t('profileList.cancel')}
           >
             {'\u00d7'}
@@ -97,7 +97,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
   }
 
   return (
-    <div className="border-subtle bg-app flex h-full w-[240px] flex-col border-r">
+    <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
       {/* Header */}
       <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
         <span className="text-muted text-[11px] font-medium tracking-wider uppercase">
@@ -106,7 +106,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
         <Button
           variant="outline"
           onClick={() => setShowPicker(true)}
-          className="h-[22px] w-[22px] p-0 text-[16px] leading-none"
+          className="h-5.5 w-5.5 p-0 text-[16px] leading-none"
           title={t('profileList.addProfile')}
         >
           +
@@ -141,7 +141,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 </span>
                 {matchedProvider && (
                   <span
-                    className="max-w-[80px] shrink-0 overflow-hidden text-[9px] font-medium tracking-wider text-ellipsis whitespace-nowrap uppercase"
+                    className="max-w-20 shrink-0 overflow-hidden text-[9px] font-medium tracking-wider text-ellipsis whitespace-nowrap uppercase"
                     style={{ color: matchedProvider.icon_color }}
                     title={matchedProvider.name}
                   >

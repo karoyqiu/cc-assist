@@ -162,7 +162,7 @@ function App() {
 
   if (error) {
     return (
-      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-[360px] rounded px-4 py-2.5 text-[13px] font-medium">
+      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-[13px] font-medium">
         {error}
       </div>
     );

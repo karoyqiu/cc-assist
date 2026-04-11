@@ -54,7 +54,7 @@ function Field({ label, value, onChange, readOnly, placeholder, mono, password }
         readOnly={readOnly}
         placeholder={placeholder}
         className={cn(
-          'h-[30px] w-full text-[13px]',
+          'h-7.5 w-full text-[13px]',
           mono && 'font-mono',
           readOnly ? 'bg-transparent text-muted border-transparent' : 'text-primary',
         )}
@@ -143,7 +143,7 @@ export function ProfileEditor({
             <Button
               variant="outline"
               onClick={() => onDuplicate(draft)}
-              className="text-muted h-[28px] px-2.5 text-[12px]"
+              className="text-muted h-7 px-2.5 text-[12px]"
             >
               {t('profileEditor.duplicate')}
             </Button>
@@ -154,7 +154,7 @@ export function ProfileEditor({
                 setShowDeleteConfirm(true);
                 setDeleteError(null);
               }}
-              className="h-[28px] px-2.5 text-[12px]"
+              className="h-7 px-2.5 text-[12px]"
             >
               {t('profileEditor.delete')}
             </Button>
@@ -230,21 +230,21 @@ export function ProfileEditor({
       <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
         <Button
           onClick={onLaunch}
-          className="text-app h-[30px] px-3.5 text-[13px] font-medium"
+          className="text-app h-7.5 px-3.5 text-[13px] font-medium"
           style={{ backgroundColor: profile.icon_color }}
         >
           {t('profileEditor.launchClaude')}
         </Button>
         {/* Use / In Use button */}
         {profile.id === activeId ? (
-          <Button variant="secondary" disabled className="h-[30px] px-3.5 text-[13px] font-medium">
+          <Button variant="secondary" disabled className="h-7.5 px-3.5 text-[13px] font-medium">
             {t('profileEditor.inUse')}
           </Button>
         ) : (
           <Button
             variant="outline"
             onClick={() => onUse(profile.id)}
-            className="text-primary hover:bg-hover h-[30px] px-3.5 text-[13px] font-medium"
+            className="text-primary hover:bg-hover h-7.5 px-3.5 text-[13px] font-medium"
           >
             {t('profileEditor.useProfile')}
           </Button>
@@ -254,7 +254,7 @@ export function ProfileEditor({
             variant="outline"
             onClick={handleSave}
             className={cn(
-              'h-[30px] px-3.5 text-[13px] font-medium hover:bg-hover',
+              'h-7.5 px-3.5 text-[13px] font-medium hover:bg-hover',
               saved ? 'text-muted' : 'text-primary',
             )}
           >
@@ -273,7 +273,7 @@ export function ProfileEditor({
           }
         }}
       >
-        <AlertDialogContent className="border-subtle bg-surface w-[380px]">
+        <AlertDialogContent className="border-subtle bg-surface w-95">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-primary text-[15px] font-semibold">
               {t('profileEditor.deleteConfirmTitle')}
@@ -284,12 +284,12 @@ export function ProfileEditor({
           </AlertDialogHeader>
           {deleteError && <div className="text-danger text-xs">{deleteError}</div>}
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-[30px] px-3.5 text-[13px]" disabled={deleting}>
+            <AlertDialogCancel className="h-7.5 px-3.5 text-[13px]" disabled={deleting}>
               {t('profileEditor.deleteConfirmCancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="text-app h-[30px] px-3.5 text-[13px] font-medium"
+              className="text-app h-7.5 px-3.5 text-[13px] font-medium"
               onClick={async () => {
                 const targetId = deleteTargetId.current;
                 if (!targetId) return;
