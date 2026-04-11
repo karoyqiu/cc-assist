@@ -1,6 +1,6 @@
+import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { invoke } from '@tauri-apps/api/core';
 
 interface Props {
   recentDirectories: string[];
@@ -131,10 +131,12 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
                       whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={(e) => {
-                      if (selected !== dir) (e.currentTarget as HTMLElement).style.backgroundColor = '#252525';
+                      if (selected !== dir)
+                        (e.currentTarget as HTMLElement).style.backgroundColor = '#252525';
                     }}
                     onMouseLeave={(e) => {
-                      if (selected !== dir) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                      if (selected !== dir)
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                     }}
                   >
                     {dir}

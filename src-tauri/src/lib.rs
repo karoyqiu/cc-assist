@@ -118,6 +118,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::set_active_profile,
+            commands::use_profile,
             commands::save_profiles,
             commands::launch_claude,
             commands::pick_directory,

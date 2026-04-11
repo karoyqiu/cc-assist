@@ -29,6 +29,8 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "launchClaude": "Launch Claude",
+    "useProfile": "Use",
+    "inUse": "In Use",
     "noProfileSelected": "Select a profile to edit",
     "deleteConfirmTitle": "Delete Profile",
     "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",

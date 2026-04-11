@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import './lib/i18n';
@@ -17,13 +17,17 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialized = useRef(false);
 
   // Load config on mount
   useEffect(() => {
     invoke<ProfilesStore>('get_config')
       .then((s) => {
         setStore(s);
-        setSelectedId(s.active_profile_id);
+        if (!initialized.current) {
+          setSelectedId(s.active_profile_id);
+          initialized.current = true;
+        }
         i18n.changeLanguage(s.locale);
       })
       .catch((e) => {
@@ -56,15 +60,6 @@ function App() {
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
 
   const recentDirs = store?.recent_directories[store.active_profile_id] ?? [];
-
-  async function handleSetActive(id: string) {
-    try {
-      await invoke('set_active_profile', { id });
-      setStore((s) => (s ? { ...s, active_profile_id: id } : s));
-    } catch (e: unknown) {
-      console.error('set_active_profile failed:', e);
-    }
-  }
 
   async function handleSaveProfiles(profiles: ProfileConfig[]): Promise<boolean> {
     try {
@@ -145,7 +140,15 @@ function App() {
 
   function handleSelectProfile(id: string) {
     setSelectedId(id);
-    handleSetActive(id);
+  }
+
+  async function handleUseProfile(id: string) {
+    try {
+      await invoke('use_profile', { id });
+      setStore((s) => (s ? { ...s, active_profile_id: id } : s));
+    } catch (e: unknown) {
+      console.error('use_profile failed:', e);
+    }
   }
 
   async function handleLaunch(dir: string) {
@@ -218,6 +221,7 @@ function App() {
         profiles={store.profiles}
         providers={store.providers}
         activeId={store.active_profile_id}
+        selectedId={selectedId}
         onSelect={handleSelectProfile}
         onAdd={handleAddWithProvider}
       />
@@ -226,10 +230,12 @@ function App() {
       <ProfileEditor
         profile={selectedProfile}
         official={selectedProfile?.provider_id === 'anthropic'}
+        activeId={store.active_profile_id}
         onSave={handleSaveProfile}
         onDelete={handleDeleteProfile}
         onDuplicate={handleDuplicateProfile}
         onLaunch={() => setShowDirectoryPicker(true)}
+        onUse={handleUseProfile}
       />
 
       {/* Directory picker modal */}

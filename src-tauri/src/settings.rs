@@ -15,11 +15,6 @@ fn settings_path() -> PathBuf {
         .join("settings.json")
 }
 
-/// Backup path for settings.json
-fn settings_backup_path() -> PathBuf {
-    settings_path().with_extension("json.bak")
-}
-
 /// Read ~/.claude/settings.json.
 pub fn read_settings_json() -> Result<Value, AppError> {
     let path = settings_path();
@@ -30,6 +25,15 @@ pub fn read_settings_json() -> Result<Value, AppError> {
     // PermissionDenied etc.
     let content = fs::read_to_string(&path).map_err(AppError::IoError)?;
     serde_json::from_str(&content).map_err(AppError::ConfigParseError)
+}
+
+/// Read ~/.claude/settings.json, returning an empty object if it doesn't exist yet.
+pub fn read_settings_json_or_empty() -> Result<Value, AppError> {
+    match read_settings_json() {
+        Ok(v) => Ok(v),
+        Err(AppError::SettingsNotFound) => Ok(Value::Object(serde_json::Map::new())),
+        Err(e) => Err(e),
+    }
 }
 
 /// Build a map of ANTHROPIC_* env vars from a profile — only non-empty fields.
@@ -63,6 +67,38 @@ pub fn build_env_map(profile: &ProfileConfig) -> BTreeMap<String, String> {
         }
     }
     map
+}
+
+/// Keys managed by cc-assist in settings["env"].
+/// When switching profiles, these are cleared before merging the new profile
+/// to prevent stale values from a previous profile persisting.
+const MANAGED_ENV_KEYS: &[&str] = &[
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+];
+
+/// Remove all cc-assist-managed ANTHROPIC_* keys from settings["env"].
+/// Preserves any other keys the user may have set (e.g. ANTHROPIC_TEMPERATURE).
+fn clear_profile_env_keys(settings: &mut Value) {
+    if let Some(env) = settings.get_mut("env").and_then(|v| v.as_object_mut()) {
+        for key in MANAGED_ENV_KEYS {
+            env.remove(*key);
+        }
+    }
+}
+
+/// Apply a profile to ~/.claude/settings.json.
+/// Creates the file if it doesn't exist. Clears previous profile keys, then
+/// merges new ones. Writes atomically.
+pub fn apply_profile_to_settings(profile: &ProfileConfig) -> Result<(), AppError> {
+    let mut settings_json = read_settings_json_or_empty()?;
+    clear_profile_env_keys(&mut settings_json);
+    merge_profile_into_settings(profile, &mut settings_json);
+    write_settings_atomically(&settings_json)
 }
 
 /// Deep-merge only the non-empty profile env fields into settings["env"].
@@ -101,33 +137,6 @@ pub fn write_settings_atomically(settings: &Value) -> Result<(), AppError> {
     // persist() renames the temp file to the target path
     temp_file.persist(&path).map_err(|e| AppError::IoError(e.error))?;
     Ok(())
-}
-
-/// Backup settings.json → settings.json.bak
-pub fn backup_settings() -> Result<(), AppError> {
-    let path = settings_path();
-    if path.exists() {
-        fs::copy(&path, settings_backup_path()).map_err(AppError::IoError)?;
-    }
-    Ok(())
-}
-
-/// Restore settings.json from settings.json.bak (used when spawn fails after merge).
-pub fn restore_settings_backup() -> Result<(), AppError> {
-    let backup = settings_backup_path();
-    let path = settings_path();
-    if !backup.exists() {
-        return Err(AppError::SettingsNotFound);
-    }
-    fs::copy(&backup, &path).map_err(AppError::IoError)?;
-    fs::remove_file(&backup).ok();
-    Ok(())
-}
-
-/// Delete the backup file after successful launch.
-pub fn clear_backup() {
-    let backup = settings_backup_path();
-    fs::remove_file(&backup).ok();
 }
 
 #[cfg(test)]
@@ -272,6 +281,64 @@ mod tests {
         merge_profile_into_settings(&profile, &mut settings);
         assert_eq!(settings.get("themes").unwrap(), &serde_json::json!(["dark"]));
         assert_eq!(settings.get("version").unwrap(), 2);
+    }
+
+    #[test]
+    fn test_clear_profile_env_keys_removes_managed_but_preserves_user_keys() {
+        let mut settings: Value = serde_json::from_str(r#"{
+            "env": {
+                "ANTHROPIC_BASE_URL": "https://old.example.com",
+                "ANTHROPIC_AUTH_TOKEN": "stale-key",
+                "ANTHROPIC_MODEL": "old-model",
+                "ANTHROPIC_TEMPERATURE": "0.7",
+                "SOME_OTHER_KEY": "preserved"
+            }
+        }"#).unwrap();
+
+        clear_profile_env_keys(&mut settings);
+
+        let env = settings.get("env").unwrap().as_object().unwrap();
+        assert!(!env.contains_key("ANTHROPIC_BASE_URL"));
+        assert!(!env.contains_key("ANTHROPIC_AUTH_TOKEN"));
+        assert!(!env.contains_key("ANTHROPIC_MODEL"));
+        // User keys preserved
+        assert_eq!(env.get("ANTHROPIC_TEMPERATURE").unwrap(), "0.7");
+        assert_eq!(env.get("SOME_OTHER_KEY").unwrap(), "preserved");
+    }
+
+    #[test]
+    fn test_apply_profile_clears_previous_profile_keys() {
+        // Simulate switching from Profile A (has api key) to Profile B (no api key)
+        let mut settings: Value = serde_json::from_str(r#"{
+            "env": {
+                "ANTHROPIC_BASE_URL": "https://a.example.com",
+                "ANTHROPIC_AUTH_TOKEN": "sk-key-from-profile-a",
+                "ANTHROPIC_TEMPERATURE": "0.5"
+            },
+            "version": 1
+        }"#).unwrap();
+
+        // Profile B: different base URL, no API key
+        let profile_b = ProfileConfig {
+            id: "b".into(),
+            name: "B".into(),
+            icon: "test".into(),
+            icon_color: "#000".into(),
+            base_url: "https://b.example.com".into(),
+            api_key: "".into(),
+            models: Default::default(),
+            provider_id: None,
+        };
+
+        clear_profile_env_keys(&mut settings);
+        merge_profile_into_settings(&profile_b, &mut settings);
+
+        let env = settings.get("env").unwrap().as_object().unwrap();
+        assert_eq!(env.get("ANTHROPIC_BASE_URL").unwrap(), "https://b.example.com");
+        // Stale key from Profile A must be gone
+        assert!(!env.contains_key("ANTHROPIC_AUTH_TOKEN"));
+        // User key preserved
+        assert_eq!(env.get("ANTHROPIC_TEMPERATURE").unwrap(), "0.5");
     }
 
     #[test]

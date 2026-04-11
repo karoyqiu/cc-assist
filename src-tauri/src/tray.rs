@@ -4,7 +4,8 @@ use tauri::{
     AppHandle, Emitter, Manager, Runtime,
 };
 
-use crate::commands::{self};
+use crate::commands;
+use crate::settings;
 use crate::state::AppState;
 use crate::window;
 
@@ -147,21 +148,40 @@ pub fn rebuild_menu<R: Runtime>(app: &AppHandle<R>, app_data_dir: &std::path::Pa
 /// Handle a menu item click by ID.
 pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     // Profile switch — catches all IDs not explicitly listed below.
+    // This is a "Use" action: writes to settings.json + updates active profile.
     if !id.starts_with("lang-")
         && id != ID_LAUNCH_CLAUDE
         && id != ID_SETTINGS
     {
-        let id_clone = id.to_string();
-        let app_data_dir = app.state::<AppState>().app_data_dir.clone();
-        let app_clone = app.clone();
-        tauri::async_runtime::spawn(async move {
-            let result = commands::switch_active_profile(&id_clone, &app_clone.state::<AppState>());
-            if let Err(e) = result {
-                log::error!("Failed to switch profile: {}", e);
+        let id_string = id.to_string();
+        let state = app.state::<AppState>();
+        let app_data_dir = state.app_data_dir.clone();
+
+        // Find profile, update active, persist config
+        let profile = {
+            let mut store = state.store.lock().unwrap();
+            let profile = match store.profiles.iter().find(|p| p.id == id_string) {
+                Some(p) => p.clone(),
+                None => return,
+            };
+            store.active_profile_id = id_string;
+            // Persist while lock is held (save_config acquires its own lock internally,
+            // but we pass a cloned store_to_save to avoid holding both locks)
+            let store_to_save = (*store).clone();
+            drop(store);
+            if let Err(e) = crate::config::save_config(&app_data_dir, &store_to_save) {
+                log::error!("Failed to persist profile switch: {}", e);
                 return;
             }
-            rebuild_menu(&app_clone, &app_data_dir);
-        });
+            profile
+        };
+
+        // Write profile to ~/.claude/settings.json
+        if let Err(e) = settings::apply_profile_to_settings(&profile) {
+            log::error!("Failed to write profile to settings.json: {}", e);
+        }
+
+        rebuild_menu(app, &app_data_dir);
         return;
     }
 

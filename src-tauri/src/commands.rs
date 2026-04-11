@@ -1,8 +1,10 @@
 use tauri::{AppHandle, Emitter, State};
 
 use crate::config;
+use crate::settings;
 use crate::spawn;
 use crate::state::AppState;
+use crate::tray;
 use crate::types::{ProfileConfig, ProfilesStore};
 use crate::window;
 
@@ -34,6 +36,39 @@ pub fn set_active_profile(
         log::error!("Failed to persist profile switch: {}", e);
         return Err(e.to_string());
     }
+    Ok(())
+}
+
+/// Apply a profile to ~/.claude/settings.json and set it as the active profile.
+/// This is the "Use" action — persistent, like cc-switch.
+#[tauri::command]
+pub fn use_profile(
+    id: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    // 1. Find profile, update active_profile_id, clone store
+    let (profile, store_to_save) = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        let profile = store
+            .profiles
+            .iter()
+            .find(|p| p.id == id)
+            .ok_or_else(|| format!("Profile not found: {}", id))?
+            .clone();
+        store.active_profile_id = id.clone();
+        (profile, (*store).clone())
+    };
+
+    // 2. Write profile env vars to ~/.claude/settings.json
+    settings::apply_profile_to_settings(&profile).map_err(|e| e.to_string())?;
+
+    // 3. Persist config (active_profile_id changed)
+    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+
+    // 4. Rebuild tray menu to sync checkmark
+    tray::rebuild_menu(&app, &state.app_data_dir);
+
     Ok(())
 }
 
@@ -125,28 +160,6 @@ pub fn set_locale(
 
     app.emit("locale-changed", locale)
         .map_err(|e| format!("Failed to emit locale-changed event: {}", e))?;
-    Ok(())
-}
-
-/// Switch the active profile by ID and persist the change. Used internally by
-/// tray.rs handle_menu_event — avoids deadlock by cloning the store before
-/// dropping the lock, so save_config can acquire its own lock safely.
-pub fn switch_active_profile(
-    id: &str,
-    state: &AppState,
-) -> Result<(), String> {
-    // Clone the full store while holding the lock so save_config (which
-    // internally acquires the same lock) won't deadlock.
-    let store_to_save = {
-        let mut store = state.store.lock().map_err(|e| e.to_string())?;
-        if !store.profiles.iter().any(|p| p.id == id) {
-            return Err(format!("Profile not found: {}", id));
-        }
-        store.active_profile_id = id.to_string();
-        (*store).clone()
-    };
-    // MutexGuard dropped here — save_config's internal lock acquisition is now safe.
-    config::save_config(&state.app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
     Ok(())
 }
 

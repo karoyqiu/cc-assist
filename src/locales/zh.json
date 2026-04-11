@@ -29,6 +29,8 @@
     "duplicate": "复制",
     "delete": "删除",
     "launchClaude": "启动 Claude",
+    "useProfile": "使用",
+    "inUse": "使用中",
     "noProfileSelected": "选择一个配置进行编辑",
     "deleteConfirmTitle": "删除配置",
     "deleteConfirmMessage": "确定要删除\"{{name}}\"吗？此操作无法撤销。",

@@ -1,21 +1,27 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type { ProfileConfig, ProviderConfig } from '../types';
+
 import { Avatar } from './Avatar';
 
 interface Props {
   profiles: ProfileConfig[];
   providers: ProviderConfig[];
   activeId: string;
+  selectedId: string | null;
   onSelect: (id: string) => void;
   onAdd: (provider: ProviderConfig | null) => void;
 }
 
-function findProviderByBaseUrl(baseUrl: string, providers: ProviderConfig[]): ProviderConfig | undefined {
+function findProviderByBaseUrl(
+  baseUrl: string,
+  providers: ProviderConfig[],
+): ProviderConfig | undefined {
   return providers.find((p) => p.base_url === baseUrl);
 }
 
-export function ProfileList({ profiles, providers, activeId, onSelect, onAdd }: Props) {
+export function ProfileList({ profiles, providers, activeId, selectedId, onSelect, onAdd }: Props) {
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
@@ -113,7 +119,18 @@ export function ProfileList({ profiles, providers, activeId, onSelect, onAdd }: 
                 (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
               }}
             >
-              <Avatar profile={{ name: provider.name, icon_color: provider.icon_color, icon: provider.icon, id: provider.id, base_url: '', api_key: '', models: {} }} size={28} />
+              <Avatar
+                profile={{
+                  name: provider.name,
+                  icon_color: provider.icon_color,
+                  icon: provider.icon,
+                  id: provider.id,
+                  base_url: '',
+                  api_key: '',
+                  models: {},
+                }}
+                size={28}
+              />
               <span
                 style={{
                   fontSize: 13,
@@ -257,25 +274,29 @@ export function ProfileList({ profiles, providers, activeId, onSelect, onAdd }: 
         ) : (
           profiles.map((profile) => {
             const isActive = profile.id === activeId;
-            const matchedProvider = profile.base_url ? findProviderByBaseUrl(profile.base_url, providers) : undefined;
+            const isSelected = profile.id === selectedId;
+            const matchedProvider = profile.base_url
+              ? findProviderByBaseUrl(profile.base_url, providers)
+              : undefined;
             return (
               <div
                 key={profile.id}
-                onClick={() => profile.id !== activeId && onSelect(profile.id)}
+                onClick={() => onSelect(profile.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
                   padding: '8px 12px',
-                  cursor: profile.id === activeId ? 'default' : 'pointer',
-                  backgroundColor: isActive ? '#1A1A1A' : 'transparent',
+                  cursor: 'pointer',
+                  backgroundColor: isSelected ? '#1A1A1A' : 'transparent',
                   transition: 'background-color 0.1s',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = '#1A1A1A';
+                  if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = '#1A1A1A';
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  if (!isSelected)
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                 }}
               >
                 <Avatar profile={profile} size={28} />

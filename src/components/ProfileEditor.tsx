@@ -8,10 +8,12 @@ import { Avatar } from './Avatar';
 interface Props {
   profile: ProfileConfig | null;
   official?: boolean;
+  activeId: string;
   onSave: (profile: ProfileConfig) => void;
   onDelete: (id: string) => Promise<boolean>;
   onDuplicate: (profile: ProfileConfig) => void;
   onLaunch: () => void;
+  onUse: (id: string) => void;
 }
 
 interface FieldProps {
@@ -171,10 +173,12 @@ function DeleteConfirmDialog({
 export function ProfileEditor({
   profile,
   official,
+  activeId,
   onSave,
   onDelete,
   onDuplicate,
   onLaunch,
+  onUse,
 }: Props) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<ProfileConfig | null>(null);
@@ -409,6 +413,42 @@ export function ProfileEditor({
         >
           {t('profileEditor.launchClaude')}
         </button>
+        {/* Use / In Use button */}
+        {profile.id === activeId ? (
+          <button
+            disabled
+            style={{
+              height: 30,
+              padding: '0 14px',
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#737373',
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #2A2A2A',
+              borderRadius: 4,
+              cursor: 'default',
+            }}
+          >
+            {t('profileEditor.inUse')}
+          </button>
+        ) : (
+          <button
+            onClick={() => onUse(profile.id)}
+            style={{
+              height: 30,
+              padding: '0 14px',
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#E5E5E5',
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #2A2A2A',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
+          >
+            {t('profileEditor.useProfile')}
+          </button>
+        )}
         {!official && (
           <button
             onClick={handleSave}
