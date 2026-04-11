@@ -23,8 +23,8 @@ function App() {
   useEffect(() => {
     invoke<ProfilesStore>('get_config')
       .then((s) => {
-        setStore(s);
         if (!initialized.current) {
+          setStore(s);
           setSelectedId(s.active_profile_id);
           initialized.current = true;
         }
