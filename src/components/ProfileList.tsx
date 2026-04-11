@@ -70,7 +70,9 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 }}
                 size={28}
               />
-              <span className="text-primary text-sm">{provider.name}</span>
+              <span className="text-primary text-sm">
+                {provider.name_key ? t(provider.name_key) : provider.name}
+              </span>
             </Button>
           ))}
 
@@ -143,9 +145,9 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                   <span
                     className="max-w-20 shrink-0 overflow-hidden text-xs font-medium tracking-wider text-ellipsis whitespace-nowrap uppercase"
                     style={{ color: matchedProvider.icon_color }}
-                    title={matchedProvider.name}
+                    title={matchedProvider.name_key ? t(matchedProvider.name_key) : matchedProvider.name}
                   >
-                    {matchedProvider.name}
+                    {matchedProvider.name_key ? t(matchedProvider.name_key) : matchedProvider.name}
                   </span>
                 )}
                 {isActive && (

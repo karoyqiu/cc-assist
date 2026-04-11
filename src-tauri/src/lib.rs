@@ -126,6 +126,7 @@ pub fn run() {
             commands::check_claude_on_path,
             commands::toggle_settings_window,
             commands::show_settings_window_cmd,
+            commands::rebuild_tray_menu,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

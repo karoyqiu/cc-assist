@@ -25,6 +25,9 @@ pub struct ProviderConfig {
     pub id: String,
     /// Display name, e.g. "Claude Official"
     pub name: String,
+    /// i18n translation key for the provider display name, e.g. "providers.anthropic"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name_key: Option<String>,
     /// Icon identifier e.g. "anthropic", "zhipu", "minimax", "kimi", "deepseek"
     pub icon: String,
     /// Hex color e.g. "#D4915D"

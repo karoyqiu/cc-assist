@@ -108,6 +108,64 @@ pub fn build_tray_menu<R: Runtime>(
     Ok(menu_builder.build()?)
 }
 
+/// Build the tray menu with translated strings (used after locale changes).
+pub fn build_tray_menu_with_strings<R: Runtime>(
+    app: &AppHandle<R>,
+    settings_label: &str,
+    lang_en_label: &str,
+    lang_zh_label: &str,
+    quit_label: &str,
+) -> Result<tauri::menu::Menu<R>, Box<dyn std::error::Error>> {
+    let state = match app.try_state::<AppState>() {
+        Some(s) => s,
+        None => return Err("AppState not initialized".into()),
+    };
+    let store = (*state.store.lock().unwrap()).clone();
+
+    let mut menu_builder = MenuBuilder::new(app);
+
+    // Profile items
+    for profile in &store.profiles {
+        let is_active = profile.id == store.active_profile_id;
+        let item = CheckMenuItemBuilder::with_id(profile.id.clone(), profile.name.clone())
+            .checked(is_active)
+            .build(app)?;
+
+        menu_builder = menu_builder.item(&item);
+    }
+
+    menu_builder = menu_builder.separator();
+
+    // Settings
+    let settings_item = MenuItemBuilder::with_id(ID_SETTINGS, settings_label)
+        .build(app)?;
+    menu_builder = menu_builder.item(&settings_item);
+
+    menu_builder = menu_builder.separator();
+
+    // Language: English
+    let lang_en_checked = store.locale == "en";
+    let lang_en_item = CheckMenuItemBuilder::with_id(ID_LANG_EN, lang_en_label)
+        .checked(lang_en_checked)
+        .build(app)?;
+    menu_builder = menu_builder.item(&lang_en_item);
+
+    // Language: Chinese
+    let lang_zh_checked = store.locale == "zh";
+    let lang_zh_item = CheckMenuItemBuilder::with_id(ID_LANG_ZH, lang_zh_label)
+        .checked(lang_zh_checked)
+        .build(app)?;
+    menu_builder = menu_builder.item(&lang_zh_item);
+
+    menu_builder = menu_builder.separator();
+
+    // Quit
+    let quit_item = PredefinedMenuItem::quit(app, Some(quit_label))?;
+    menu_builder = menu_builder.item(&quit_item);
+
+    Ok(menu_builder.build()?)
+}
+
 /// Rebuild the tray menu (e.g., after profile switch or locale change).
 pub fn rebuild_menu<R: Runtime>(app: &AppHandle<R>, app_data_dir: &std::path::Path) {
     let state = match app.try_state::<AppState>() {
@@ -126,6 +184,47 @@ pub fn rebuild_menu<R: Runtime>(app: &AppHandle<R>, app_data_dir: &std::path::Pa
     }
 
     // Update tooltip
+    let active_name = store
+        .profiles
+        .iter()
+        .find(|p| p.id == store.active_profile_id)
+        .map(|p| p.name.as_str())
+        .unwrap_or("cc-assist");
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_tooltip(Some(format!("cc-assist — {}", active_name)));
+    }
+}
+
+/// Rebuild the tray menu with translated strings (called after locale change).
+pub fn rebuild_menu_with_strings<R: Runtime>(
+    app: &AppHandle<R>,
+    _app_data_dir: &std::path::Path,
+    settings_label: &str,
+    lang_en_label: &str,
+    lang_zh_label: &str,
+    quit_label: &str,
+) {
+    if let Ok(menu) = build_tray_menu_with_strings(
+        app,
+        settings_label,
+        lang_en_label,
+        lang_zh_label,
+        quit_label,
+    ) {
+        if let Some(tray) = app.tray_by_id("main") {
+            let _ = tray.set_menu(Some(menu));
+        }
+    }
+
+    // Update tooltip
+    let state = match app.try_state::<AppState>() {
+        Some(s) => s,
+        None => return,
+    };
+    let store = match state.store.lock() {
+        Ok(s) => s.clone(),
+        Err(_) => return,
+    };
     let active_name = store
         .profiles
         .iter()

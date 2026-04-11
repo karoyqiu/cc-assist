@@ -9,6 +9,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "anthropic".into(),
             name: "Claude Official".into(),
+            name_key: Some("providers.anthropic".into()),
             icon: "anthropic".into(),
             icon_color: "#D4915D".into(),
             base_url: String::new(),
@@ -16,6 +17,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "zai-international".into(),
             name: "z.ai International".into(),
+            name_key: Some("providers.zai-international".into()),
             icon: "zhipu".into(),
             icon_color: "#0F62FE".into(),
             base_url: "https://api.z.ai/api/anthropic".into(),
@@ -23,6 +25,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "zai-cn".into(),
             name: "z.ai CN".into(),
+            name_key: Some("providers.zai-cn".into()),
             icon: "zhipu".into(),
             icon_color: "#0F62FE".into(),
             base_url: "https://open.bigmodel.cn/api/anthropic".into(),
@@ -30,6 +33,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "minimax-cn".into(),
             name: "MiniMax CN".into(),
+            name_key: Some("providers.minimax-cn".into()),
             icon: "minimax".into(),
             icon_color: "#FF6B6B".into(),
             base_url: "https://api.minimaxi.com/anthropic".into(),
@@ -37,6 +41,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "minimax-international".into(),
             name: "MiniMax International".into(),
+            name_key: Some("providers.minimax-international".into()),
             icon: "minimax".into(),
             icon_color: "#FF6B6B".into(),
             base_url: "https://api.minimax.io/anthropic".into(),
@@ -44,6 +49,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "kimi".into(),
             name: "Kimi".into(),
+            name_key: Some("providers.kimi".into()),
             icon: "kimi".into(),
             icon_color: "#6366F1".into(),
             base_url: "https://api.moonshot.cn/anthropic".into(),
@@ -51,6 +57,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
         ProviderConfig {
             id: "deepseek".into(),
             name: "DeepSeek".into(),
+            name_key: Some("providers.deepseek".into()),
             icon: "deepseek".into(),
             icon_color: "#1E88E5".into(),
             base_url: "https://api.deepseek.com/anthropic".into(),

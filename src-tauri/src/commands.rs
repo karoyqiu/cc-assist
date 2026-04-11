@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::config;
 use crate::settings;
@@ -200,4 +200,25 @@ pub fn toggle_settings_window(app: AppHandle) {
 #[tauri::command]
 pub fn show_settings_window_cmd(app: AppHandle) {
     window::show_settings_window(&app);
+}
+
+/// Rebuild the tray menu with translated strings from the frontend i18n system.
+#[tauri::command]
+pub fn rebuild_tray_menu(
+    app: AppHandle,
+    settings_label: String,
+    lang_en_label: String,
+    lang_zh_label: String,
+    quit_label: String,
+) -> Result<(), String> {
+    let app_data_dir = app.state::<AppState>().app_data_dir.clone();
+    tray::rebuild_menu_with_strings(
+        &app,
+        &app_data_dir,
+        &settings_label,
+        &lang_en_label,
+        &lang_zh_label,
+        &quit_label,
+    );
+    Ok(())
 }

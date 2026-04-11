@@ -3,7 +3,6 @@
     "title": "cc-assist"
   },
   "tray": {
-    "launchClaude": "Launch Claude",
     "settings": "Settings",
     "quit": "Quit"
   },
@@ -56,5 +55,14 @@
   "languages": {
     "en": "English",
     "zh": "中文"
+  },
+  "providers": {
+    "anthropic": "Claude Official",
+    "zai-international": "z.ai International",
+    "zai-cn": "z.ai CN",
+    "minimax-cn": "MiniMax CN",
+    "minimax-international": "MiniMax International",
+    "kimi": "Kimi",
+    "deepseek": "DeepSeek"
   }
 }

@@ -8,6 +8,8 @@ export interface ModelConfig {
 export interface ProviderConfig {
   id: string;
   name: string;
+  /** i18n translation key for the provider display name, e.g. "providers.anthropic" */
+  name_key?: string;
   icon: string;
   icon_color: string;
   base_url: string;

@@ -28,19 +28,35 @@ function App() {
           setSelectedId(s.active_profile_id);
           initialized.current = true;
         }
-        i18n.changeLanguage(s.locale);
+        return i18n.changeLanguage(s.locale);
+      })
+      .then(() => {
+        // Sync tray strings after language is confirmed changed
+        return invoke('rebuild_tray_menu', {
+          settingsLabel: i18n.t('tray.settings'),
+          langEnLabel: i18n.t('languages.en'),
+          langZhLabel: i18n.t('languages.zh'),
+          quitLabel: i18n.t('tray.quit'),
+        });
       })
       .catch((e) => {
         console.error('get_config failed:', e);
-        setError(t('errors.loadConfigFailed'));
+        setError(i18n.t('errors.loadConfigFailed'));
       });
-  }, [i18n, t, setStore, setSelectedId]);
+  }, [i18n, setStore, setSelectedId]);
 
   // Listen for locale-changed events from tray menu
   useEffect(() => {
-    const unlisten = listen<string>('locale-changed', (event) => {
-      i18n.changeLanguage(event.payload);
+    const unlisten = listen<string>('locale-changed', async (event) => {
+      await i18n.changeLanguage(event.payload);
       setStore((s) => (s ? { ...s, locale: event.payload } : s));
+      // Rebuild tray menu with new translated strings
+      await invoke('rebuild_tray_menu', {
+        settingsLabel: i18n.t('tray.settings'),
+        langEnLabel: i18n.t('languages.en'),
+        langZhLabel: i18n.t('languages.zh'),
+        quitLabel: i18n.t('tray.quit'),
+      });
     });
     return () => {
       unlisten.then((fn) => fn());
