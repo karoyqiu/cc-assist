@@ -162,7 +162,7 @@ function App() {
 
   if (error) {
     return (
-      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-[13px] font-medium">
+      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-sm font-medium">
         {error}
       </div>
     );
@@ -170,7 +170,7 @@ function App() {
 
   if (!store) {
     return (
-      <div className="bg-app text-muted flex h-screen w-screen items-center justify-center text-[13px]">
+      <div className="bg-app text-muted flex h-screen w-screen items-center justify-center text-sm">
         {t('errors.loadConfigFailed')}
       </div>
     );

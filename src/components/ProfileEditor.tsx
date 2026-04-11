@@ -44,7 +44,7 @@ interface FieldProps {
 function Field({ label, value, onChange, readOnly, placeholder, mono, password }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-muted text-[10px] font-medium tracking-[0.08em] uppercase">
+      <Label className="text-muted text-xs font-medium tracking-[0.08em] uppercase">
         {label}
       </Label>
       <Input
@@ -54,7 +54,7 @@ function Field({ label, value, onChange, readOnly, placeholder, mono, password }
         readOnly={readOnly}
         placeholder={placeholder}
         className={cn(
-          'h-7.5 w-full text-[13px]',
+          'h-7.5 w-full text-sm',
           mono && 'font-mono',
           readOnly ? 'bg-transparent text-muted border-transparent' : 'text-primary',
         )}
@@ -92,7 +92,7 @@ export function ProfileEditor({
 
   if (!profile || !draft) {
     return (
-      <div className="text-muted flex flex-1 items-center justify-center text-[13px]">
+      <div className="text-muted flex flex-1 items-center justify-center text-sm">
         {t('profileEditor.noProfileSelected')}
       </div>
     );
@@ -127,12 +127,12 @@ export function ProfileEditor({
         <Avatar profile={profile} size={40} />
         <div className="flex-1">
           {official ? (
-            <div className="text-primary text-[15px] font-semibold">{draft.name}</div>
+            <div className="text-primary text-base font-semibold">{draft.name}</div>
           ) : (
             <Input
               value={draft.name}
               onChange={(e) => update('name', e.target.value)}
-              className="text-primary w-full border-none bg-transparent text-[15px] font-semibold outline-none"
+              className="text-primary w-full border-none bg-transparent text-base font-semibold outline-none"
             />
           )}
         </div>
@@ -182,7 +182,7 @@ export function ProfileEditor({
 
         {/* Models */}
         <div>
-          <div className="text-muted mb-2 text-[10px] font-medium tracking-[0.08em] uppercase">
+          <div className="text-muted mb-2 text-xs font-medium tracking-[0.08em] uppercase">
             {t('profileEditor.models')}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -268,10 +268,10 @@ export function ProfileEditor({
       >
         <AlertDialogContent className="border-subtle bg-surface w-95">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-primary text-[15px] font-semibold">
+            <AlertDialogTitle className="text-primary text-base font-semibold">
               {t('profileEditor.deleteConfirmTitle')}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted text-[13px] leading-relaxed">
+            <AlertDialogDescription className="text-muted text-sm leading-relaxed">
               {t('profileEditor.deleteConfirmMessage', { name: draft.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>

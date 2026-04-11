@@ -33,7 +33,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
       <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
         {/* Header */}
         <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
-          <span className="text-muted text-[11px] font-medium tracking-wider uppercase">
+          <span className="text-muted text-xs font-medium tracking-wider uppercase">
             {t('profileList.chooseProvider')}
           </span>
           <Button
@@ -70,7 +70,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 }}
                 size={28}
               />
-              <span className="text-primary text-[13px]">{provider.name}</span>
+              <span className="text-primary text-sm">{provider.name}</span>
             </Button>
           ))}
 
@@ -89,7 +89,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
             <div className="bg-subtle text-muted flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
               +
             </div>
-            <span className="text-muted text-[13px]">{t('profileList.customProvider')}</span>
+            <span className="text-muted text-sm">{t('profileList.customProvider')}</span>
           </Button>
         </div>
       </div>
@@ -100,7 +100,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
     <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
       {/* Header */}
       <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
-        <span className="text-muted text-[11px] font-medium tracking-wider uppercase">
+        <span className="text-muted text-xs font-medium tracking-wider uppercase">
           {t('profileList.title')}
         </span>
         <Button
@@ -116,7 +116,7 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
       {/* List */}
       <div className="flex-1 overflow-y-auto py-1">
         {profiles.length === 0 ? (
-          <div className="text-muted px-3 py-6 text-center text-[13px]">
+          <div className="text-muted px-3 py-6 text-center text-sm">
             {t('profileList.emptyState')}
           </div>
         ) : (
@@ -136,12 +136,12 @@ export function ProfileList({ profiles, providers, activeId, selectedId, onSelec
                 )}
               >
                 <Avatar profile={profile} size={28} />
-                <span className="text-primary flex-1 overflow-hidden text-[13px] font-normal text-ellipsis whitespace-nowrap">
+                <span className="text-primary flex-1 overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap">
                   {profile.name}
                 </span>
                 {matchedProvider && (
                   <span
-                    className="max-w-20 shrink-0 overflow-hidden text-[9px] font-medium tracking-wider text-ellipsis whitespace-nowrap uppercase"
+                    className="max-w-20 shrink-0 overflow-hidden text-xs font-medium tracking-wider text-ellipsis whitespace-nowrap uppercase"
                     style={{ color: matchedProvider.icon_color }}
                     title={matchedProvider.name}
                   >

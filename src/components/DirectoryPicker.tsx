@@ -54,12 +54,12 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
       }}
     >
       <DialogContent
-        className="border-subtle bg-surface flex max-h-[80vh] w-[500px] flex-col overflow-hidden"
+        className="border-subtle bg-surface flex max-h-[80vh] w-128 flex-col overflow-hidden"
         showCloseButton={false}
       >
         {/* Header */}
         <DialogHeader className="border-subtle flex flex-row items-center justify-between border-b px-4 pt-4 pb-3">
-          <DialogTitle className="text-primary text-[15px] font-semibold">
+          <DialogTitle className="text-primary text-base font-semibold">
             {t('directoryPicker.title')}
           </DialogTitle>
         </DialogHeader>
@@ -68,11 +68,11 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {/* Recent directories */}
           <div className="mb-3">
-            <div className="text-muted mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase">
+            <div className="text-muted mb-1.5 text-xs font-medium tracking-[0.08em] uppercase">
               {t('directoryPicker.recentDirectories')}
             </div>
             {recentDirectories.length === 0 ? (
-              <div className="text-muted py-2 text-[13px]">
+              <div className="text-muted py-2 text-sm">
                 {t('directoryPicker.noRecentDirectories')}
               </div>
             ) : (
@@ -82,7 +82,7 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
                     key={dir}
                     onClick={() => setSelected(dir)}
                     className={cn(
-                      'cursor-pointer overflow-hidden rounded px-2 py-1.5 font-mono text-[12px]',
+                      'cursor-pointer overflow-hidden rounded px-2 py-1.5 font-mono text-xs',
                       'text-ellipsis whitespace-nowrap',
                       selected === dir
                         ? 'bg-subtle text-primary'
@@ -98,7 +98,7 @@ export function DirectoryPicker({ recentDirectories, accentColor, onLaunch, onCa
 
           {/* Selected path display */}
           {selected && (
-            <div className="border-subtle bg-app text-primary overflow-hidden rounded border p-2 font-mono text-[12px] text-ellipsis whitespace-nowrap">
+            <div className="border-subtle bg-app text-primary overflow-hidden rounded border p-2 font-mono text-xs text-ellipsis whitespace-nowrap">
               {selected}
             </div>
           )}
