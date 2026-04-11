@@ -41,8 +41,8 @@ The executable will be at `src-tauri/target/release/cc-assist.exe` (or `cc-assis
 
 ## Data storage
 
-- **Config:** `%APPDATA%/cc-assist/config.json`
-- **Logs:** `%APPDATA%/cc-assist/app.log`
+- **Config:** `%APPDATA%/com.gmail.karoyqiu.cc-assist/config.json`
+- **Logs:** `%APPDATA%/com.gmail.karoyqiu.cc-assist/app.log`
 
 ## Tech stack
 
