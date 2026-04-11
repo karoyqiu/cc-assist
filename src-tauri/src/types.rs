@@ -63,9 +63,6 @@ pub type RecentDirectories = HashMap<String, Vec<String>>;
 pub struct ProfilesStore {
     pub active_profile_id: String,
     pub profiles: Vec<ProfileConfig>,
-    /// Built-in providers, populated from built_in_providers() on every load.
-    #[serde(default)]
-    pub providers: Vec<ProviderConfig>,
     #[serde(default)]
     pub recent_directories: RecentDirectories,
     #[serde(default = "default_locale")]

@@ -14,22 +14,9 @@ use state::AppState;
 use tauri::Manager;
 
 fn default_store() -> crate::types::ProfilesStore {
-    let providers = config::built_in_providers();
-    let anthropic = providers.iter().find(|p| p.id == "anthropic").unwrap();
-    let default_profile = crate::types::ProfileConfig {
-        id: "default".to_string(),
-        name: anthropic.name.clone(),
-        icon: anthropic.icon.clone(),
-        icon_color: anthropic.icon_color.clone(),
-        base_url: anthropic.base_url.clone(),
-        api_key: String::new(),
-        models: Default::default(),
-        provider_id: Some("anthropic".into()),
-    };
     crate::types::ProfilesStore {
         active_profile_id: "default".to_string(),
-        profiles: vec![default_profile],
-        providers,
+        profiles: Vec::new(),
         recent_directories: Default::default(),
         locale: "en".to_string(),
     }
@@ -133,6 +120,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
+            commands::get_providers,
             commands::set_active_profile,
             commands::use_profile,
             commands::save_profiles,

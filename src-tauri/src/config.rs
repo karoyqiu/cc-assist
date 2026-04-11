@@ -66,21 +66,15 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
 }
 
 fn default_store() -> ProfilesStore {
-    let providers = built_in_providers();
-    let active_profile_id = providers.first().map(|p| format!("{}-default", p.id)).unwrap_or_default();
     ProfilesStore {
-        active_profile_id,
+        active_profile_id: "default".to_string(),
         profiles: Vec::new(),
-        providers,
         recent_directories: Default::default(),
         locale: "en".to_string(),
     }
 }
 
 /// Load config from the app data dir, creating defaults if absent.
-/// Handles backward compatibility:
-/// - Missing `providers` field: inject from built_in_providers()
-/// - Existing profiles with `is_built_in` field: silently drop (field not in new schema)
 pub fn load_config(app_data_dir: &Path) -> Result<ProfilesStore, AppError> {
     let config_path = app_data_dir.join("config.json");
 
@@ -92,19 +86,7 @@ pub fn load_config(app_data_dir: &Path) -> Result<ProfilesStore, AppError> {
 
     let content = fs::read_to_string(&config_path).map_err(AppError::IoError)?;
 
-    // First pass: deserialize with ignoring unknown fields (handles old is_built_in)
-    let store: ProfilesStore = serde_json::from_str(&content)
-        .map_err(AppError::ConfigParseError)?;
-
-    // Inject providers if missing (backward compat for old config files without providers field)
-    if store.providers.is_empty() {
-        Ok(ProfilesStore {
-            providers: built_in_providers(),
-            ..store
-        })
-    } else {
-        Ok(store)
-    }
+    serde_json::from_str(&content).map_err(AppError::ConfigParseError)
 }
 
 /// Atomic save: write to temp file in same dir, then rename.
@@ -136,11 +118,10 @@ mod tests {
     fn test_load_config_creates_default_if_missing() {
         let tmp = TempDir::new().unwrap();
         let store = load_config(tmp.path()).unwrap();
-        // Default store has 0 profiles and 7 built-in providers
+        // Default store has 0 profiles
         assert_eq!(store.profiles.len(), 0);
-        assert_eq!(store.providers.len(), 7);
         assert_eq!(store.locale, "en");
-        assert!(!store.active_profile_id.is_empty());
+        assert_eq!(store.active_profile_id, "default");
     }
 
     #[test]
@@ -152,7 +133,6 @@ mod tests {
 
         let loaded = load_config(tmp.path()).unwrap();
         assert_eq!(loaded.locale, "zh");
-        assert_eq!(loaded.providers.len(), 7);
     }
 
     #[test]
@@ -201,8 +181,6 @@ mod tests {
         // is_built_in was dropped; profile preserved with original fields
         assert_eq!(store.profiles.len(), 1);
         assert_eq!(store.profiles[0].name, "Claude Official");
-        // providers injected from built_in_providers()
-        assert_eq!(store.providers.len(), 7);
     }
 
     #[test]
@@ -231,7 +209,6 @@ mod tests {
         let store = load_config(tmp.path()).unwrap();
         assert_eq!(store.profiles.len(), 1);
         assert_eq!(store.profiles[0].base_url, "https://my-custom.endpoint.com");
-        assert_eq!(store.providers.len(), 7);
     }
 
     #[test]

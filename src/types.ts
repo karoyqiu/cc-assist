@@ -32,7 +32,6 @@ export type RecentDirectories = Record<string, string[]>;
 export interface ProfilesStore {
   active_profile_id: string;
   profiles: ProfileConfig[];
-  providers: ProviderConfig[];
   recent_directories: RecentDirectories;
   locale: string;
 }

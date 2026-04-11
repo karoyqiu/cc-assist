@@ -5,7 +5,7 @@ use crate::settings;
 use crate::spawn;
 use crate::state::AppState;
 use crate::tray;
-use crate::types::{ProfileConfig, ProfilesStore};
+use crate::types::{ProfileConfig, ProfilesStore, ProviderConfig};
 use crate::window;
 
 /// Get the full config store.
@@ -13,6 +13,12 @@ use crate::window;
 pub fn get_config(state: State<'_, AppState>) -> Result<ProfilesStore, String> {
     let store = state.store.lock().map_err(|e| e.to_string())?;
     Ok(store.clone())
+}
+
+/// Get the built-in provider list.
+#[tauri::command]
+pub fn get_providers() -> Vec<ProviderConfig> {
+    config::built_in_providers()
 }
 
 /// Set the active profile by ID.

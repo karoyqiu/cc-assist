@@ -14,17 +14,22 @@ import { ProfileList } from './components/ProfileList';
 function App() {
   const { i18n, t } = useTranslation();
   const [store, setStore] = useState<ProfilesStore | null>(null);
+  const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initialized = useRef(false);
 
-  // Load config on mount
+  // Load config and providers on mount
   useEffect(() => {
-    invoke<ProfilesStore>('get_config')
-      .then((s) => {
+    Promise.all([
+      invoke<ProfilesStore>('get_config'),
+      invoke<ProviderConfig[]>('get_providers'),
+    ])
+      .then(([s, p]) => {
         if (!initialized.current) {
           setStore(s);
+          setProviders(p);
           setSelectedId(s.active_profile_id);
           initialized.current = true;
         }
@@ -197,7 +202,7 @@ function App() {
       {/* Left: profile list */}
       <ProfileList
         profiles={store.profiles}
-        providers={store.providers}
+        providers={providers}
         activeId={store.active_profile_id}
         selectedId={selectedId}
         onSelect={handleSelectProfile}
