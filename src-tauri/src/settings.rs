@@ -83,7 +83,7 @@ const MANAGED_ENV_KEYS: &[&str] = &[
 
 /// Remove all cc-assist-managed ANTHROPIC_* keys from settings["env"].
 /// Preserves any other keys the user may have set (e.g. ANTHROPIC_TEMPERATURE).
-fn clear_profile_env_keys(settings: &mut Value) {
+pub fn clear_profile_env_keys(settings: &mut Value) {
     if let Some(env) = settings.get_mut("env").and_then(|v| v.as_object_mut()) {
         for key in MANAGED_ENV_KEYS {
             env.remove(*key);

@@ -100,10 +100,11 @@ pub fn save_profiles(
     Ok(())
 }
 
-/// Launch Claude in a directory with the active profile.
+/// Launch Claude in a directory with the given profile.
 #[tauri::command]
 pub fn launch_claude(
     directory: String,
+    profile_id: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     let (profile, active_id) = {
@@ -111,8 +112,8 @@ pub fn launch_claude(
         let profile = store
             .profiles
             .iter()
-            .find(|p| p.id == store.active_profile_id)
-            .ok_or_else(|| "No active profile".to_string())?
+            .find(|p| p.id == profile_id)
+            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
             .clone();
         (profile, store.active_profile_id.clone())
     };

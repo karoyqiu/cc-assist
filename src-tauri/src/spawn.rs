@@ -71,13 +71,10 @@ pub fn launch_claude_in_directory(
     // 2. Clean up stale temp files from previous launches
     cleanup_stale_temp_files();
 
-    // 3. Build temp settings file with profile env vars
-    let env_map = settings::build_env_map(profile);
-    let settings_json = if env_map.is_empty() {
-        serde_json::json!({})
-    } else {
-        serde_json::json!({ "env": env_map })
-    };
+    // 3. Build temp settings file: read user's existing settings and merge profile env vars
+    let mut settings_json = settings::read_settings_json_or_empty()?;
+    settings::clear_profile_env_keys(&mut settings_json);
+    settings::merge_profile_into_settings(profile, &mut settings_json);
 
     let temp_dir = std::env::temp_dir();
     let mut temp_file = tempfile::NamedTempFile::with_prefix_in(
@@ -99,15 +96,20 @@ pub fn launch_claude_in_directory(
     // The file stays on disk until we explicitly remove it.
     temp_path.keep().map_err(|e| AppError::IoError(e.error))?;
 
-    // 4. Spawn Claude with --settings flag
+    // 4. Spawn Claude in the system's default terminal so the user can interact with it
     #[cfg(windows)]
     let result = {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NEW_CONSOLE: u32 = 0x00000010;
-        Command::new("claude")
-            .args(["--settings", &temp_path_buf.to_string_lossy()])
+        Command::new("cmd")
+            .args([
+                "/c",
+                "start",
+                "/wait",
+                "",
+                "claude",
+                "--settings",
+                &temp_path_buf.to_string_lossy(),
+            ])
             .current_dir(dir)
-            .creation_flags(CREATE_NEW_CONSOLE)
             .spawn()
     };
 

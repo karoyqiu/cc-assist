@@ -11,7 +11,7 @@ pub fn built_in_providers() -> Vec<ProviderConfig> {
             name: "Claude Official".into(),
             icon: "anthropic".into(),
             icon_color: "#D4915D".into(),
-            base_url: "https://api.anthropic.com".into(),
+            base_url: String::new(),
         },
         ProviderConfig {
             id: "zai-international".into(),
