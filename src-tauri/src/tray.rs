@@ -10,7 +10,6 @@ use crate::state::AppState;
 use crate::window;
 
 // Menu item ID constants — cross-referenced across build_tray_menu and handle_menu_event.
-const ID_LAUNCH_CLAUDE: &str = "launch-claude";
 const ID_SETTINGS: &str = "settings";
 const ID_LANG_EN: &str = "lang-en";
 const ID_LANG_ZH: &str = "lang-zh";
@@ -79,13 +78,6 @@ pub fn build_tray_menu<R: Runtime>(
 
     menu_builder = menu_builder.separator();
 
-    // Launch Claude
-    let launch_item = MenuItemBuilder::with_id(ID_LAUNCH_CLAUDE, "Launch Claude")
-        .build(app)?;
-    menu_builder = menu_builder.item(&launch_item);
-
-    menu_builder = menu_builder.separator();
-
     // Settings
     let settings_item = MenuItemBuilder::with_id(ID_SETTINGS, "Settings")
         .build(app)?;
@@ -150,7 +142,6 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     // Profile switch — catches all IDs not explicitly listed below.
     // This is a "Use" action: writes to settings.json + updates active profile.
     if !id.starts_with("lang-")
-        && id != ID_LAUNCH_CLAUDE
         && id != ID_SETTINGS
     {
         let id_string = id.to_string();
@@ -186,10 +177,6 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     }
 
     match id {
-        ID_LAUNCH_CLAUDE => {
-            // Emit event so the frontend shows the DirectoryPicker modal.
-            let _ = app.emit("show-directory-picker", ());
-        }
         ID_SETTINGS => {
             window::show_settings_window(app);
         }

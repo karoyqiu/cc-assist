@@ -47,16 +47,6 @@ function App() {
     };
   }, [i18n, setStore]);
 
-  // Listen for show-directory-picker events from tray menu "Launch Claude"
-  useEffect(() => {
-    const unlisten = listen('show-directory-picker', () => {
-      setShowDirectoryPicker(true);
-    });
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, [setShowDirectoryPicker]);
-
   // Show window once the page is ready
   useEffect(() => {
     invoke('show_settings_window_cmd');
