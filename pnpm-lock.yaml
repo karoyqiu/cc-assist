@@ -29,9 +29,6 @@ importers:
       '@tauri-apps/api':
         specifier: ^2
         version: 2.10.1
-      '@tauri-apps/plugin-opener':
-        specifier: ^2
-        version: 2.5.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -53,9 +50,6 @@ importers:
       react-i18next:
         specifier: ^17.0.2
         version: 17.0.2(i18next@26.0.4(typescript@5.8.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@5.8.3)
-      shadcn:
-        specifier: ^4.2.0
-        version: 4.2.0(@types/node@22.19.17)(typescript@5.8.3)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -87,6 +81,9 @@ importers:
       oxlint:
         specifier: ^1.59.0
         version: 1.59.0
+      shadcn:
+        specifier: ^4.2.0
+        version: 4.2.0(@types/node@22.19.17)(typescript@5.8.3)
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
@@ -1815,9 +1812,6 @@ packages:
     resolution: {integrity: sha512-jQNGF/5quwORdZSSLtTluyKQ+o6SMa/AUICfhf4egCGFdMHqWssApVgYSbg+jmrZoc8e1DscNvjTnXtlHLS11g==}
     engines: {node: '>= 10'}
     hasBin: true
-
-  '@tauri-apps/plugin-opener@2.5.3':
-    resolution: {integrity: sha512-CCcUltXMOfUEArbf3db3kCE7Ggy1ExBEBl51Ko2ODJ6GDYHRp1nSNlQm5uNCFY5k7/ufaK5Ib3Du/Zir19IYQQ==}
 
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
@@ -4816,10 +4810,6 @@ snapshots:
       '@tauri-apps/cli-win32-arm64-msvc': 2.10.1
       '@tauri-apps/cli-win32-ia32-msvc': 2.10.1
       '@tauri-apps/cli-win32-x64-msvc': 2.10.1
-
-  '@tauri-apps/plugin-opener@2.5.3':
-    dependencies:
-      '@tauri-apps/api': 2.10.1
 
   '@ts-morph/common@0.27.0':
     dependencies:
