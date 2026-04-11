@@ -1,9 +1,9 @@
 [package]
 name = "cc-assist"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+description = "CC Assistant"
+authors = ["karoyqiu@gmail.com"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -38,4 +38,3 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
-
