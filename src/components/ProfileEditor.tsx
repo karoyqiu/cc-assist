@@ -188,10 +188,14 @@ export function ProfileEditor({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
   const deleteTargetId = useRef<string | null>(null);
+  const prevProfileId = useRef<string | null>(null);
 
   useEffect(() => {
-    setDraft(profile ? { ...profile, models: { ...profile.models } } : null);
-    setSaved(false);
+    if (profile?.id !== prevProfileId.current) {
+      prevProfileId.current = profile?.id ?? null;
+      setDraft(profile ? { ...profile, models: { ...profile.models } } : null);
+      setSaved(false);
+    }
   }, [profile]);
 
   if (!profile || !draft) {
