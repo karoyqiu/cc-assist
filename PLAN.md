@@ -2,7 +2,7 @@
 
 **Branch:** develop
 **Design doc:** `~/.gstack/projects/cc-assist/roy-develop-design-20260409-143000.md` (APPROVED)
-**Status:** Pre-implementation — awaiting eng review
+**Status:** Implemented on `develop` (2026-04-11) — see commit history
 
 ---
 
