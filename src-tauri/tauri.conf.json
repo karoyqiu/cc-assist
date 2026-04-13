@@ -22,6 +22,17 @@
         "visible": false,
         "minWidth": 500,
         "minHeight": 300
+      },
+      {
+        "title": "CC Assist — Terminal",
+        "label": "terminal",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "center": true,
+        "visible": true,
+        "minWidth": 400,
+        "minHeight": 300
       }
     ],
     "security": {
