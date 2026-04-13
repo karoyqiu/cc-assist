@@ -64,5 +64,16 @@
     "minimax-international": "MiniMax 国际版",
     "kimi": "Kimi",
     "deepseek": "DeepSeek"
+  },
+  "terminal": {
+    "sessions": "会话",
+    "noSessions": "暂无会话",
+    "noSessionsHint": "点击 + 开始新会话",
+    "selectSession": "选择一个会话开始",
+    "closeSession": "关闭会话",
+    "profileId": "配置 ID",
+    "directory": "目录",
+    "start": "启动",
+    "cancel": "取消"
   }
 }

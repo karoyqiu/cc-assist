@@ -64,5 +64,16 @@
     "minimax-international": "MiniMax International",
     "kimi": "Kimi",
     "deepseek": "DeepSeek"
+  },
+  "terminal": {
+    "sessions": "Sessions",
+    "noSessions": "No sessions",
+    "noSessionsHint": "Click + to start a new session",
+    "selectSession": "Select a session to begin",
+    "closeSession": "Close session",
+    "profileId": "Profile ID",
+    "directory": "Directory",
+    "start": "Start",
+    "cancel": "Cancel"
   }
 }
