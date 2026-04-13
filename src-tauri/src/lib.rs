@@ -71,12 +71,11 @@ pub fn run() {
     let store = default_store();
 
     let mut builder = tauri::Builder::default();
-    #[cfg(not(debug_assertions))]
-    {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            window::show_settings_window(app);
-        }));
-    }
+    // NOTE: single-instance enforcement is intentionally disabled in this worktree.
+    // Re-enable in release builds by adding back:
+    // .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+    //     window::show_settings_window(app);
+    // }))
     builder = builder.plugin(tauri_plugin_clipboard_manager::init());
     builder
         .manage(AppState {
