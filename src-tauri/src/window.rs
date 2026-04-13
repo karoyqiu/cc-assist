@@ -37,6 +37,40 @@ pub fn show_settings_window<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
+/// Show the terminal window, creating it if it doesn't exist.
+pub fn show_terminal_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("terminal") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let window_config = app
+        .config()
+        .app
+        .windows
+        .iter()
+        .find(|w| w.label == "terminal");
+
+    let builder = match window_config {
+        Some(config) => {
+            WebviewWindowBuilder::from_config(app, config).unwrap_or_else(|_| {
+                WebviewWindowBuilder::new(app, "terminal", WebviewUrl::App("index.html".into()))
+            })
+        }
+        None => {
+            WebviewWindowBuilder::new(app, "terminal", WebviewUrl::App("index.html".into()))
+        }
+    };
+
+    match builder.visible(true).build() {
+        Ok(_) => {}
+        Err(e) => {
+            log::error!("Failed to create terminal window: {}", e);
+        }
+    }
+}
+
 /// Toggle the settings window (show if hidden, hide if shown).
 pub fn toggle_settings_window<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window(WINDOW_LABEL) {

@@ -11,6 +11,7 @@ use crate::window;
 
 // Menu item ID constants — cross-referenced across build_tray_menu and handle_menu_event.
 const ID_SETTINGS: &str = "settings";
+const ID_OPEN_TERMINAL: &str = "open-terminal";
 const ID_LANG_EN: &str = "lang-en";
 const ID_LANG_ZH: &str = "lang-zh";
 
@@ -83,6 +84,11 @@ pub fn build_tray_menu<R: Runtime>(
         .build(app)?;
     menu_builder = menu_builder.item(&settings_item);
 
+    // Open Terminal
+    let open_terminal_item = MenuItemBuilder::with_id(ID_OPEN_TERMINAL, "Open Terminal")
+        .build(app)?;
+    menu_builder = menu_builder.item(&open_terminal_item);
+
     menu_builder = menu_builder.separator();
 
     // Language: English
@@ -140,6 +146,11 @@ pub fn build_tray_menu_with_strings<R: Runtime>(
     let settings_item = MenuItemBuilder::with_id(ID_SETTINGS, settings_label)
         .build(app)?;
     menu_builder = menu_builder.item(&settings_item);
+
+    // Open Terminal
+    let open_terminal_item = MenuItemBuilder::with_id(ID_OPEN_TERMINAL, "Open Terminal")
+        .build(app)?;
+    menu_builder = menu_builder.item(&open_terminal_item);
 
     menu_builder = menu_builder.separator();
 
@@ -242,6 +253,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     // This is a "Use" action: writes to settings.json + updates active profile.
     if !id.starts_with("lang-")
         && id != ID_SETTINGS
+        && id != ID_OPEN_TERMINAL
     {
         let id_string = id.to_string();
         let state = app.state::<AppState>();
@@ -278,6 +290,9 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     match id {
         ID_SETTINGS => {
             window::show_settings_window(app);
+        }
+        ID_OPEN_TERMINAL => {
+            window::show_terminal_window(app);
         }
         ID_LANG_EN => {
             let app_clone = app.clone();
