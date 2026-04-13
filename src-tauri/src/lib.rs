@@ -71,9 +71,12 @@ pub fn run() {
     let store = default_store();
 
     let mut builder = tauri::Builder::default();
-    // NOTE: tauri-plugin-single-instance is commented out in Cargo.toml
-    // to allow multiple dev instances. Uncomment both Cargo.toml and lib.rs
-    // to re-enable singleton behavior.
+    #[cfg(not(debug_assertions))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            window::show_settings_window(app);
+        }));
+    }
     builder = builder.plugin(tauri_plugin_clipboard_manager::init());
     builder
         .manage(AppState {
