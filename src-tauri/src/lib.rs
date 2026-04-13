@@ -70,11 +70,15 @@ pub fn run() {
     // Create builder with default store — will be replaced in setup with proper config
     let store = default_store();
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+    let mut builder = tauri::Builder::default();
+    #[cfg(not(debug_assertions))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             window::show_settings_window(app);
-        }))
-        .plugin(tauri_plugin_clipboard_manager::init())
+        }));
+    }
+    builder = builder.plugin(tauri_plugin_clipboard_manager::init());
+    builder
         .manage(AppState {
             store: Mutex::new(store),
             app_data_dir: Mutex::new(early_log_dir.clone()),
