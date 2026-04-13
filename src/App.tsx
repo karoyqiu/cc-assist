@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,8 +11,43 @@ import './App.css';
 import { DirectoryPicker } from './components/DirectoryPicker';
 import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
+import { TerminalWindow } from './components/TerminalWindow';
 
+const isTerminalWindow = getCurrentWindow().label === 'terminal';
+
+// Terminal window renders its own UI directly
+function TerminalWindowApp() {
+  const [store, setStore] = useState<ProfilesStore | null>(null);
+  const [lastDir, setLastDir] = useState('');
+
+  useEffect(() => {
+    invoke<ProfilesStore>('get_config').then((s) => {
+      setStore(s);
+      const dirs = s.recent_directories[s.active_profile_id];
+      setLastDir(dirs?.[0] ?? '');
+    });
+  }, []);
+
+  if (!store) return null;
+
+  const profile = store.profiles.find((p) => p.id === store.active_profile_id);
+
+  return (
+    <TerminalWindow
+      activeProfileId={store.active_profile_id}
+      activeProfileColor={profile?.icon_color ?? '#D4915D'}
+      lastDirectory={lastDir}
+      onOpenSettings={() => invoke('toggle_settings_window')}
+    />
+  );
+}
+
+// Main app (settings window)
 function App() {
+  if (isTerminalWindow) {
+    return <TerminalWindowApp />;
+  }
+
   const { i18n, t } = useTranslation();
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
@@ -22,10 +58,7 @@ function App() {
 
   // Load config and providers on mount
   useEffect(() => {
-    Promise.all([
-      invoke<ProfilesStore>('get_config'),
-      invoke<ProviderConfig[]>('get_providers'),
-    ])
+    Promise.all([invoke<ProfilesStore>('get_config'), invoke<ProviderConfig[]>('get_providers')])
       .then(([s, p]) => {
         if (!initialized.current) {
           setStore(s);
