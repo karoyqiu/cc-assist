@@ -204,15 +204,12 @@ function App() {
     }
   }
 
-  async function handleLaunch(dir: string) {
+  async function handleLaunch() {
     setShowDirectoryPicker(false);
     try {
-      await invoke('launch_claude', { directory: dir, profileId: selectedId });
-      // Refresh config to get updated recent_directories
-      const updated = await invoke<ProfilesStore>('get_config');
-      setStore(updated);
+      await import('@/lib/terminal').then(({ launchTerminal }) => launchTerminal());
     } catch (e: unknown) {
-      console.error('launch_claude failed:', e);
+      console.error('launch_terminal failed:', e);
       setError(e instanceof Error ? e.message : String(e));
       setTimeout(() => setError(null), 5000);
     }

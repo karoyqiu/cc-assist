@@ -102,3 +102,7 @@ export async function resizeSession(sessionId: string, cols: number, rows: numbe
 export async function closeSession(sessionId: string): Promise<void> {
   await invoke('terminal_close_session', { sessionId });
 }
+
+export async function launchTerminal(): Promise<void> {
+  await invoke('launch_terminal');
+}

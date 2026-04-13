@@ -140,6 +140,7 @@ pub fn run() {
             commands::show_settings_window_cmd,
             commands::rebuild_tray_menu,
             commands::terminal_create_session,
+            commands::launch_terminal,
             commands::terminal_write,
             commands::terminal_resize,
             commands::terminal_close_session,

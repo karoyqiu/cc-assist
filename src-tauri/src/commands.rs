@@ -236,6 +236,37 @@ pub fn rebuild_tray_menu(
     Ok(())
 }
 
+/// Open the terminal window and auto-create a session with the active profile
+/// and most recent directory.
+#[tauri::command]
+pub fn launch_terminal(
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<terminal::CreateSessionResult, String> {
+    let (profile, directory) = {
+        let store = state.store.lock().map_err(|e| e.to_string())?;
+        let profile = store
+            .profiles
+            .iter()
+            .find(|p| p.id == store.active_profile_id)
+            .ok_or_else(|| "No active profile".to_string())?
+            .clone();
+        let recent = store
+            .recent_directories
+            .get(&store.active_profile_id)
+            .and_then(|dirs| dirs.first().cloned())
+            .unwrap_or_else(|| std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default());
+        (profile, recent)
+    };
+
+    // Open the terminal window
+    window::show_terminal_window(&app);
+
+    // Create a session in that directory with that profile
+    let dir = std::path::PathBuf::from(&directory);
+    terminal::create_session(&profile, &dir, app)
+}
+
 /// Create a new terminal session.
 #[tauri::command]
 pub fn terminal_create_session(
