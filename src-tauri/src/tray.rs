@@ -289,10 +289,16 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
 
     match id {
         ID_SETTINGS => {
-            window::show_settings_window(app);
+            let app_clone = app.clone();
+            tauri::async_runtime::spawn(async move {
+                window::show_settings_window(&app_clone);
+            });
         }
         ID_OPEN_TERMINAL => {
-            window::show_terminal_window(app);
+            let app_clone = app.clone();
+            tauri::async_runtime::spawn(async move {
+                window::show_terminal_window(&app_clone);
+            });
         }
         ID_LANG_EN => {
             let app_clone = app.clone();

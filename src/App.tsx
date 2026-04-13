@@ -34,6 +34,7 @@ function TerminalWindowApp() {
 
   return (
     <TerminalWindow
+      profiles={store.profiles}
       activeProfileId={store.active_profile_id}
       activeProfileColor={profile?.icon_color ?? '#D4915D'}
       lastDirectory={lastDir}

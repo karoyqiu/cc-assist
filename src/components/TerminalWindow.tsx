@@ -4,6 +4,7 @@ import { Terminal } from '@xterm/xterm';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import type { Session } from '@/lib/terminal';
+import type { ProfileConfig } from '@/types';
 
 import {
   initOutputListener,
@@ -22,6 +23,7 @@ import {
 } from '@/lib/terminal';
 
 interface TerminalWindowProps {
+  profiles: ProfileConfig[];
   activeProfileId: string;
   activeProfileColor: string;
   lastDirectory: string;
@@ -29,6 +31,7 @@ interface TerminalWindowProps {
 }
 
 export function TerminalWindow({
+  profiles,
   activeProfileId,
   activeProfileColor,
   lastDirectory,
@@ -43,6 +46,9 @@ export function TerminalWindow({
   const initializedRef = useRef(false);
   const [newSessionDir, setNewSessionDir] = useState(lastDirectory);
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
+  const [newSessionProfileName, setNewSessionProfileName] = useState(
+    profiles.find((p) => p.id === activeProfileId)?.name ?? '',
+  );
 
   // Init xterm
   useEffect(() => {
@@ -259,15 +265,21 @@ export function TerminalWindow({
         {/* New session form */}
         {showNewSession && (
           <div className="border-border bg-surface flex flex-col gap-2 border-b p-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newSessionProfileId}
-                onChange={(e) => setNewSessionProfileId(e.target.value)}
-                placeholder="Profile ID"
-                className="border-border bg-app text-text placeholder:text-muted flex-1 rounded border px-2 py-1 font-mono text-sm"
-              />
-            </div>
+            <select
+              value={newSessionProfileId}
+              onChange={(e) => {
+                const p = profiles.find((x) => x.id === e.target.value);
+                setNewSessionProfileId(e.target.value);
+                setNewSessionProfileName(p?.name ?? '');
+              }}
+              className="border-border bg-app text-text flex-1 rounded border px-2 py-1 text-sm"
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
             <div className="flex gap-2">
               <input
                 type="text"
