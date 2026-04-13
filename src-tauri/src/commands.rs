@@ -4,6 +4,7 @@ use crate::config;
 use crate::settings;
 use crate::spawn;
 use crate::state::AppState;
+use crate::terminal;
 use crate::tray;
 use crate::types::{ProfileConfig, ProfilesStore, ProviderConfig};
 use crate::window;
@@ -233,4 +234,55 @@ pub fn rebuild_tray_menu(
         &quit_label,
     );
     Ok(())
+}
+
+/// Create a new terminal session.
+#[tauri::command]
+pub fn terminal_create_session(
+    profile_id: String,
+    directory: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<terminal::CreateSessionResult, String> {
+    let profile = {
+        let store = state.store.lock().map_err(|e| e.to_string())?;
+        store
+            .profiles
+            .iter()
+            .find(|p| p.id == profile_id)
+            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
+            .clone()
+    };
+    let dir = std::path::PathBuf::from(&directory);
+    terminal::create_session(&profile, &dir, app)
+}
+
+/// Write keystrokes to a terminal session.
+#[tauri::command]
+pub fn terminal_write(
+    session_id: String,
+    data: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    terminal::write_to_session(&session_id, &data, &state)
+}
+
+/// Resize a terminal session.
+#[tauri::command]
+pub fn terminal_resize(
+    session_id: String,
+    cols: u16,
+    rows: u16,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    terminal::resize_session(&session_id, cols, rows, &state)
+}
+
+/// Close a terminal session.
+#[tauri::command]
+pub fn terminal_close_session(
+    session_id: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    terminal::close_session(&session_id, &state)
 }

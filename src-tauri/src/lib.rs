@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
 
@@ -6,6 +7,7 @@ mod config;
 mod settings;
 mod spawn;
 mod state;
+mod terminal;
 mod tray;
 mod types;
 mod window;
@@ -72,9 +74,11 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             window::show_settings_window(app);
         }))
+        .plugin(tauri_plugin_clipboard_manager::init())
         .manage(AppState {
             store: Mutex::new(store),
             app_data_dir: Mutex::new(early_log_dir.clone()),
+            sessions: Mutex::new(HashMap::new()),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -131,6 +135,10 @@ pub fn run() {
             commands::toggle_settings_window,
             commands::show_settings_window_cmd,
             commands::rebuild_tray_menu,
+            commands::terminal_create_session,
+            commands::terminal_write,
+            commands::terminal_resize,
+            commands::terminal_close_session,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
