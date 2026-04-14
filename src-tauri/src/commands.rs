@@ -1,9 +1,9 @@
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 
 use crate::config;
 use crate::settings;
-use crate::spawn;
 use crate::state::AppState;
+use crate::terminal;
 use crate::tray;
 use crate::types::{ProfileConfig, ProfilesStore, ProviderConfig};
 use crate::window;
@@ -75,7 +75,7 @@ pub fn use_profile(
     config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
 
     // 4. Rebuild tray menu to sync checkmark
-    tray::rebuild_menu(&app, &app_data_dir);
+    tray::rebuild_menu(&app);
 
     Ok(())
 }
@@ -106,45 +106,6 @@ pub fn save_profiles(
     };
     let app_data_dir = state.app_data_dir.lock().unwrap();
     config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-/// Launch Claude in a directory with the given profile.
-#[tauri::command]
-pub fn launch_claude(
-    directory: String,
-    profile_id: String,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    let (profile, active_id) = {
-        let store = state.store.lock().map_err(|e| e.to_string())?;
-        let profile = store
-            .profiles
-            .iter()
-            .find(|p| p.id == profile_id)
-            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
-            .clone();
-        (profile, store.active_profile_id.clone())
-    };
-
-    let dir = std::path::PathBuf::from(&directory);
-    // Early return: only record directory if spawn succeeds.
-    spawn::launch_claude_in_directory(&profile, &dir).map_err(|e| e.to_string())?;
-
-    // Record recent directory — use &*store (not &mut store) to avoid
-    // mutating in-memory state before persistence.
-    {
-        let mut store = state.store.lock().map_err(|e| e.to_string())?;
-        let entries = store
-            .recent_directories
-            .entry(active_id)
-            .or_insert_with(Vec::new);
-        entries.retain(|d| d != &directory);
-        entries.insert(0, directory.clone());
-        entries.truncate(10);
-        let app_data_dir = state.app_data_dir.lock().unwrap();
-        config::save_config(&app_data_dir, &store).map_err(|e| e.to_string())?;
-    }
     Ok(())
 }
 
@@ -196,41 +157,112 @@ pub fn switch_locale(
     Ok(())
 }
 
-/// Check if claude is on PATH.
-#[tauri::command]
-pub fn check_claude_on_path() -> bool {
-    spawn::check_claude_on_path()
-}
-
 /// Toggle the settings window (show if hidden, hide if shown).
 #[tauri::command]
 pub fn toggle_settings_window(app: AppHandle) {
-    window::toggle_settings_window(&app);
+    let app_clone = app.clone();
+    tauri::async_runtime::spawn(async move {
+        window::show_settings_window(&app_clone);
+    });
 }
 
-/// Show the settings window.
+/// Open the terminal window and auto-create a session with the active profile
+/// and most recent directory.
 #[tauri::command]
-pub fn show_settings_window_cmd(app: AppHandle) {
-    window::show_settings_window(&app);
-}
-
-/// Rebuild the tray menu with translated strings from the frontend i18n system.
-#[tauri::command]
-pub fn rebuild_tray_menu(
+pub fn launch_terminal(
+    state: State<'_, AppState>,
     app: AppHandle,
-    settings_label: String,
-    lang_en_label: String,
-    lang_zh_label: String,
-    quit_label: String,
+) -> Result<terminal::CreateSessionResult, String> {
+    let (profile, directory) = {
+        let store = state.store.lock().map_err(|e| e.to_string())?;
+        let profile = store
+            .profiles
+            .iter()
+            .find(|p| p.id == store.active_profile_id)
+            .ok_or_else(|| "No active profile".to_string())?
+            .clone();
+        let recent = store
+            .recent_directories
+            .first()
+            .cloned()
+            .unwrap_or_else(|| std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default());
+        (profile, recent)
+    };
+
+    // Show the main (terminal) window
+    window::show_main_window(&app);
+
+    // Create a session in that directory with that profile
+    let dir = if directory.is_empty() {
+        std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+    } else {
+        std::path::PathBuf::from(&directory)
+    };
+    terminal::create_session(&profile, &dir, app)
+}
+
+/// Create a new terminal session.
+#[tauri::command]
+pub fn terminal_create_session(
+    profile_id: String,
+    directory: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<terminal::CreateSessionResult, String> {
+    let profile = {
+        let store = state.store.lock().map_err(|e| e.to_string())?;
+        store
+            .profiles
+            .iter()
+            .find(|p| p.id == profile_id)
+            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
+            .clone()
+    };
+    let dir = if directory.is_empty() {
+        std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+    } else {
+        std::path::PathBuf::from(&directory)
+    };
+    terminal::create_session(&profile, &dir, app)
+}
+
+/// Write keystrokes to a terminal session.
+#[tauri::command]
+pub fn terminal_write(
+    session_id: String,
+    data: String,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let app_data_dir = app.state::<AppState>().app_data_dir.lock().unwrap().clone();
-    tray::rebuild_menu_with_strings(
-        &app,
-        &app_data_dir,
-        &settings_label,
-        &lang_en_label,
-        &lang_zh_label,
-        &quit_label,
-    );
-    Ok(())
+    terminal::write_to_session(&session_id, &data, &state)
+}
+
+/// Resize a terminal session.
+#[tauri::command]
+pub fn terminal_resize(
+    session_id: String,
+    cols: u16,
+    rows: u16,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    terminal::resize_session(&session_id, cols, rows, &state)
+}
+
+/// Close a terminal session.
+#[tauri::command]
+pub fn terminal_close_session(
+    session_id: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    terminal::close_session(&session_id, &state)
+}
+
+/// List all active terminal sessions.
+#[tauri::command]
+pub fn terminal_list_sessions(
+    state: State<'_, AppState>,
+) -> Result<Vec<terminal::SessionInfo>, String> {
+    Ok(terminal::list_sessions(&state)
+        .into_iter()
+        .map(|(id, name)| terminal::SessionInfo { session_id: id, name })
+        .collect())
 }

@@ -69,7 +69,7 @@ function SortableProfileItem({
         type="button"
         ref={handleRef}
         className="text-muted hover:text-primary cursor-grab touch-none p-0.5"
-        title="Drag to reorder"
+        title={t('profileList.dragToReorder')}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <circle cx="4" cy="3" r="1" fill="currentColor" />

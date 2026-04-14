@@ -27,7 +27,6 @@ interface Props {
   onSave: (profile: ProfileConfig) => void;
   onDelete: (id: string) => Promise<boolean>;
   onDuplicate: (profile: ProfileConfig) => void;
-  onLaunch: () => void;
   onUse: (id: string) => void;
 }
 
@@ -68,7 +67,6 @@ export function ProfileEditor({
   onSave,
   onDelete,
   onDuplicate,
-  onLaunch,
   onUse,
 }: Props) {
   const { t } = useTranslation();
@@ -222,13 +220,6 @@ export function ProfileEditor({
 
       {/* Footer actions */}
       <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
-        <Button
-          onClick={onLaunch}
-          className="text-app"
-          style={{ backgroundColor: profile.icon_color }}
-        >
-          {t('profileEditor.launchClaude')}
-        </Button>
         {/* Use / In Use button */}
         {profile.id === activeId ? (
           <Button variant="secondary" disabled>

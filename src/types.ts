@@ -27,7 +27,7 @@ export interface ProfileConfig {
   provider_id?: string;
 }
 
-export type RecentDirectories = Record<string, string[]>;
+export type RecentDirectories = string[];
 
 export interface ProfilesStore {
   active_profile_id: string;

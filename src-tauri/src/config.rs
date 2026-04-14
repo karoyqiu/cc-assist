@@ -172,7 +172,7 @@ mod tests {
                     "is_built_in": true
                 }
             ],
-            "recent_directories": {},
+            "recent_directories": [],
             "locale": "en"
         });
         std::fs::write(&path, old_json.to_string()).unwrap();
@@ -201,7 +201,7 @@ mod tests {
                     "models": {}
                 }
             ],
-            "recent_directories": {},
+            "recent_directories": [],
             "locale": "en"
         });
         std::fs::write(&path, old_json.to_string()).unwrap();
@@ -229,7 +229,7 @@ mod tests {
                     "models": {}
                 }
             ],
-            "recent_directories": {},
+            "recent_directories": [],
             "locale": "en"
         });
         std::fs::write(&path, old_json.to_string()).unwrap();

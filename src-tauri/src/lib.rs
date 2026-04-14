@@ -1,11 +1,12 @@
+use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
 
 mod commands;
 mod config;
 mod settings;
-mod spawn;
 mod state;
+mod terminal;
 mod tray;
 mod types;
 mod window;
@@ -68,13 +69,19 @@ pub fn run() {
     // Create builder with default store — will be replaced in setup with proper config
     let store = default_store();
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            window::show_settings_window(app);
-        }))
+    let mut builder = tauri::Builder::default();
+    #[cfg(not(debug_assertions))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            window::show_main_window(app);
+        }));
+    }
+    builder = builder.plugin(tauri_plugin_clipboard_manager::init());
+    builder
         .manage(AppState {
             store: Mutex::new(store),
             app_data_dir: Mutex::new(early_log_dir.clone()),
+            sessions: Mutex::new(HashMap::new()),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -124,13 +131,15 @@ pub fn run() {
             commands::set_active_profile,
             commands::use_profile,
             commands::save_profiles,
-            commands::launch_claude,
             commands::pick_directory,
             commands::set_locale,
-            commands::check_claude_on_path,
             commands::toggle_settings_window,
-            commands::show_settings_window_cmd,
-            commands::rebuild_tray_menu,
+            commands::terminal_create_session,
+            commands::launch_terminal,
+            commands::terminal_write,
+            commands::terminal_resize,
+            commands::terminal_close_session,
+            commands::terminal_list_sessions,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
