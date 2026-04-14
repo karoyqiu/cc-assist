@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
-use std::sync::{mpsc, Mutex};
+use std::sync::mpsc;
+use std::sync::{Arc, Mutex};
 
 use crate::types::ProfilesStore;
 
-/// Messages sent to a PTY session worker thread.
+/// Messages sent to the command thread.
 #[derive(Debug)]
 pub enum PtyCommand {
     Write(String),
@@ -12,11 +13,14 @@ pub enum PtyCommand {
     Close,
 }
 
-/// A running PTY session: just a command sender.
-/// The worker thread is self-managing; we signal Close and it exits.
+/// A running PTY session.
+/// `cmd_sender` sends commands to a dedicated command thread.
+/// `output` is a shared buffer filled by the reader thread.
 #[derive(Clone)]
 pub struct SessionHandle {
+    pub name: String,
     pub cmd_sender: mpsc::Sender<PtyCommand>,
+    pub output: Arc<Mutex<VecDeque<String>>>,
 }
 
 /// AppState — shared across all Tauri commands.

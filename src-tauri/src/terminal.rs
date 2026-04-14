@@ -1,30 +1,33 @@
-//! PTY session management using background threads + channels.
-//! Each session runs in its own std::thread, communicating via mpsc.
+//! PTY session management using two threads per session:
+//! - Reader thread: reads PTY output into a shared buffer (polled by frontend)
+//! - Command thread: handles Write / Resize / Close via mpsc channel
 
+use std::collections::VecDeque;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::mpsc;
+use std::sync::Arc;
 use std::thread;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 use uuid::Uuid;
 
 use crate::settings;
 use crate::state::{AppState, PtyCommand, SessionHandle};
 use crate::types::ProfileConfig;
 
-/// Packet sent from PTY worker to frontend via Tauri event.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TerminalPacket {
-    pub session_id: String,
-    pub data: String,
-}
-
 /// Result returned after creating a session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateSessionResult {
+    pub session_id: String,
+    pub name: String,
+}
+
+/// Info about an active session (returned by list command).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionInfo {
     pub session_id: String,
     pub name: String,
 }
@@ -39,7 +42,7 @@ pub fn create_session(
     let profile_name = profile.name.clone();
     let dir = directory.clone();
 
-    // Build temp settings file (same approach as spawn.rs)
+    // Build temp settings file
     cleanup_stale_temp_files();
 
     let mut settings_json =
@@ -62,7 +65,6 @@ pub fn create_session(
     temp_path.keep().map_err(|e| e.to_string())?;
 
     // Create PTY pair
-    log::info!("Creating PTY pair...");
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
@@ -71,113 +73,74 @@ pub fn create_session(
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| {
-            log::error!("openpty failed: {}", e);
-            e.to_string()
-        })?;
-    log::info!("PTY pair created successfully");
+        .map_err(|e| e.to_string())?;
 
     // Spawn claude in the PTY slave
     let mut cmd = CommandBuilder::new("claude");
     cmd.args(["--settings", &temp_path_buf.to_string_lossy()]);
     cmd.cwd(&dir);
 
-    let child = pair.slave.spawn_command(cmd).map_err(|e| {
-        log::error!("spawn_command failed: {}", e);
-        e.to_string()
-    })?;
-    log::info!("claude spawned successfully");
+    let mut child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
     drop(pair.slave);
 
     let master = pair.master;
     let mut reader = master.try_clone_reader().map_err(|e| e.to_string())?;
     let mut writer = master.take_writer().map_err(|e| e.to_string())?;
 
+    // Shared output buffer
+    let output: Arc<std::sync::Mutex<VecDeque<String>>> =
+        Arc::new(std::sync::Mutex::new(VecDeque::<String>::new()));
+    let output_reader = output.clone();
+
+    // Command channel
     let (cmd_tx, cmd_rx) = mpsc::channel::<PtyCommand>();
-    let session_id_clone = session_id.clone();
-    let app_clone = app.clone();
-    let temp_path_clone = temp_path_buf.clone();
-    let mut child = child;
-    let master = master;
+    let temp_path_cmd = temp_path_buf.clone();
 
-    // Spawn worker thread
-    log::info!("About to spawn worker thread...");
+    // Command thread — handles Write, Resize, Close
     thread::spawn(move || {
-        let cmd_rx = cmd_rx;
-        let mut buf = [0u8; 4096];
-        log::info!("Worker thread started for session {}", session_id_clone);
-
         loop {
-            // Check for commands first (non-blocking)
-            while let Ok(cmd) = cmd_rx.try_recv() {
-                match cmd {
-                    PtyCommand::Write(data) => {
-                        log::info!("Write command received, {} bytes", data.len());
-                        let _ = writer.write_all(data.as_bytes());
-                    }
-                    PtyCommand::Resize(cols, rows) => {
-                        log::info!("Resize command: {}x{}", cols, rows);
-                        let _ = master.resize(PtySize {
-                            rows,
-                            cols,
-                            pixel_width: 0,
-                            pixel_height: 0,
-                        });
-                    }
-                    PtyCommand::Close => {
-                        log::info!("Close command received");
-                        let _ = child.kill();
-                        drop(writer);
-                        drop(reader);
-                        let _ = std::fs::remove_file(&temp_path_clone);
-                        return;
-                    }
+            match cmd_rx.recv() {
+                Ok(PtyCommand::Write(data)) => {
+                    let _ = writer.write_all(data.as_bytes());
                 }
-            }
-
-            // Read from PTY reader (with timeout to allow command checking)
-            match reader.read(&mut buf) {
-                Ok(0) => {
-                    // EOF — PTY closed
-                    log::info!("PTY EOF, worker thread exiting");
-                    break;
+                Ok(PtyCommand::Resize(cols, rows)) => {
+                    let _ = master.resize(PtySize {
+                        rows,
+                        cols,
+                        pixel_width: 0,
+                        pixel_height: 0,
+                    });
                 }
-                Ok(n) => {
-                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    log::info!("PTY read {} bytes: {:?}", n, &data[..data.len().min(100)]);
-                    let packet = TerminalPacket {
-                        session_id: session_id_clone.clone(),
-                        data,
-                    };
-                    if app_clone.emit("terminal-output", packet).is_err() {
-                        log::info!("Emit failed, worker thread exiting");
-                        break;
-                    }
-                }
-                Err(_) => {
-                    // Would-block or other error — continue loop
-                    thread::sleep(std::time::Duration::from_millis(10));
+                Ok(PtyCommand::Close) | Err(_) => {
+                    let _ = child.kill();
+                    let _ = std::fs::remove_file(&temp_path_cmd);
+                    return;
                 }
             }
         }
-
-        // Clean up
-        drop(child);
-        drop(writer);
-        drop(reader);
-        let _ = std::fs::remove_file(&temp_path_clone);
     });
 
-    // Register session in AppState
-    let state = app.state::<AppState>();
-    let mut sessions = state.sessions.lock().map_err(|e| e.to_string())?;
-    sessions.insert(
-        session_id.clone(),
-        SessionHandle {
-            cmd_sender: cmd_tx,
-        },
-    );
-    log::info!("Session registered: {}", session_id);
+    let temp_path_reader = temp_path_buf;
+
+    // Reader thread — reads PTY output into shared buffer
+    thread::spawn(move || {
+        let mut buf = [0u8; 8192];
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                    if let Ok(mut out) = output_reader.lock() {
+                        out.push_back(data);
+                    }
+                }
+                Err(_) => {
+                    thread::sleep(std::time::Duration::from_millis(5));
+                }
+            }
+        }
+        let _ = std::fs::remove_file(&temp_path_reader);
+    });
 
     // Session name
     let name = if dir.file_name().is_some() {
@@ -190,10 +153,42 @@ pub fn create_session(
         format!("{} ({})", dir.display(), profile_name)
     };
 
+    // Register session
+    let state = app.state::<AppState>();
+    let mut sessions = state.sessions.lock().map_err(|e| e.to_string())?;
+    sessions.insert(
+        session_id.clone(),
+        SessionHandle {
+            name: name.clone(),
+            cmd_sender: cmd_tx,
+            output,
+        },
+    );
+
     Ok(CreateSessionResult { session_id, name })
 }
 
-/// Write data to a PTY session.
+/// List all active terminal sessions.
+pub fn list_sessions(state: &AppState) -> Vec<(String, String)> {
+    let sessions = state.sessions.lock().unwrap();
+    sessions
+        .iter()
+        .map(|(id, handle)| (id.clone(), handle.name.clone()))
+        .collect()
+}
+
+/// Drain buffered PTY output for a session (polled by frontend).
+pub fn read_output(session_id: &str, state: &AppState) -> Result<String, String> {
+    let sessions = state.sessions.lock().map_err(|e| e.to_string())?;
+    let handle = sessions
+        .get(session_id)
+        .ok_or_else(|| format!("Session not found: {}", session_id))?;
+    let mut buf = handle.output.lock().map_err(|e| e.to_string())?;
+    let data: String = buf.drain(..).collect();
+    Ok(data)
+}
+
+/// Write data to a PTY session (via command thread).
 pub fn write_to_session(session_id: &str, data: &str, state: &AppState) -> Result<(), String> {
     let sessions = state.sessions.lock().map_err(|e| e.to_string())?;
     let handle = sessions
@@ -206,7 +201,7 @@ pub fn write_to_session(session_id: &str, data: &str, state: &AppState) -> Resul
     Ok(())
 }
 
-/// Resize a PTY session.
+/// Resize a PTY session (via command thread).
 pub fn resize_session(
     session_id: &str,
     cols: u16,
@@ -227,20 +222,12 @@ pub fn resize_session(
 /// Close and remove a PTY session.
 pub fn close_session(session_id: &str, state: &AppState) -> Result<(), String> {
     let handle = {
-        let sessions = state.sessions.lock().map_err(|e| e.to_string())?;
+        let mut sessions = state.sessions.lock().map_err(|e| e.to_string())?;
         sessions
-            .get(session_id)
-            .cloned()
+            .remove(session_id)
             .ok_or_else(|| format!("Session not found: {}", session_id))?
     };
-
-    // Signal Close to worker thread (it will kill PTY and exit)
     let _ = handle.cmd_sender.send(PtyCommand::Close);
-
-    // Remove from sessions map immediately
-    let mut sessions = state.sessions.lock().map_err(|e| e.to_string())?;
-    sessions.remove(session_id);
-
     Ok(())
 }
 
@@ -250,8 +237,7 @@ pub fn cleanup_stale_temp_files() {
     let Ok(entries) = std::fs::read_dir(&temp_dir) else {
         return;
     };
-    let cutoff = std::time::SystemTime::now()
-        - std::time::Duration::from_secs(60);
+    let cutoff = std::time::SystemTime::now() - std::time::Duration::from_secs(60);
     for entry in entries.flatten() {
         let name = entry.file_name();
         let name_str = name.to_string_lossy();

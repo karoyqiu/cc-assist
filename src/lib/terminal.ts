@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/core';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
 export interface Session {
   id: string;
@@ -24,7 +23,7 @@ const DEFAULT_FONT: TerminalFontSettings = {
 let sessions: Session[] = [];
 let activeSessionId: string | null = null;
 let fontSettings: TerminalFontSettings = { ...DEFAULT_FONT };
-let outputListener: Promise<UnlistenFn> | null = null;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 let activeWrite: ((data: string) => void) | null = null;
 
 export function setActiveWriteFn(fn: (data: string) => void) {
@@ -62,22 +61,30 @@ export function removeSession(id: string) {
   }
 }
 
-export function initOutputListener() {
-  if (outputListener) return;
-  outputListener = listen<{ session_id: string; data: string }>('terminal-output', (event) => {
-    if (activeWrite && event.payload.session_id === activeSessionId) {
-      activeWrite(event.payload.data);
+/// Start polling PTY output for the active session.
+/// The writeFn callback is called with each chunk of data.
+export function startOutputPolling() {
+  stopOutputPolling();
+  pollInterval = setInterval(async () => {
+    const id = activeSessionId;
+    if (!id || !activeWrite) return;
+    try {
+      const data = await invoke<string>('terminal_read_output', { sessionId: id });
+      if (data) {
+        activeWrite(data);
+      }
+    } catch {
+      // Session might have been closed — ignore
     }
-  });
+  }, 32);
 }
 
-export async function cleanupOutputListener() {
-  if (outputListener) {
-    const unlisten = await outputListener;
-    unlisten();
+/// Stop polling.
+export function stopOutputPolling() {
+  if (pollInterval !== null) {
+    clearInterval(pollInterval);
+    pollInterval = null;
   }
-  outputListener = null;
-  activeWrite = null;
 }
 
 export async function createSession(
@@ -101,6 +108,11 @@ export async function resizeSession(sessionId: string, cols: number, rows: numbe
 
 export async function closeSession(sessionId: string): Promise<void> {
   await invoke('terminal_close_session', { sessionId });
+}
+
+export async function listSessions(): Promise<Session[]> {
+  const result = await invoke<{ session_id: string; name: string }[]>('terminal_list_sessions');
+  return result.map((s) => ({ id: s.session_id, name: s.name }));
 }
 
 export async function launchTerminal(): Promise<void> {

@@ -7,8 +7,8 @@ import type { Session } from '@/lib/terminal';
 import type { ProfileConfig } from '@/types';
 
 import {
-  initOutputListener,
-  cleanupOutputListener,
+  startOutputPolling,
+  stopOutputPolling,
   createSession,
   writeToSession,
   resizeSession,
@@ -20,6 +20,7 @@ import {
   removeSession,
   setActiveWriteFn,
   getFontSettings,
+  listSessions,
 } from '@/lib/terminal';
 
 interface TerminalWindowProps {
@@ -78,23 +79,26 @@ export function TerminalWindow({
     xtermRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    // Set up output writer
+    // Set up output writer — polling calls this with PTY data
     setActiveWriteFn((data: string) => {
       term.write(data);
     });
 
     // Set up input handler — send keystrokes to Rust
+    // Use getActiveSessionId() to read module-level state at call time,
+    // avoiding stale closure over React state.
     term.onData((data) => {
-      if (activeId) {
-        writeToSession(activeId, data).catch(console.error);
+      const id = getActiveSessionId();
+      if (id) {
+        writeToSession(id, data).catch(console.error);
       }
     });
 
-    // Init output listener
-    initOutputListener();
+    // Start polling PTY output
+    startOutputPolling();
 
     return () => {
-      cleanupOutputListener();
+      stopOutputPolling();
       setActiveWriteFn(() => {});
       term.dispose();
       initializedRef.current = false;
@@ -132,10 +136,23 @@ export function TerminalWindow({
     };
   }, [activeId]);
 
-  // Sync sessions on mount
+  // Discover existing sessions from Rust backend on mount.
+  // This handles the case where launch_terminal (tray/settings) created
+  // a session before the terminal window's frontend loaded.
   useEffect(() => {
-    syncSessions();
-  }, [syncSessions]);
+    listSessions()
+      .then((existing) => {
+        for (const s of existing) {
+          addSession(s);
+        }
+        // Set the first discovered session as active
+        if (existing.length > 0 && !getActiveSessionId()) {
+          setActiveSessionId(existing[0].id);
+        }
+        syncSessions();
+      })
+      .catch(console.error);
+  }, [syncSessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clear xterm when active session changes
   useEffect(() => {

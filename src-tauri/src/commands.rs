@@ -349,3 +349,23 @@ pub fn terminal_close_session(
 ) -> Result<(), String> {
     terminal::close_session(&session_id, &state)
 }
+
+/// List all active terminal sessions.
+#[tauri::command]
+pub fn terminal_list_sessions(
+    state: State<'_, AppState>,
+) -> Result<Vec<terminal::SessionInfo>, String> {
+    Ok(terminal::list_sessions(&state)
+        .into_iter()
+        .map(|(id, name)| terminal::SessionInfo { session_id: id, name })
+        .collect())
+}
+
+/// Drain buffered PTY output for a session (polled by frontend).
+#[tauri::command]
+pub fn terminal_read_output(
+    session_id: String,
+    state: State<'_, AppState>,
+) -> Result<String, String> {
+    terminal::read_output(&session_id, &state)
+}
