@@ -74,7 +74,7 @@ pub fn run() {
     #[cfg(not(debug_assertions))]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            window::show_settings_window(app);
+            window::show_main_window(app);
         }));
     }
     builder = builder.plugin(tauri_plugin_clipboard_manager::init());
@@ -138,7 +138,7 @@ pub fn run() {
             commands::check_claude_on_path,
             commands::ping,
             commands::toggle_settings_window,
-            commands::show_settings_window_cmd,
+            commands::show_main_window_cmd,
             commands::rebuild_tray_menu,
             commands::terminal_create_session,
             commands::launch_terminal,

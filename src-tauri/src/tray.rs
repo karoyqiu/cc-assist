@@ -46,7 +46,7 @@ pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::err
                 ..
             } = event
             {
-                window::toggle_settings_window(tray.app_handle());
+                window::toggle_main_window(tray.app_handle());
             }
         })
         .build(app)?;
@@ -292,7 +292,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             window::show_settings_window(app);
         }
         ID_OPEN_TERMINAL => {
-            window::show_terminal_window(app);
+            window::show_main_window(app);
         }
         ID_LANG_EN => {
             let app_clone = app.clone();

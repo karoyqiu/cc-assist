@@ -215,14 +215,14 @@ pub fn ping() -> String {
 pub fn toggle_settings_window(app: AppHandle) {
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
-        window::toggle_settings_window(&app_clone);
+        window::show_settings_window(&app_clone);
     });
 }
 
-/// Show the settings window.
+/// Show the main (terminal) window. Called by frontend on first render.
 #[tauri::command]
-pub fn show_settings_window_cmd(app: AppHandle) {
-    window::show_settings_window(&app);
+pub fn show_main_window_cmd(app: AppHandle) {
+    window::show_main_window(&app);
 }
 
 /// Rebuild the tray menu with translated strings from the frontend i18n system.
@@ -272,10 +272,8 @@ pub fn launch_terminal(
         (profile, recent)
     };
 
-    // Open the terminal window
-    log::info!("Opening terminal window...");
-    window::show_terminal_window(&app);
-    log::info!("Terminal window shown");
+    // Show the main (terminal) window
+    window::show_main_window(&app);
 
     // Create a session in that directory with that profile
     let dir = if directory.is_empty() {

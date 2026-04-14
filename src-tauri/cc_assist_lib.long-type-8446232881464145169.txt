@@ -1,5 +1,0 @@
-(std::string::String, std::sync::Arc<std::sync::Mutex<std::boxed::Box<(dyn portable_pty::MasterPty + 'static)>>>)
-hashbrown::raw::RawTable<(std::string::String, std::sync::Arc<std::sync::Mutex<std::boxed::Box<(dyn portable_pty::MasterPty + 'static)>>>)>
-hashbrown::map::HashMap<std::string::String, std::sync::Arc<std::sync::Mutex<std::boxed::Box<(dyn portable_pty::MasterPty + 'static)>>>, std::hash::RandomState>
-std::collections::HashMap<std::string::String, std::sync::Arc<std::sync::Mutex<std::boxed::Box<(dyn portable_pty::MasterPty + 'static)>>>>
-std::sync::Mutex<std::collections::HashMap<std::string::String, std::sync::Arc<std::sync::Mutex<std::boxed::Box<(dyn portable_pty::MasterPty + 'static)>>>>>

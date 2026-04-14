@@ -13,10 +13,7 @@ import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
 import { TerminalWindow } from './components/TerminalWindow';
 
-const isTerminalWindow = getCurrentWindow().label === 'terminal';
-
-// Terminal window renders its own UI directly
-function TerminalWindowApp() {
+export function TerminalWindowApp() {
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [lastDir, setLastDir] = useState('');
 
@@ -26,6 +23,11 @@ function TerminalWindowApp() {
       const dirs = s.recent_directories[s.active_profile_id];
       setLastDir(dirs?.[0] ?? '');
     });
+  }, []);
+
+  // Show window once loaded
+  useEffect(() => {
+    getCurrentWindow().show().catch(console.error);
   }, []);
 
   if (!store) return null;
@@ -43,12 +45,7 @@ function TerminalWindowApp() {
   );
 }
 
-// Main app (settings window)
-function App() {
-  if (isTerminalWindow) {
-    return <TerminalWindowApp />;
-  }
-
+export function SettingsApp() {
   const { i18n, t } = useTranslation();
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
@@ -102,9 +99,8 @@ function App() {
     };
   }, [i18n, setStore]);
 
-  // Show window once the page is ready
   useEffect(() => {
-    invoke('show_settings_window_cmd');
+    getCurrentWindow().show().catch(console.error);
   }, []);
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
@@ -269,5 +265,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
