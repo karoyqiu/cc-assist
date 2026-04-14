@@ -7,8 +7,8 @@ import type { Session } from '@/lib/terminal';
 import type { ProfileConfig } from '@/types';
 
 import {
-  startOutputPolling,
-  stopOutputPolling,
+  startOutputListener,
+  stopOutputListener,
   createSession,
   writeToSession,
   resizeSession,
@@ -79,7 +79,7 @@ export function TerminalWindow({
     xtermRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    // Set up output writer — polling calls this with PTY data
+    // Set up output writer — event listener calls this with PTY data
     setActiveWriteFn((data: string) => {
       term.write(data);
     });
@@ -94,11 +94,11 @@ export function TerminalWindow({
       }
     });
 
-    // Start polling PTY output
-    startOutputPolling();
+    // Start listening for PTY output events
+    startOutputListener();
 
     return () => {
-      stopOutputPolling();
+      stopOutputListener();
       setActiveWriteFn(() => {});
       term.dispose();
       initializedRef.current = false;

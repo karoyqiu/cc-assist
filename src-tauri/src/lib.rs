@@ -146,7 +146,6 @@ pub fn run() {
             commands::terminal_resize,
             commands::terminal_close_session,
             commands::terminal_list_sessions,
-            commands::terminal_read_output,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

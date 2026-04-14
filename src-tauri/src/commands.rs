@@ -360,12 +360,3 @@ pub fn terminal_list_sessions(
         .map(|(id, name)| terminal::SessionInfo { session_id: id, name })
         .collect())
 }
-
-/// Drain buffered PTY output for a session (polled by frontend).
-#[tauri::command]
-pub fn terminal_read_output(
-    session_id: String,
-    state: State<'_, AppState>,
-) -> Result<String, String> {
-    terminal::read_output(&session_id, &state)
-}

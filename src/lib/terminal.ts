@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 export interface Session {
   id: string;
@@ -23,8 +24,8 @@ const DEFAULT_FONT: TerminalFontSettings = {
 let sessions: Session[] = [];
 let activeSessionId: string | null = null;
 let fontSettings: TerminalFontSettings = { ...DEFAULT_FONT };
-let pollInterval: ReturnType<typeof setInterval> | null = null;
 let activeWrite: ((data: string) => void) | null = null;
+let unlisten: UnlistenFn | null = null;
 
 export function setActiveWriteFn(fn: (data: string) => void) {
   activeWrite = fn;
@@ -61,29 +62,39 @@ export function removeSession(id: string) {
   }
 }
 
-/// Start polling PTY output for the active session.
-/// The writeFn callback is called with each chunk of data.
-export function startOutputPolling() {
-  stopOutputPolling();
-  pollInterval = setInterval(async () => {
-    const id = activeSessionId;
-    if (!id || !activeWrite) return;
-    try {
-      const data = await invoke<string>('terminal_read_output', { sessionId: id });
-      if (data) {
-        activeWrite(data);
-      }
-    } catch {
-      // Session might have been closed — ignore
+let listenGen = 0;
+
+/// Start listening for terminal output events from the Rust backend.
+export async function startOutputListener() {
+  // Stop any existing listener
+  if (unlisten) {
+    unlisten();
+    unlisten = null;
+  }
+
+  const myGen = ++listenGen;
+  const fn = await listen<{ session_id: string; data: string }>('terminal-output', (event) => {
+    // Ignore events from stale listeners
+    if (myGen !== listenGen) return;
+    if (event.payload.session_id === activeSessionId && activeWrite) {
+      activeWrite(event.payload.data);
     }
-  }, 32);
+  });
+
+  // If a newer listener was started while we were awaiting, discard this one
+  if (myGen !== listenGen) {
+    fn();
+    return;
+  }
+  unlisten = fn;
 }
 
-/// Stop polling.
-export function stopOutputPolling() {
-  if (pollInterval !== null) {
-    clearInterval(pollInterval);
-    pollInterval = null;
+/// Stop listening for terminal output events.
+export function stopOutputListener() {
+  listenGen++; // invalidate any pending or active listener
+  if (unlisten) {
+    unlisten();
+    unlisten = null;
   }
 }
 

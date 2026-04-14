@@ -1,17 +1,15 @@
 //! PTY session management using two threads per session:
-//! - Reader thread: reads PTY output into a shared buffer (polled by frontend)
+//! - Reader thread: reads PTY output and emits Tauri events
 //! - Command thread: handles Write / Resize / Close via mpsc channel
 
-use std::collections::VecDeque;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::mpsc;
-use std::sync::Arc;
 use std::thread;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
 
 use crate::settings;
@@ -30,6 +28,13 @@ pub struct CreateSessionResult {
 pub struct SessionInfo {
     pub session_id: String,
     pub name: String,
+}
+
+/// Payload emitted with `terminal-output` events.
+#[derive(Debug, Clone, Serialize)]
+pub struct OutputEvent {
+    pub session_id: String,
+    pub data: String,
 }
 
 /// Create a new PTY session for a profile + directory.
@@ -87,11 +92,6 @@ pub fn create_session(
     let mut reader = master.try_clone_reader().map_err(|e| e.to_string())?;
     let mut writer = master.take_writer().map_err(|e| e.to_string())?;
 
-    // Shared output buffer
-    let output: Arc<std::sync::Mutex<VecDeque<String>>> =
-        Arc::new(std::sync::Mutex::new(VecDeque::<String>::new()));
-    let output_reader = output.clone();
-
     // Command channel
     let (cmd_tx, cmd_rx) = mpsc::channel::<PtyCommand>();
     let temp_path_cmd = temp_path_buf.clone();
@@ -121,8 +121,10 @@ pub fn create_session(
     });
 
     let temp_path_reader = temp_path_buf;
+    let sid_for_reader = session_id.clone();
+    let app_for_reader = app.clone();
 
-    // Reader thread — reads PTY output into shared buffer
+    // Reader thread — reads PTY output and emits Tauri events
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
@@ -130,9 +132,11 @@ pub fn create_session(
                 Ok(0) => break,
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    if let Ok(mut out) = output_reader.lock() {
-                        out.push_back(data);
-                    }
+                    let event = OutputEvent {
+                        session_id: sid_for_reader.clone(),
+                        data,
+                    };
+                    let _ = app_for_reader.emit("terminal-output", &event);
                 }
                 Err(_) => {
                     thread::sleep(std::time::Duration::from_millis(5));
@@ -161,7 +165,6 @@ pub fn create_session(
         SessionHandle {
             name: name.clone(),
             cmd_sender: cmd_tx,
-            output,
         },
     );
 
@@ -175,17 +178,6 @@ pub fn list_sessions(state: &AppState) -> Vec<(String, String)> {
         .iter()
         .map(|(id, handle)| (id.clone(), handle.name.clone()))
         .collect()
-}
-
-/// Drain buffered PTY output for a session (polled by frontend).
-pub fn read_output(session_id: &str, state: &AppState) -> Result<String, String> {
-    let sessions = state.sessions.lock().map_err(|e| e.to_string())?;
-    let handle = sessions
-        .get(session_id)
-        .ok_or_else(|| format!("Session not found: {}", session_id))?;
-    let mut buf = handle.output.lock().map_err(|e| e.to_string())?;
-    let data: String = buf.drain(..).collect();
-    Ok(data)
 }
 
 /// Write data to a PTY session (via command thread).
