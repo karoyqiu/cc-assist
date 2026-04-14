@@ -8,22 +8,31 @@ import './lib/i18n';
 import type { ProfileConfig, ProfilesStore, ProviderConfig } from './types';
 
 import './App.css';
-import { DirectoryPicker } from './components/DirectoryPicker';
 import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
 import { TerminalWindow } from './components/TerminalWindow';
 
 export function TerminalWindowApp() {
+  const { i18n } = useTranslation();
   const [store, setStore] = useState<ProfilesStore | null>(null);
-  const [lastDir, setLastDir] = useState('');
 
   useEffect(() => {
     invoke<ProfilesStore>('get_config').then((s) => {
       setStore(s);
-      const dirs = s.recent_directories[s.active_profile_id];
-      setLastDir(dirs?.[0] ?? '');
+      return i18n.changeLanguage(s.locale);
     });
-  }, []);
+  }, [i18n]);
+
+  // Listen for locale-changed events from tray menu
+  useEffect(() => {
+    const unlisten = listen<string>('locale-changed', async (event) => {
+      await i18n.changeLanguage(event.payload);
+      setStore((s) => (s ? { ...s, locale: event.payload } : s));
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [i18n]);
 
   // Show window once loaded
   useEffect(() => {
@@ -39,7 +48,7 @@ export function TerminalWindowApp() {
       profiles={store.profiles}
       activeProfileId={store.active_profile_id}
       activeProfileColor={profile?.icon_color ?? '#D4915D'}
-      lastDirectory={lastDir}
+      recentDirectories={store.recent_directories}
       onOpenSettings={() => invoke('toggle_settings_window')}
     />
   );
@@ -50,7 +59,6 @@ export function SettingsApp() {
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initialized = useRef(false);
 
@@ -66,15 +74,6 @@ export function SettingsApp() {
         }
         return i18n.changeLanguage(s.locale);
       })
-      .then(() => {
-        // Sync tray strings after language is confirmed changed
-        return invoke('rebuild_tray_menu', {
-          settingsLabel: i18n.t('tray.settings'),
-          langEnLabel: i18n.t('languages.en'),
-          langZhLabel: i18n.t('languages.zh'),
-          quitLabel: i18n.t('tray.quit'),
-        });
-      })
       .catch((e) => {
         console.error('get_config failed:', e);
         setError(i18n.t('errors.loadConfigFailed'));
@@ -86,13 +85,6 @@ export function SettingsApp() {
     const unlisten = listen<string>('locale-changed', async (event) => {
       await i18n.changeLanguage(event.payload);
       setStore((s) => (s ? { ...s, locale: event.payload } : s));
-      // Rebuild tray menu with new translated strings
-      await invoke('rebuild_tray_menu', {
-        settingsLabel: i18n.t('tray.settings'),
-        langEnLabel: i18n.t('languages.en'),
-        langZhLabel: i18n.t('languages.zh'),
-        quitLabel: i18n.t('tray.quit'),
-      });
     });
     return () => {
       unlisten.then((fn) => fn());
@@ -104,8 +96,6 @@ export function SettingsApp() {
   }, []);
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
-
-  const recentDirs = store?.recent_directories[store.active_profile_id] ?? [];
 
   async function handleSaveProfiles(profiles: ProfileConfig[]): Promise<boolean> {
     try {
@@ -144,7 +134,7 @@ export function SettingsApp() {
         }
       : {
           id: crypto.randomUUID(),
-          name: 'New Profile',
+          name: t('profileEditor.newProfileName'),
           icon: 'custom',
           icon_color: '#737373',
           base_url: '',
@@ -162,7 +152,7 @@ export function SettingsApp() {
     const copy: ProfileConfig = {
       ...profile,
       id: crypto.randomUUID(),
-      name: `Copy of ${profile.name}`,
+      name: t('profileEditor.copyOfName', { name: profile.name }),
       models: { ...profile.models },
       provider_id: undefined,
     };
@@ -198,17 +188,6 @@ export function SettingsApp() {
       setStore((s) => (s ? { ...s, active_profile_id: id } : s));
     } catch (e: unknown) {
       console.error('use_profile failed:', e);
-    }
-  }
-
-  async function handleLaunch() {
-    setShowDirectoryPicker(false);
-    try {
-      await import('@/lib/terminal').then(({ launchTerminal }) => launchTerminal());
-    } catch (e: unknown) {
-      console.error('launch_terminal failed:', e);
-      setError(e instanceof Error ? e.message : String(e));
-      setTimeout(() => setError(null), 5000);
     }
   }
 
@@ -249,19 +228,8 @@ export function SettingsApp() {
         onSave={handleSaveProfile}
         onDelete={handleDeleteProfile}
         onDuplicate={handleDuplicateProfile}
-        onLaunch={() => setShowDirectoryPicker(true)}
         onUse={handleUseProfile}
       />
-
-      {/* Directory picker modal */}
-      {showDirectoryPicker && (
-        <DirectoryPicker
-          recentDirectories={recentDirs}
-          accentColor={selectedProfile?.icon_color ?? '#D4915D'}
-          onLaunch={handleLaunch}
-          onCancel={() => setShowDirectoryPicker(false)}
-        />
-      )}
     </div>
   );
 }

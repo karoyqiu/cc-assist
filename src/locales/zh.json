@@ -4,6 +4,7 @@
   },
   "tray": {
     "settings": "设置",
+    "openTerminal": "打开终端",
     "quit": "退出"
   },
   "profileList": {
@@ -12,7 +13,8 @@
     "emptyState": "暂无配置",
     "chooseProvider": "选择服务商",
     "cancel": "取消",
-    "customProvider": "其他 / 自定义"
+    "customProvider": "其他 / 自定义",
+    "dragToReorder": "拖拽排序"
   },
   "profileEditor": {
     "apiKey": "API 密钥",
@@ -36,7 +38,9 @@
     "deleteConfirmCancel": "取消",
     "deleteConfirmDelete": "删除",
     "deleting": "删除中...",
-    "deleteFailed": "删除配置失败，请重试。"
+    "deleteFailed": "删除配置失败，请重试。",
+    "newProfileName": "新配置",
+    "copyOfName": "{{name}} 的副本"
   },
   "directoryPicker": {
     "title": "启动 Claude",
@@ -67,6 +71,7 @@
   },
   "terminal": {
     "sessions": "会话",
+    "newSession": "新会话",
     "noSessions": "暂无会话",
     "noSessionsHint": "点击 + 开始新会话",
     "selectSession": "选择一个会话开始",

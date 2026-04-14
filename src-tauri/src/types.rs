@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Model configuration — maps to ANTHROPIC_* env vars.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -55,8 +54,8 @@ pub struct ProfileConfig {
     pub provider_id: Option<String>,
 }
 
-/// Recent directories per profile — last 10 per profile, LRU ordering (most recent first).
-pub type RecentDirectories = HashMap<String, Vec<String>>;
+/// Recent directories — global flat list, LRU ordering (most recent first).
+pub type RecentDirectories = Vec<String>;
 
 /// The full application config stored at %APPDATA%/cc-assist/config.json
 #[derive(Serialize, Deserialize, Clone, Debug)]

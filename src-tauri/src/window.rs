@@ -80,7 +80,7 @@ pub fn toggle_main_window<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         match window.is_visible() {
             Ok(true) => {
-                let _ = window.hide();
+                let _ = window.close();
             }
             Ok(false) | Err(_) => {
                 let _ = window.show();

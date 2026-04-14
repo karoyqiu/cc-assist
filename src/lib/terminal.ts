@@ -24,12 +24,16 @@ const DEFAULT_FONT: TerminalFontSettings = {
 let sessions: Session[] = [];
 let activeSessionId: string | null = null;
 let fontSettings: TerminalFontSettings = { ...DEFAULT_FONT };
-let activeWrite: ((data: string) => void) | null = null;
+const sessionWriters = new Map<string, (data: string) => void>();
 let unlisten: UnlistenFn | null = null;
 let exitedSessionId: string | null = null;
 
-export function setActiveWriteFn(fn: (data: string) => void) {
-  activeWrite = fn;
+export function registerSessionWriter(sessionId: string, fn: (data: string) => void) {
+  sessionWriters.set(sessionId, fn);
+}
+
+export function unregisterSessionWriter(sessionId: string) {
+  sessionWriters.delete(sessionId);
 }
 
 export function getFontSettings(): TerminalFontSettings {
@@ -86,8 +90,9 @@ export async function startOutputListener() {
   const fn = await listen<{ session_id: string; data: string }>('terminal-output', (event) => {
     // Ignore events from stale listeners
     if (myGen !== listenGen) return;
-    if (event.payload.session_id === activeSessionId && activeWrite) {
-      activeWrite(event.payload.data);
+    const writer = sessionWriters.get(event.payload.session_id);
+    if (writer) {
+      writer(event.payload.data);
     }
   });
 

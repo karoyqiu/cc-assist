@@ -4,6 +4,7 @@
   },
   "tray": {
     "settings": "Settings",
+    "openTerminal": "Open Terminal",
     "quit": "Quit"
   },
   "profileList": {
@@ -12,7 +13,8 @@
     "emptyState": "No profiles",
     "chooseProvider": "Choose Provider",
     "cancel": "Cancel",
-    "customProvider": "Other / Custom"
+    "customProvider": "Other / Custom",
+    "dragToReorder": "Drag to reorder"
   },
   "profileEditor": {
     "apiKey": "API Key",
@@ -36,7 +38,9 @@
     "deleteConfirmCancel": "Cancel",
     "deleteConfirmDelete": "Delete",
     "deleting": "Deleting...",
-    "deleteFailed": "Failed to delete profile. Please try again."
+    "deleteFailed": "Failed to delete profile. Please try again.",
+    "newProfileName": "New Profile",
+    "copyOfName": "Copy of {{name}}"
   },
   "directoryPicker": {
     "title": "Launch Claude",
@@ -67,6 +71,7 @@
   },
   "terminal": {
     "sessions": "Sessions",
+    "newSession": "New Session",
     "noSessions": "No sessions",
     "noSessionsHint": "Click + to start a new session",
     "selectSession": "Select a session to begin",

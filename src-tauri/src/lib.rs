@@ -5,7 +5,6 @@ use std::sync::Mutex;
 mod commands;
 mod config;
 mod settings;
-mod spawn;
 mod state;
 mod terminal;
 mod tray;
@@ -132,14 +131,9 @@ pub fn run() {
             commands::set_active_profile,
             commands::use_profile,
             commands::save_profiles,
-            commands::launch_claude,
             commands::pick_directory,
             commands::set_locale,
-            commands::check_claude_on_path,
-            commands::ping,
             commands::toggle_settings_window,
-            commands::show_main_window_cmd,
-            commands::rebuild_tray_menu,
             commands::terminal_create_session,
             commands::launch_terminal,
             commands::terminal_write,
