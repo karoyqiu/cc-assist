@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
 
-use portable_pty::{native_pty_system, Child, ChildKiller, CommandBuilder, MasterPty, PtySize};
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
@@ -62,6 +62,7 @@ pub fn create_session(
     temp_path.keep().map_err(|e| e.to_string())?;
 
     // Create PTY pair
+    log::info!("Creating PTY pair...");
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
@@ -70,14 +71,22 @@ pub fn create_session(
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("openpty failed: {}", e);
+            e.to_string()
+        })?;
+    log::info!("PTY pair created successfully");
 
     // Spawn claude in the PTY slave
     let mut cmd = CommandBuilder::new("claude");
     cmd.args(["--settings", &temp_path_buf.to_string_lossy()]);
     cmd.cwd(&dir);
 
-    let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+    let child = pair.slave.spawn_command(cmd).map_err(|e| {
+        log::error!("spawn_command failed: {}", e);
+        e.to_string()
+    })?;
+    log::info!("claude spawned successfully");
     drop(pair.slave);
 
     let master = pair.master;
@@ -92,18 +101,22 @@ pub fn create_session(
     let master = master;
 
     // Spawn worker thread
+    log::info!("About to spawn worker thread...");
     thread::spawn(move || {
-        let mut cmd_rx = cmd_rx;
+        let cmd_rx = cmd_rx;
         let mut buf = [0u8; 4096];
+        log::info!("Worker thread started for session {}", session_id_clone);
 
         loop {
             // Check for commands first (non-blocking)
             while let Ok(cmd) = cmd_rx.try_recv() {
                 match cmd {
                     PtyCommand::Write(data) => {
+                        log::info!("Write command received, {} bytes", data.len());
                         let _ = writer.write_all(data.as_bytes());
                     }
                     PtyCommand::Resize(cols, rows) => {
+                        log::info!("Resize command: {}x{}", cols, rows);
                         let _ = master.resize(PtySize {
                             rows,
                             cols,
@@ -112,6 +125,7 @@ pub fn create_session(
                         });
                     }
                     PtyCommand::Close => {
+                        log::info!("Close command received");
                         let _ = child.kill();
                         drop(writer);
                         drop(reader);
@@ -125,15 +139,18 @@ pub fn create_session(
             match reader.read(&mut buf) {
                 Ok(0) => {
                     // EOF — PTY closed
+                    log::info!("PTY EOF, worker thread exiting");
                     break;
                 }
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                    log::info!("PTY read {} bytes: {:?}", n, &data[..data.len().min(100)]);
                     let packet = TerminalPacket {
                         session_id: session_id_clone.clone(),
                         data,
                     };
                     if app_clone.emit("terminal-output", packet).is_err() {
+                        log::info!("Emit failed, worker thread exiting");
                         break;
                     }
                 }
@@ -160,6 +177,7 @@ pub fn create_session(
             cmd_sender: cmd_tx,
         },
     );
+    log::info!("Session registered: {}", session_id);
 
     // Session name
     let name = if dir.file_name().is_some() {

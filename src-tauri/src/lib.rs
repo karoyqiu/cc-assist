@@ -136,6 +136,7 @@ pub fn run() {
             commands::pick_directory,
             commands::set_locale,
             commands::check_claude_on_path,
+            commands::ping,
             commands::toggle_settings_window,
             commands::show_settings_window_cmd,
             commands::rebuild_tray_menu,

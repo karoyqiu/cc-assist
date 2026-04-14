@@ -203,10 +203,20 @@ pub fn check_claude_on_path() -> bool {
     spawn::check_claude_on_path()
 }
 
+/// Simple ping test.
+#[tauri::command]
+pub fn ping() -> String {
+    log::info!("ping called!");
+    "pong".to_string()
+}
+
 /// Toggle the settings window (show if hidden, hide if shown).
 #[tauri::command]
 pub fn toggle_settings_window(app: AppHandle) {
-    window::toggle_settings_window(&app);
+    let app_clone = app.clone();
+    tauri::async_runtime::spawn(async move {
+        window::toggle_settings_window(&app_clone);
+    });
 }
 
 /// Show the settings window.
@@ -243,8 +253,10 @@ pub fn launch_terminal(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<terminal::CreateSessionResult, String> {
+    log::info!("launch_terminal called");
     let (profile, directory) = {
         let store = state.store.lock().map_err(|e| e.to_string())?;
+        log::info!("Store lock acquired, profiles: {}", store.profiles.len());
         let profile = store
             .profiles
             .iter()
@@ -256,15 +268,25 @@ pub fn launch_terminal(
             .get(&store.active_profile_id)
             .and_then(|dirs| dirs.first().cloned())
             .unwrap_or_else(|| std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default());
+        log::info!("Profile: {}, recent dir: {}", profile.name, recent);
         (profile, recent)
     };
 
     // Open the terminal window
+    log::info!("Opening terminal window...");
     window::show_terminal_window(&app);
+    log::info!("Terminal window shown");
 
     // Create a session in that directory with that profile
-    let dir = std::path::PathBuf::from(&directory);
-    terminal::create_session(&profile, &dir, app)
+    let dir = if directory.is_empty() {
+        std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+    } else {
+        std::path::PathBuf::from(&directory)
+    };
+    log::info!("Creating session in dir: {}", dir.display());
+    let result = terminal::create_session(&profile, &dir, app);
+    log::info!("create_session result: {:?}", result);
+    result
 }
 
 /// Create a new terminal session.
@@ -275,6 +297,11 @@ pub fn terminal_create_session(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<terminal::CreateSessionResult, String> {
+    log::info!(
+        "terminal_create_session called: profile_id={}, directory='{}'",
+        profile_id,
+        directory
+    );
     let profile = {
         let store = state.store.lock().map_err(|e| e.to_string())?;
         store
@@ -284,7 +311,12 @@ pub fn terminal_create_session(
             .ok_or_else(|| format!("Profile not found: {}", profile_id))?
             .clone()
     };
-    let dir = std::path::PathBuf::from(&directory);
+    let dir = if directory.is_empty() {
+        std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+    } else {
+        std::path::PathBuf::from(&directory)
+    };
+    log::info!("Creating session in dir: {}", dir.display());
     terminal::create_session(&profile, &dir, app)
 }
 

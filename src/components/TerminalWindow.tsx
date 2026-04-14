@@ -46,9 +46,6 @@ export function TerminalWindow({
   const initializedRef = useRef(false);
   const [newSessionDir, setNewSessionDir] = useState(lastDirectory);
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
-  const [newSessionProfileName, setNewSessionProfileName] = useState(
-    profiles.find((p) => p.id === activeProfileId)?.name ?? '',
-  );
 
   // Init xterm
   useEffect(() => {
@@ -148,7 +145,7 @@ export function TerminalWindow({
   }, [activeId]);
 
   async function handleNewSession() {
-    if (!newSessionProfileId || !newSessionDir) return;
+    if (!newSessionProfileId) return;
     try {
       const result = await createSession(newSessionProfileId, newSessionDir);
       addSession({ id: result.session_id, name: result.name });
@@ -268,9 +265,7 @@ export function TerminalWindow({
             <select
               value={newSessionProfileId}
               onChange={(e) => {
-                const p = profiles.find((x) => x.id === e.target.value);
                 setNewSessionProfileId(e.target.value);
-                setNewSessionProfileName(p?.name ?? '');
               }}
               className="border-border bg-app text-text flex-1 rounded border px-2 py-1 text-sm"
             >
