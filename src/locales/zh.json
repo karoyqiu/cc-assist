@@ -71,6 +71,7 @@
     "noSessionsHint": "点击 + 开始新会话",
     "selectSession": "选择一个会话开始",
     "closeSession": "关闭会话",
+    "pressAnyKeyToClose": "进程已退出。按任意键关闭会话。",
     "profileId": "配置 ID",
     "directory": "目录",
     "start": "启动",

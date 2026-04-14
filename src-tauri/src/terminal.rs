@@ -1,6 +1,7 @@
 //! PTY session management using two threads per session:
 //! - Reader thread: reads PTY output and emits Tauri events
-//! - Command thread: handles Write / Resize / Close via mpsc channel
+//! - Command thread: handles Write / Resize / Close via mpsc channel,
+//!   detects child process exit via try_wait()
 
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -95,11 +96,13 @@ pub fn create_session(
     // Command channel
     let (cmd_tx, cmd_rx) = mpsc::channel::<PtyCommand>();
     let temp_path_cmd = temp_path_buf.clone();
+    let sid_for_cmd = session_id.clone();
+    let app_for_cmd = app.clone();
 
-    // Command thread — handles Write, Resize, Close
+    // Command thread — handles Write, Resize, Close, and detects child exit
     thread::spawn(move || {
         loop {
-            match cmd_rx.recv() {
+            match cmd_rx.recv_timeout(std::time::Duration::from_secs(1)) {
                 Ok(PtyCommand::Write(data)) => {
                     let _ = writer.write_all(data.as_bytes());
                 }
@@ -111,7 +114,27 @@ pub fn create_session(
                         pixel_height: 0,
                     });
                 }
-                Ok(PtyCommand::Close) | Err(_) => {
+                Ok(PtyCommand::Close) => {
+                    let _ = child.kill();
+                    let _ = std::fs::remove_file(&temp_path_cmd);
+                    return;
+                }
+                Err(mpsc::RecvTimeoutError::Timeout) => {
+                    match child.try_wait() {
+                        Ok(Some(_)) => {
+                            let _ = std::fs::remove_file(&temp_path_cmd);
+                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            return;
+                        }
+                        Ok(None) => {}
+                        Err(_) => {
+                            let _ = std::fs::remove_file(&temp_path_cmd);
+                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            return;
+                        }
+                    }
+                }
+                Err(mpsc::RecvTimeoutError::Disconnected) => {
                     let _ = child.kill();
                     let _ = std::fs::remove_file(&temp_path_cmd);
                     return;
@@ -120,11 +143,11 @@ pub fn create_session(
         }
     });
 
-    let temp_path_reader = temp_path_buf;
     let sid_for_reader = session_id.clone();
     let app_for_reader = app.clone();
 
     // Reader thread — reads PTY output and emits Tauri events
+    // Stops when the pipe closes (command thread drops writer on exit)
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
@@ -138,12 +161,9 @@ pub fn create_session(
                     };
                     let _ = app_for_reader.emit("terminal-output", &event);
                 }
-                Err(_) => {
-                    thread::sleep(std::time::Duration::from_millis(5));
-                }
+                Err(_) => break,
             }
         }
-        let _ = std::fs::remove_file(&temp_path_reader);
     });
 
     // Session name

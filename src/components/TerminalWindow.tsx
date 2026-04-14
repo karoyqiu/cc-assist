@@ -1,7 +1,9 @@
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
+import { listen } from '@tauri-apps/api/event';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import '@xterm/xterm/css/xterm.css';
 import type { Session } from '@/lib/terminal';
 import type { ProfileConfig } from '@/types';
@@ -20,6 +22,8 @@ import {
   removeSession,
   setActiveWriteFn,
   getFontSettings,
+  getExitedSessionId,
+  setExitedSessionId,
   listSessions,
 } from '@/lib/terminal';
 
@@ -47,6 +51,7 @@ export function TerminalWindow({
   const initializedRef = useRef(false);
   const [newSessionDir, setNewSessionDir] = useState(lastDirectory);
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
+  const { t } = useTranslation();
 
   // Init xterm
   useEffect(() => {
@@ -89,16 +94,34 @@ export function TerminalWindow({
     // avoiding stale closure over React state.
     term.onData((data) => {
       const id = getActiveSessionId();
-      if (id) {
-        writeToSession(id, data).catch(console.error);
+      if (!id) return;
+      if (getExitedSessionId() === id) {
+        setExitedSessionId(null);
+        closeSession(id).catch(console.error);
+        removeSession(id);
+        // Sync React state after module-level mutation
+        setSessions(getSessions());
+        setActiveId(getActiveSessionId());
+        return;
       }
+      writeToSession(id, data).catch(console.error);
     });
 
     // Start listening for PTY output events
     startOutputListener();
 
+    // Listen for session exit — show "press any key" prompt
+    const exitUnlisten = listen<string>('session-exited', (event) => {
+      const id = event.payload;
+      setExitedSessionId(id);
+      if (xtermRef.current) {
+        xtermRef.current.write(`\r\n\x1b[90m${t('terminal.pressAnyKeyToClose')}\x1b[0m `);
+      }
+    });
+
     return () => {
       stopOutputListener();
+      exitUnlisten.then((fn) => fn());
       setActiveWriteFn(() => {});
       term.dispose();
       initializedRef.current = false;

@@ -26,6 +26,7 @@ let activeSessionId: string | null = null;
 let fontSettings: TerminalFontSettings = { ...DEFAULT_FONT };
 let activeWrite: ((data: string) => void) | null = null;
 let unlisten: UnlistenFn | null = null;
+let exitedSessionId: string | null = null;
 
 export function setActiveWriteFn(fn: (data: string) => void) {
   activeWrite = fn;
@@ -49,6 +50,15 @@ export function getActiveSessionId(): string | null {
 
 export function setActiveSessionId(id: string | null) {
   activeSessionId = id;
+  exitedSessionId = null;
+}
+
+export function getExitedSessionId(): string | null {
+  return exitedSessionId;
+}
+
+export function setExitedSessionId(id: string | null) {
+  exitedSessionId = id;
 }
 
 export function addSession(session: Session) {
