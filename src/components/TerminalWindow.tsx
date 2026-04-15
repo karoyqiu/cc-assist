@@ -90,6 +90,8 @@ function SortableSession({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    borderLeft:
+      session.id === activeId ? `2px solid ${activeProfileColor}` : '2px solid transparent',
   };
   return (
     <div
@@ -102,16 +104,7 @@ function SortableSession({
       {...attributes}
       {...listeners}
     >
-      <span
-        className="truncate"
-        style={
-          session.id === activeId
-            ? { borderLeft: `2px solid ${activeProfileColor}`, paddingLeft: '6px' }
-            : undefined
-        }
-      >
-        {session.name}
-      </span>
+      <span className="truncate">{session.name}</span>
       <button
         onClick={(e) => onClose(e, session.id)}
         className="text-muted hover:text-text hidden group-hover:block"
