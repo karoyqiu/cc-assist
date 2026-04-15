@@ -237,6 +237,7 @@ pub fn terminal_create_session(
             .clone();
         store.recent_directories.retain(|d| d != &dir_str);
         store.recent_directories.insert(0, dir_str);
+        store.recent_directories.truncate(10);
         let store_to_save = (*store).clone();
         drop(store);
 
