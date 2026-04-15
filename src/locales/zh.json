@@ -81,6 +81,12 @@
     "profileId": "配置 ID",
     "directory": "目录",
     "start": "启动",
-    "cancel": "取消"
+    "cancel": "取消",
+    "tabProfiles": "配置",
+    "tabTerminal": "终端",
+    "fontFamily": "字体",
+    "fontSize": "字号",
+    "fontSizeUnit": "像素",
+    "apply": "应用"
   }
 }

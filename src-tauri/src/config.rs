@@ -71,6 +71,8 @@ fn default_store() -> ProfilesStore {
         profiles: Vec::new(),
         recent_directories: Default::default(),
         locale: "en".to_string(),
+        terminal_font_family: crate::types::default_terminal_font_family(),
+        terminal_font_size: crate::types::default_terminal_font_size(),
     }
 }
 

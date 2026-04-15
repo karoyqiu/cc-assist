@@ -36,4 +36,6 @@ export interface ProfilesStore {
   profiles: ProfileConfig[];
   recent_directories: RecentDirectories;
   locale: string;
+  terminal_font_family: string;
+  terminal_font_size: number;
 }

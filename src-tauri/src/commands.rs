@@ -296,3 +296,25 @@ pub fn terminal_list_sessions(
         .map(|(id, name)| terminal::SessionInfo { session_id: id, name })
         .collect())
 }
+
+/// Save terminal font settings and emit change event.
+#[tauri::command]
+pub fn save_terminal_font_settings(
+    font_family: String,
+    font_size: u16,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    let store_to_save = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        store.terminal_font_family = font_family.clone();
+        store.terminal_font_size = font_size;
+        (*store).clone()
+    };
+    let app_data_dir = state.app_data_dir.lock().unwrap();
+    config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+
+    app.emit("terminal-font-changed", serde_json::json!({ "font_family": font_family, "font_size": font_size }))
+        .map_err(|e| format!("Failed to emit terminal-font-changed: {}", e))?;
+    Ok(())
+}

@@ -39,7 +39,10 @@ import {
   removeSession,
   registerSessionWriter,
   unregisterSessionWriter,
+  registerTerminal,
+  unregisterTerminal,
   getFontSettings,
+  applyFontToAllTerminals,
   getExitedSessionId,
   setExitedSessionId,
   listSessions,
@@ -132,6 +135,7 @@ export function TerminalWindow({
     });
 
     terminalsRef.current.set(sessionId, { terminal: term, fitAddon, container });
+    registerTerminal(sessionId, term);
   }
 
   // Dispose a session's terminal instance
@@ -139,6 +143,7 @@ export function TerminalWindow({
     const st = terminalsRef.current.get(sessionId);
     if (st) {
       unregisterSessionWriter(sessionId);
+      unregisterTerminal(sessionId);
       st.terminal.dispose();
       st.container.remove();
       terminalsRef.current.delete(sessionId);
@@ -177,6 +182,16 @@ export function TerminalWindow({
       }
     });
 
+    const fontUnlisten = listen<{ font_family: string; font_size: number }>(
+      'terminal-font-changed',
+      (event) => {
+        applyFontToAllTerminals({
+          fontFamily: event.payload.font_family,
+          fontSize: event.payload.font_size,
+        });
+      },
+    );
+
     listSessions()
       .then((existing) => {
         for (const s of existing) {
@@ -194,6 +209,7 @@ export function TerminalWindow({
     return () => {
       stopOutputListener();
       exitUnlisten.then((fn) => fn());
+      fontUnlisten.then((fn) => fn());
       for (const st of terminals.values()) {
         st.terminal.dispose();
       }
@@ -380,9 +396,7 @@ export function TerminalWindow({
               <Button variant="outline" onClick={() => setShowNewSession(false)}>
                 {t('terminal.cancel')}
               </Button>
-              <Button onClick={handleNewSession}>
-                {t('terminal.start')}
-              </Button>
+              <Button onClick={handleNewSession}>{t('terminal.start')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

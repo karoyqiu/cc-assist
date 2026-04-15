@@ -69,10 +69,22 @@ pub struct ProfilesStore {
     pub recent_directories: RecentDirectories,
     #[serde(default = "default_locale")]
     pub locale: String,
+    #[serde(default = "default_terminal_font_family")]
+    pub terminal_font_family: String,
+    #[serde(default = "default_terminal_font_size")]
+    pub terminal_font_size: u16,
 }
 
-fn default_locale() -> String {
+pub fn default_locale() -> String {
     "en".to_string()
+}
+
+pub fn default_terminal_font_family() -> String {
+    "Cascadia Code, Fira Code, Consolas, monospace".to_string()
+}
+
+pub fn default_terminal_font_size() -> u16 {
+    14
 }
 
 /// App-wide errors.

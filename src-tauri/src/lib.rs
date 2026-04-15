@@ -20,6 +20,8 @@ fn default_store() -> crate::types::ProfilesStore {
         profiles: Vec::new(),
         recent_directories: Default::default(),
         locale: "en".to_string(),
+        terminal_font_family: crate::types::default_terminal_font_family(),
+        terminal_font_size: crate::types::default_terminal_font_size(),
     }
 }
 
@@ -77,6 +79,7 @@ pub fn run() {
         }));
     }
     builder = builder.plugin(tauri_plugin_clipboard_manager::init());
+    builder = builder.plugin(tauri_plugin_system_fonts::init());
     builder
         .manage(AppState {
             store: Mutex::new(store),
@@ -140,6 +143,7 @@ pub fn run() {
             commands::terminal_resize,
             commands::terminal_close_session,
             commands::terminal_list_sessions,
+            commands::save_terminal_font_settings,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
