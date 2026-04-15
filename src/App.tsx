@@ -34,6 +34,17 @@ export function TerminalWindowApp() {
     };
   }, [i18n]);
 
+  // Listen for profile changes from settings window
+  useEffect(() => {
+    const unlisten = listen('profiles-changed', async () => {
+      const s = await invoke<ProfilesStore>('get_config');
+      setStore(s);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
   // Show window once loaded
   useEffect(() => {
     getCurrentWindow().show().catch(console.error);

@@ -77,6 +77,10 @@ pub fn use_profile(
     // 4. Rebuild tray menu to sync checkmark
     tray::rebuild_menu(&app);
 
+    // 5. Notify other windows
+    app.emit("profiles-changed", ())
+        .map_err(|e| format!("Failed to emit profiles-changed: {}", e))?;
+
     Ok(())
 }
 
@@ -85,6 +89,7 @@ pub fn use_profile(
 pub fn save_profiles(
     profiles: Vec<ProfileConfig>,
     state: State<'_, AppState>,
+    app: AppHandle,
 ) -> Result<(), String> {
     // Clone and modify, then persist — avoids mutating before confirming save.
     let store_to_save = {
@@ -106,6 +111,11 @@ pub fn save_profiles(
     };
     let app_data_dir = state.app_data_dir.lock().unwrap();
     config::save_config(&app_data_dir, &store_to_save).map_err(|e| e.to_string())?;
+    drop(app_data_dir);
+
+    tray::rebuild_menu(&app);
+    app.emit("profiles-changed", ())
+        .map_err(|e| format!("Failed to emit profiles-changed: {}", e))?;
     Ok(())
 }
 
