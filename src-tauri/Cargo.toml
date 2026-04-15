@@ -1,6 +1,6 @@
 [package]
 name = "cc-assist"
-version = "0.1.0"
+version = "2.0.0"
 description = "CC Assistant"
 authors = ["karoyqiu@gmail.com"]
 edition = "2024"
