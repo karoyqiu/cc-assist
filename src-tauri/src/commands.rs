@@ -219,21 +219,40 @@ pub fn terminal_create_session(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<terminal::CreateSessionResult, String> {
-    let profile = {
-        let store = state.store.lock().map_err(|e| e.to_string())?;
-        store
-            .profiles
-            .iter()
-            .find(|p| p.id == profile_id)
-            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
-            .clone()
-    };
     let dir = if directory.is_empty() {
         std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
     } else {
         std::path::PathBuf::from(&directory)
     };
-    terminal::create_session(&profile, &dir, app)
+    let dir_str = dir.to_string_lossy().to_string();
+
+    // Add to recent directories (LRU: dedupe, push to front) and find profile
+    let profile = {
+        let mut store = state.store.lock().map_err(|e| e.to_string())?;
+        let profile = store
+            .profiles
+            .iter()
+            .find(|p| p.id == profile_id)
+            .ok_or_else(|| format!("Profile not found: {}", profile_id))?
+            .clone();
+        store.recent_directories.retain(|d| d != &dir_str);
+        store.recent_directories.insert(0, dir_str);
+        let store_to_save = (*store).clone();
+        drop(store);
+
+        let app_data_dir = state.app_data_dir.lock().unwrap();
+        if let Err(e) = config::save_config(&app_data_dir, &store_to_save) {
+            log::error!("Failed to persist recent directories: {}", e);
+        }
+        profile
+    };
+
+    let result = terminal::create_session(&profile, &dir, app.clone())?;
+
+    // Refresh recent directories in frontend
+    let _ = app.emit("profiles-changed", ());
+
+    Ok(result)
 }
 
 /// Write keystrokes to a terminal session.
