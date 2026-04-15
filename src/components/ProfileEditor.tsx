@@ -238,11 +238,9 @@ export function ProfileEditor({
             {t('profileEditor.useProfile')}
           </Button>
         )}
-        {!official && (
-          <Button variant="outline" onClick={handleSave} disabled={saved}>
-            {t('profileEditor.saveChanges')}
-          </Button>
-        )}
+        <Button variant="outline" onClick={handleSave} disabled={saved}>
+          {t('profileEditor.saveChanges')}
+        </Button>
       </div>
 
       {/* Delete confirmation dialog */}
