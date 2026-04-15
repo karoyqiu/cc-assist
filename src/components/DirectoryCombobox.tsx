@@ -16,9 +16,7 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const filtered = value
-    ? directories.filter((d) => d.toLowerCase().includes(value.toLowerCase()))
-    : directories;
+  const filtered = directories;
 
   // All items: filtered dirs + browse
   const browseLabel = t('directoryPicker.browse');
