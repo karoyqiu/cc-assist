@@ -81,6 +81,12 @@
     "profileId": "Profile ID",
     "directory": "Directory",
     "start": "Start",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "tabProfiles": "Profiles",
+    "tabTerminal": "Terminal",
+    "fontFamily": "Font Family",
+    "fontSize": "Font Size",
+    "fontSizeUnit": "px",
+    "apply": "Apply"
   }
 }

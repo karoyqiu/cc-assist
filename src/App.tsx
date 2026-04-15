@@ -8,9 +8,14 @@ import './lib/i18n';
 import type { ProfileConfig, ProfilesStore, ProviderConfig } from './types';
 
 import './App.css';
+import { FontCombobox } from './components/FontCombobox';
 import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
 import { TerminalWindow } from './components/TerminalWindow';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
+import { setFontSettings } from './lib/terminal';
 
 export function TerminalWindowApp() {
   const { i18n } = useTranslation();
@@ -19,6 +24,10 @@ export function TerminalWindowApp() {
   useEffect(() => {
     invoke<ProfilesStore>('get_config').then((s) => {
       setStore(s);
+      setFontSettings({
+        fontFamily: s.terminal_font_family,
+        fontSize: s.terminal_font_size,
+      });
       return i18n.changeLanguage(s.locale);
     });
   }, [i18n]);
@@ -70,7 +79,10 @@ export function SettingsApp() {
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'profiles' | 'terminal'>('profiles');
   const [error, setError] = useState<string | null>(null);
+  const [draftFontFamily, setDraftFontFamily] = useState('');
+  const [draftFontSize, setDraftFontSize] = useState(14);
   const initialized = useRef(false);
 
   // Load config and providers on mount
@@ -81,6 +93,8 @@ export function SettingsApp() {
           setStore(s);
           setProviders(p);
           setSelectedId(s.active_profile_id);
+          setDraftFontFamily(s.terminal_font_family);
+          setDraftFontSize(s.terminal_font_size);
           initialized.current = true;
         }
         return i18n.changeLanguage(s.locale);
@@ -202,6 +216,24 @@ export function SettingsApp() {
     }
   }
 
+  async function handleApplyFontSettings() {
+    try {
+      await invoke('save_terminal_font_settings', {
+        fontFamily: draftFontFamily,
+        fontSize: draftFontSize,
+      });
+      setStore((s) =>
+        s ? { ...s, terminal_font_family: draftFontFamily, terminal_font_size: draftFontSize } : s,
+      );
+    } catch (e) {
+      console.error('save_terminal_font_settings failed:', e);
+    }
+  }
+
+  const fontDirty =
+    store &&
+    (draftFontFamily !== store.terminal_font_family || draftFontSize !== store.terminal_font_size);
+
   if (error) {
     return (
       <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-sm font-medium">
@@ -219,28 +251,94 @@ export function SettingsApp() {
   }
 
   return (
-    <div className="bg-app flex h-screen w-screen overflow-hidden">
-      {/* Left: profile list */}
-      <ProfileList
-        profiles={store.profiles}
-        providers={providers}
-        activeId={store.active_profile_id}
-        selectedId={selectedId}
-        onSelect={handleSelectProfile}
-        onAdd={handleAddWithProvider}
-        onReorder={handleReorderProfiles}
-      />
+    <div className="bg-app flex h-screen w-screen flex-col overflow-hidden">
+      {/* Tab bar */}
+      <div className="border-border flex border-b">
+        <button
+          onClick={() => setActiveTab('profiles')}
+          className={`px-4 py-2.5 text-sm ${
+            activeTab === 'profiles'
+              ? 'text-primary border-primary border-b-2'
+              : 'text-muted hover:text-text'
+          }`}
+        >
+          {t('terminal.tabProfiles')}
+        </button>
+        <button
+          onClick={() => setActiveTab('terminal')}
+          className={`px-4 py-2.5 text-sm ${
+            activeTab === 'terminal'
+              ? 'text-primary border-primary border-b-2'
+              : 'text-muted hover:text-text'
+          }`}
+        >
+          {t('terminal.tabTerminal')}
+        </button>
+      </div>
 
-      {/* Right: profile editor */}
-      <ProfileEditor
-        profile={selectedProfile}
-        official={selectedProfile?.provider_id === 'anthropic'}
-        activeId={store.active_profile_id}
-        onSave={handleSaveProfile}
-        onDelete={handleDeleteProfile}
-        onDuplicate={handleDuplicateProfile}
-        onUse={handleUseProfile}
-      />
+      {/* Tab content */}
+      {activeTab === 'profiles' ? (
+        <div className="flex flex-1 overflow-hidden">
+          <ProfileList
+            profiles={store.profiles}
+            providers={providers}
+            activeId={store.active_profile_id}
+            selectedId={selectedId}
+            onSelect={handleSelectProfile}
+            onAdd={handleAddWithProvider}
+            onReorder={handleReorderProfiles}
+          />
+          <ProfileEditor
+            profile={selectedProfile}
+            official={selectedProfile?.provider_id === 'anthropic'}
+            activeId={store.active_profile_id}
+            onSave={handleSaveProfile}
+            onDelete={handleDeleteProfile}
+            onDuplicate={handleDuplicateProfile}
+            onUse={handleUseProfile}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Fields */}
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
+            <div className="flex flex-col gap-1">
+              <Label className="text-muted text-xs uppercase">{t('terminal.fontFamily')}</Label>
+              <FontCombobox
+                value={draftFontFamily}
+                onChange={setDraftFontFamily}
+                placeholder="monospace"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-muted text-xs uppercase">{t('terminal.fontSize')}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={8}
+                  max={72}
+                  value={draftFontSize}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v) && v >= 8 && v <= 72) {
+                      setDraftFontSize(v);
+                    }
+                  }}
+                  className="w-20 text-sm"
+                />
+                <span className="text-muted text-xs">{t('terminal.fontSizeUnit')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer with Apply */}
+          <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
+            <Button onClick={handleApplyFontSettings} disabled={!fontDirty}>
+              {t('terminal.apply')}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,10 @@ export interface TerminalFontSettings {
   fontSize: number;
 }
 
+export interface FontAwareTerminal {
+  options: { fontFamily?: string; fontSize?: number };
+}
+
 const DEFAULT_FONT: TerminalFontSettings = {
   fontFamily: 'Cascadia Code, Fira Code, Consolas, monospace',
   fontSize: 14,
@@ -25,6 +29,7 @@ let sessions: Session[] = [];
 let activeSessionId: string | null = null;
 let fontSettings: TerminalFontSettings = { ...DEFAULT_FONT };
 const sessionWriters = new Map<string, (data: string) => void>();
+const terminalRegistry = new Map<string, FontAwareTerminal>();
 let unlisten: UnlistenFn | null = null;
 let exitedSessionId: string | null = null;
 
@@ -42,6 +47,22 @@ export function getFontSettings(): TerminalFontSettings {
 
 export function setFontSettings(settings: TerminalFontSettings) {
   fontSettings = settings;
+}
+
+export function registerTerminal(sessionId: string, term: FontAwareTerminal) {
+  terminalRegistry.set(sessionId, term);
+}
+
+export function unregisterTerminal(sessionId: string) {
+  terminalRegistry.delete(sessionId);
+}
+
+export function applyFontToAllTerminals(settings: TerminalFontSettings) {
+  fontSettings = settings;
+  for (const term of terminalRegistry.values()) {
+    term.options.fontFamily = settings.fontFamily;
+    term.options.fontSize = settings.fontSize;
+  }
 }
 
 export function getSessions(): Session[] {

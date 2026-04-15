@@ -2,12 +2,11 @@ import { listen } from '@tauri-apps/api/event';
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@xterm/xterm/css/xterm.css';
 import type { Session } from '@/lib/terminal';
-import type { RecentDirectories } from '@/types';
-import type { ProfileConfig } from '@/types';
+import type { ProfileConfig, RecentDirectories } from '@/types';
 
 import { DirectoryCombobox } from '@/components/DirectoryCombobox';
 import { Button } from '@/components/ui/button';
@@ -26,23 +25,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  addSession,
+  applyFontToAllTerminals,
+  closeSession,
+  createSession,
+  getActiveSessionId,
+  getExitedSessionId,
+  getFontSettings,
+  getSessions,
+  listSessions,
+  registerSessionWriter,
+  registerTerminal,
+  removeSession,
+  resizeSession,
+  setActiveSessionId,
+  setExitedSessionId,
   startOutputListener,
   stopOutputListener,
-  createSession,
-  writeToSession,
-  resizeSession,
-  closeSession,
-  getSessions,
-  getActiveSessionId,
-  setActiveSessionId,
-  addSession,
-  removeSession,
-  registerSessionWriter,
   unregisterSessionWriter,
-  getFontSettings,
-  getExitedSessionId,
-  setExitedSessionId,
-  listSessions,
+  unregisterTerminal,
+  writeToSession,
 } from '@/lib/terminal';
 
 interface SessionTerminal {
@@ -132,6 +134,7 @@ export function TerminalWindow({
     });
 
     terminalsRef.current.set(sessionId, { terminal: term, fitAddon, container });
+    registerTerminal(sessionId, term);
   }
 
   // Dispose a session's terminal instance
@@ -139,6 +142,7 @@ export function TerminalWindow({
     const st = terminalsRef.current.get(sessionId);
     if (st) {
       unregisterSessionWriter(sessionId);
+      unregisterTerminal(sessionId);
       st.terminal.dispose();
       st.container.remove();
       terminalsRef.current.delete(sessionId);
@@ -177,6 +181,16 @@ export function TerminalWindow({
       }
     });
 
+    const fontUnlisten = listen<{ font_family: string; font_size: number }>(
+      'terminal-font-changed',
+      (event) => {
+        applyFontToAllTerminals({
+          fontFamily: event.payload.font_family,
+          fontSize: event.payload.font_size,
+        });
+      },
+    );
+
     listSessions()
       .then((existing) => {
         for (const s of existing) {
@@ -194,6 +208,7 @@ export function TerminalWindow({
     return () => {
       stopOutputListener();
       exitUnlisten.then((fn) => fn());
+      fontUnlisten.then((fn) => fn());
       for (const st of terminals.values()) {
         st.terminal.dispose();
       }
@@ -204,7 +219,7 @@ export function TerminalWindow({
   // Show/hide terminals when activeId changes
   useEffect(() => {
     showTerminal(activeId);
-  }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeId]);
 
   // Handle resize
   useEffect(() => {
@@ -380,9 +395,7 @@ export function TerminalWindow({
               <Button variant="outline" onClick={() => setShowNewSession(false)}>
                 {t('terminal.cancel')}
               </Button>
-              <Button onClick={handleNewSession}>
-                {t('terminal.start')}
-              </Button>
+              <Button onClick={handleNewSession}>{t('terminal.start')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

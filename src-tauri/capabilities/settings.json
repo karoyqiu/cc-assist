@@ -8,6 +8,7 @@
   "permissions": [
     "core:event:allow-listen",
     "core:event:allow-unlisten",
-    "core:window:allow-show"
+    "core:window:allow-show",
+    "system-fonts:default"
   ]
 }
