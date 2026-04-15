@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { readText, writeText } from '@tauri-apps/plugin-clipboard';
+import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -136,7 +136,7 @@ export function TerminalWindow({
     term.open(container);
 
     // Right-click paste from system clipboard
-    container.addEventListener('contextmenu', (e) => {
+    term.element?.addEventListener('contextmenu', (e: MouseEvent) => {
       e.preventDefault();
       readText()
         .then((text) => {
