@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { ClipboardAddon } from '@xterm/addon-clipboard';
+import { readText, writeText } from '@tauri-apps/plugin-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -103,10 +103,30 @@ export function TerminalWindow({
     });
 
     const fitAddon = new FitAddon();
-    const clipboardAddon = new ClipboardAddon();
 
     term.loadAddon(fitAddon);
-    term.loadAddon(clipboardAddon);
+
+    // Ctrl+Shift+V to paste, Ctrl+Shift+C to copy
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.ctrlKey && e.shiftKey && e.type === 'keydown') {
+        if (e.key === 'V') {
+          readText()
+            .then((t) => {
+              if (t) term.paste(t);
+            })
+            .catch(console.error);
+          return false;
+        }
+        if (e.key === 'C') {
+          const s = term.getSelection();
+          if (s) {
+            writeText(s).catch(console.error);
+            return false;
+          }
+        }
+      }
+      return true;
+    });
 
     const container = document.createElement('div');
     container.className = 'absolute inset-0 overflow-hidden px-2 py-2';
@@ -114,6 +134,16 @@ export function TerminalWindow({
     panelRef.current.appendChild(container);
 
     term.open(container);
+
+    // Right-click paste from system clipboard
+    container.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      readText()
+        .then((text) => {
+          if (text) term.paste(text);
+        })
+        .catch(console.error);
+    });
 
     // Register output writer — PTY output for this session writes to this terminal
     registerSessionWriter(sessionId, (data: string) => {
