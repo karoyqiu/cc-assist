@@ -25,6 +25,8 @@ export interface ProfileConfig {
   models: ModelConfig;
   /** Provider ID this profile was created from, e.g. "anthropic". None = custom profile. */
   provider_id?: string;
+  /** → HTTPS_PROXY */
+  proxy_url?: string;
 }
 
 export type RecentDirectories = string[];
