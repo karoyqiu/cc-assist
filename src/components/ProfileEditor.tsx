@@ -34,13 +34,13 @@ interface FieldProps {
   label: string;
   value: string;
   onChange?: (v: string) => void;
-  readOnly?: boolean;
+  disabled?: boolean;
   placeholder?: string;
   mono?: boolean;
   password?: boolean;
 }
 
-function Field({ label, value, onChange, readOnly, placeholder, mono, password }: FieldProps) {
+function Field({ label, value, onChange, disabled, placeholder, mono, password }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
       <Label className="text-muted text-xs uppercase">{label}</Label>
@@ -48,12 +48,11 @@ function Field({ label, value, onChange, readOnly, placeholder, mono, password }
         type={password ? 'password' : 'text'}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        readOnly={readOnly}
+        disabled={disabled}
         placeholder={placeholder}
         className={cn(
           'w-full text-sm',
           mono && 'font-mono',
-          readOnly ? 'bg-transparent text-muted border-transparent' : 'text-primary',
         )}
       />
     </div>
@@ -161,7 +160,7 @@ export function ProfileEditor({
           label={t('profileEditor.apiKey')}
           value={draft.api_key}
           onChange={official ? undefined : (v) => update('api_key', v)}
-          readOnly={official}
+          disabled={official}
           placeholder="sk-..."
           mono
           password
@@ -172,7 +171,7 @@ export function ProfileEditor({
           label={t('profileEditor.baseUrl')}
           value={draft.base_url}
           onChange={official ? undefined : (v) => update('base_url', v)}
-          readOnly={official}
+          disabled={official}
           mono
         />
 
@@ -195,7 +194,7 @@ export function ProfileEditor({
               label={t('profileEditor.modelMain')}
               value={draft.models.main ?? ''}
               onChange={official ? undefined : (v) => updateModel('main', v)}
-              readOnly={official}
+              disabled={official}
               mono
               placeholder="claude-sonnet-4-6"
             />
@@ -203,7 +202,7 @@ export function ProfileEditor({
               label={t('profileEditor.modelHaiku')}
               value={draft.models.haiku ?? ''}
               onChange={official ? undefined : (v) => updateModel('haiku', v)}
-              readOnly={official}
+              disabled={official}
               mono
               placeholder="claude-haiku-4-5"
             />
@@ -211,7 +210,7 @@ export function ProfileEditor({
               label={t('profileEditor.modelSonnet')}
               value={draft.models.sonnet ?? ''}
               onChange={official ? undefined : (v) => updateModel('sonnet', v)}
-              readOnly={official}
+              disabled={official}
               mono
               placeholder="claude-sonnet-4-6"
             />
@@ -219,7 +218,7 @@ export function ProfileEditor({
               label={t('profileEditor.modelOpus')}
               value={draft.models.opus ?? ''}
               onChange={official ? undefined : (v) => updateModel('opus', v)}
-              readOnly={official}
+              disabled={official}
               mono
               placeholder="claude-opus-4-6"
             />
