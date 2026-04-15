@@ -189,6 +189,7 @@ export function TerminalWindow({
       if (st) {
         requestAnimationFrame(() => {
           st.fitAddon.fit();
+          st.terminal.focus();
           const dims = st.fitAddon.proposeDimensions();
           if (dims) {
             resizeSession(sessionId, dims.cols, dims.rows).catch(console.error);
