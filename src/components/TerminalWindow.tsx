@@ -294,8 +294,6 @@ export function TerminalWindow({
     }
   }
 
-  const activeSession = sessions.find((s) => s.id === activeId);
-
   return (
     <div className="bg-app flex h-screen w-screen overflow-hidden">
       {/* Sidebar */}
@@ -359,13 +357,6 @@ export function TerminalWindow({
 
       {/* Terminal panel */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Active session header */}
-        {activeSession && (
-          <div className="border-border bg-surface flex h-6 items-center border-b px-3">
-            <span className="text-muted truncate font-mono text-xs">{activeSession.name}</span>
-          </div>
-        )}
-
         {/* New session dialog */}
         <Dialog open={showNewSession} onOpenChange={setShowNewSession}>
           <DialogContent showCloseButton={false} className="sm:max-w-md">
