@@ -40,7 +40,8 @@
     "deleting": "Deleting...",
     "deleteFailed": "Failed to delete profile. Please try again.",
     "newProfileName": "New Profile",
-    "copyOfName": "Copy of {{name}}"
+    "copyOfName": "Copy of {{name}}",
+    "proxyUrl": "Proxy URL"
   },
   "directoryPicker": {
     "title": "Launch Claude",

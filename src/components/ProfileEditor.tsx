@@ -176,6 +176,16 @@ export function ProfileEditor({
           mono
         />
 
+        {/* Proxy URL */}
+        <Field
+          label={t('profileEditor.proxyUrl')}
+          value={draft.proxy_url ?? ''}
+          onChange={official ? undefined : (v) => update('proxy_url', v)}
+          readOnly={official}
+          mono
+          placeholder="http://proxy:8080"
+        />
+
         {/* Models */}
         <div>
           <div className="text-muted mb-2 text-xs font-medium tracking-[0.08em] uppercase">

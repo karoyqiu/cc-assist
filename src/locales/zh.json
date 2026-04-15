@@ -40,7 +40,8 @@
     "deleting": "删除中...",
     "deleteFailed": "删除配置失败，请重试。",
     "newProfileName": "新配置",
-    "copyOfName": "{{name}} 的副本"
+    "copyOfName": "{{name}} 的副本",
+    "proxyUrl": "代理 URL"
   },
   "directoryPicker": {
     "title": "启动 Claude",
