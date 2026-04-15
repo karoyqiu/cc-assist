@@ -63,7 +63,7 @@ export function TerminalWindow({
   const [showNewSession, setShowNewSession] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalsRef = useRef<Map<string, SessionTerminal>>(new Map());
-  const [newSessionDir, setNewSessionDir] = useState(recentDirectories[0] ?? '');
+  const [newSessionDir, setNewSessionDir] = useState('');
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
   const { t } = useTranslation();
 
