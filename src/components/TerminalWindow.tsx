@@ -1,3 +1,19 @@
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { listen } from '@tauri-apps/api/event';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { FitAddon } from '@xterm/addon-fit';
@@ -37,6 +53,7 @@ import {
   registerSessionWriter,
   registerTerminal,
   removeSession,
+  reorderSessions,
   resizeSession,
   setActiveSessionId,
   setExitedSessionId,
@@ -51,6 +68,58 @@ interface SessionTerminal {
   terminal: Terminal;
   fitAddon: FitAddon;
   container: HTMLDivElement;
+}
+
+function SortableSession({
+  session,
+  activeId,
+  activeProfileColor,
+  onSelect,
+  onClose,
+}: {
+  session: Session;
+  activeId: string | null;
+  activeProfileColor: string;
+  onSelect: (id: string) => void;
+  onClose: (e: React.MouseEvent, id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: session.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => onSelect(session.id)}
+      className={`group flex cursor-pointer items-center justify-between px-4 py-5 text-sm ${
+        session.id === activeId ? 'bg-surface' : 'hover:bg-surface'
+      }`}
+      {...attributes}
+      {...listeners}
+    >
+      <span
+        className="truncate"
+        style={
+          session.id === activeId
+            ? { borderLeft: `2px solid ${activeProfileColor}`, paddingLeft: '6px' }
+            : undefined
+        }
+      >
+        {session.name}
+      </span>
+      <button
+        onClick={(e) => onClose(e, session.id)}
+        className="text-muted hover:text-text hidden group-hover:block"
+      >
+        ×
+      </button>
+    </div>
+  );
 }
 
 interface TerminalWindowProps {
@@ -76,6 +145,22 @@ export function TerminalWindow({
   const [newSessionDir, setNewSessionDir] = useState('');
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
   const { t } = useTranslation();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = sessions.findIndex((s) => s.id === active.id);
+    const newIndex = sessions.findIndex((s) => s.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderSessions(oldIndex, newIndex);
+      syncSessions();
+    }
+  }
 
   // Sync sessions state from module
   const syncSessions = useCallback(() => {
@@ -349,29 +434,27 @@ export function TerminalWindow({
               <div className="mt-1 text-xs">{t('terminal.noSessionsHint')}</div>
             </div>
           ) : (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => handleSelectSession(session.id)}
-                className={`group flex cursor-pointer items-center justify-between px-4 py-5 text-sm ${
-                  session.id === activeId ? 'bg-surface' : 'hover:bg-surface'
-                }`}
-                style={
-                  session.id === activeId
-                    ? { borderLeft: `2px solid ${activeProfileColor}` }
-                    : { borderLeft: '2px solid transparent' }
-                }
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sessions.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <span className="truncate">{session.name}</span>
-                <button
-                  onClick={(e) => handleCloseSession(e, session.id)}
-                  className="text-muted hover:text-text hidden group-hover:block"
-                  title={t('terminal.closeSession')}
-                >
-                  ×
-                </button>
-              </div>
-            ))
+                {sessions.map((session) => (
+                  <SortableSession
+                    key={session.id}
+                    session={session}
+                    activeId={activeId}
+                    activeProfileColor={activeProfileColor}
+                    onSelect={handleSelectSession}
+                    onClose={handleCloseSession}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 
