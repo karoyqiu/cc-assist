@@ -10,6 +10,14 @@ import type { RecentDirectories } from '@/types';
 import type { ProfileConfig } from '@/types';
 
 import { DirectoryCombobox } from '@/components/DirectoryCombobox';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -343,42 +351,41 @@ export function TerminalWindow({
           </div>
         )}
 
-        {/* New session form */}
-        {showNewSession && (
-          <div className="border-border bg-surface flex flex-col gap-2 border-b p-3">
-            <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('terminal.profileId')} />
-              </SelectTrigger>
-              <SelectContent>
-                {profiles.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <DirectoryCombobox
-              directories={recentDirectories}
-              value={newSessionDir}
-              onChange={setNewSessionDir}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleNewSession}
-                className="bg-accent rounded px-3 py-1 text-sm text-white hover:opacity-90"
-              >
-                {t('terminal.start')}
-              </button>
-              <button
-                onClick={() => setShowNewSession(false)}
-                className="bg-surface text-muted hover:bg-border hover:text-text rounded px-3 py-1 text-sm"
-              >
-                {t('terminal.cancel')}
-              </button>
+        {/* New session dialog */}
+        <Dialog open={showNewSession} onOpenChange={setShowNewSession}>
+          <DialogContent showCloseButton={false} className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('terminal.newSession')}</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-3">
+              <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('terminal.profileId')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <DirectoryCombobox
+                directories={recentDirectories}
+                value={newSessionDir}
+                onChange={setNewSessionDir}
+              />
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewSession(false)}>
+                {t('terminal.cancel')}
+              </Button>
+              <Button onClick={handleNewSession}>
+                {t('terminal.start')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Terminal container — holds per-session xterm instances */}
         <div
