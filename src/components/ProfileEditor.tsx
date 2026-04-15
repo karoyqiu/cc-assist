@@ -180,8 +180,7 @@ export function ProfileEditor({
         <Field
           label={t('profileEditor.proxyUrl')}
           value={draft.proxy_url ?? ''}
-          onChange={official ? undefined : (v) => update('proxy_url', v)}
-          readOnly={official}
+          onChange={(v) => update('proxy_url', v)}
           mono
           placeholder="http://proxy:8080"
         />
