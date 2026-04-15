@@ -78,6 +78,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .xterm {
+    font-feature-settings:
+      'liga' on,
+      'calt' on;
+  }
 }
 
 @keyframes fadeIn {

@@ -2,12 +2,11 @@ import { listen } from '@tauri-apps/api/event';
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@xterm/xterm/css/xterm.css';
 import type { Session } from '@/lib/terminal';
-import type { RecentDirectories } from '@/types';
-import type { ProfileConfig } from '@/types';
+import type { ProfileConfig, RecentDirectories } from '@/types';
 
 import { DirectoryCombobox } from '@/components/DirectoryCombobox';
 import { Button } from '@/components/ui/button';
@@ -26,26 +25,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  addSession,
+  applyFontToAllTerminals,
+  closeSession,
+  createSession,
+  getActiveSessionId,
+  getExitedSessionId,
+  getFontSettings,
+  getSessions,
+  listSessions,
+  registerSessionWriter,
+  registerTerminal,
+  removeSession,
+  resizeSession,
+  setActiveSessionId,
+  setExitedSessionId,
   startOutputListener,
   stopOutputListener,
-  createSession,
-  writeToSession,
-  resizeSession,
-  closeSession,
-  getSessions,
-  getActiveSessionId,
-  setActiveSessionId,
-  addSession,
-  removeSession,
-  registerSessionWriter,
   unregisterSessionWriter,
-  registerTerminal,
   unregisterTerminal,
-  getFontSettings,
-  applyFontToAllTerminals,
-  getExitedSessionId,
-  setExitedSessionId,
-  listSessions,
+  writeToSession,
 } from '@/lib/terminal';
 
 interface SessionTerminal {
@@ -220,7 +219,7 @@ export function TerminalWindow({
   // Show/hide terminals when activeId changes
   useEffect(() => {
     showTerminal(activeId);
-  }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeId]);
 
   // Handle resize
   useEffect(() => {
