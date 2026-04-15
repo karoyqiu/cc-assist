@@ -52,6 +52,9 @@ pub struct ProfileConfig {
     /// Provider ID this profile was created from, e.g. "anthropic". None = custom profile.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider_id: Option<String>,
+    /// → HTTPS_PROXY
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proxy_url: Option<String>,
 }
 
 /// Recent directories — global flat list, LRU ordering (most recent first).
