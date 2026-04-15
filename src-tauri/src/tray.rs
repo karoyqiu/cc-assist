@@ -56,7 +56,8 @@ pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::err
             .find(|p| p.id == store.active_profile_id)
             .map(|p| p.name.as_str())
             .unwrap_or("cc-assist");
-        format!("cc-assist — {}", name)
+        let suffix = if cfg!(debug_assertions) { " (dev)" } else { "" };
+        format!("cc-assist — {}{}", name, suffix)
     };
 
     let _tray = TrayIconBuilder::with_id("main")
@@ -159,7 +160,8 @@ pub fn rebuild_menu<R: Runtime>(app: &AppHandle<R>) {
         .map(|p| p.name.as_str())
         .unwrap_or("cc-assist");
     if let Some(tray) = app.tray_by_id("main") {
-        let _ = tray.set_tooltip(Some(format!("cc-assist — {}", active_name)));
+        let suffix = if cfg!(debug_assertions) { " (dev)" } else { "" };
+        let _ = tray.set_tooltip(Some(format!("cc-assist — {}{}", active_name, suffix)));
     }
 }
 
