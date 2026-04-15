@@ -66,6 +66,11 @@ pub fn build_env_map(profile: &ProfileConfig) -> BTreeMap<String, String> {
             map.insert("ANTHROPIC_DEFAULT_OPUS_MODEL".to_string(), o.clone());
         }
     }
+    if let Some(ref proxy) = profile.proxy_url {
+        if !proxy.is_empty() {
+            map.insert("HTTPS_PROXY".to_string(), proxy.clone());
+        }
+    }
     map
 }
 
@@ -79,6 +84,7 @@ const MANAGED_ENV_KEYS: &[&str] = &[
     "ANTHROPIC_DEFAULT_HAIKU_MODEL",
     "ANTHROPIC_DEFAULT_SONNET_MODEL",
     "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "HTTPS_PROXY",
 ];
 
 /// Remove all cc-assist-managed ANTHROPIC_* keys from settings["env"].
@@ -154,6 +160,7 @@ mod tests {
             api_key: "".into(),
             models: Default::default(),
             provider_id: None,
+            proxy_url: None,
         };
         let map = build_env_map(&profile);
         assert!(map.is_empty());
@@ -170,6 +177,7 @@ mod tests {
             api_key: "".into(),
             models: Default::default(),
             provider_id: None,
+            proxy_url: None,
         };
         let map = build_env_map(&profile);
         assert_eq!(map.len(), 1);
@@ -192,6 +200,7 @@ mod tests {
                 opus: Some("claude-3-opus".into()),
             },
             provider_id: None,
+            proxy_url: None,
         };
         let map = build_env_map(&profile);
         assert_eq!(map.len(), 6);
@@ -217,6 +226,7 @@ mod tests {
                 opus: None,
             },
             provider_id: None,
+            proxy_url: None,
         };
         let map = build_env_map(&profile);
         // Only base_url + main model
@@ -243,6 +253,7 @@ mod tests {
             api_key: "secret".into(),
             models: Default::default(),
             provider_id: None,
+            proxy_url: None,
         };
 
         merge_profile_into_settings(&profile, &mut settings);
@@ -276,6 +287,7 @@ mod tests {
             api_key: "".into(),
             models: Default::default(),
             provider_id: None,
+            proxy_url: None,
         };
 
         merge_profile_into_settings(&profile, &mut settings);
@@ -328,6 +340,7 @@ mod tests {
             api_key: "".into(),
             models: Default::default(),
             provider_id: None,
+            proxy_url: None,
         };
 
         clear_profile_env_keys(&mut settings);
@@ -385,5 +398,72 @@ mod tests {
             &std::fs::read_to_string(&settings_file).unwrap()
         ).unwrap();
         assert_eq!(content["env"]["ANTHROPIC_MODEL"], "restored");
+    }
+
+    #[test]
+    fn test_build_env_map_with_proxy() {
+        let profile = ProfileConfig {
+            id: "test".into(),
+            name: "Test".into(),
+            icon: "test".into(),
+            icon_color: "#000".into(),
+            base_url: "https://api.example.com".into(),
+            api_key: "secret-key".into(),
+            models: Default::default(),
+            provider_id: None,
+            proxy_url: Some("http://proxy:8080".into()),
+        };
+        let map = build_env_map(&profile);
+        assert_eq!(map.get("HTTPS_PROXY").unwrap(), "http://proxy:8080");
+    }
+
+    #[test]
+    fn test_build_env_map_proxy_empty_string() {
+        let profile = ProfileConfig {
+            id: "test".into(),
+            name: "Test".into(),
+            icon: "test".into(),
+            icon_color: "#000".into(),
+            base_url: "https://api.example.com".into(),
+            api_key: "secret-key".into(),
+            models: Default::default(),
+            provider_id: None,
+            proxy_url: Some("".into()),
+        };
+        let map = build_env_map(&profile);
+        assert!(!map.contains_key("HTTPS_PROXY"));
+    }
+
+    #[test]
+    fn test_build_env_map_proxy_none() {
+        let profile = ProfileConfig {
+            id: "test".into(),
+            name: "Test".into(),
+            icon: "test".into(),
+            icon_color: "#000".into(),
+            base_url: "https://api.example.com".into(),
+            api_key: "secret-key".into(),
+            models: Default::default(),
+            provider_id: None,
+            proxy_url: None,
+        };
+        let map = build_env_map(&profile);
+        assert!(!map.contains_key("HTTPS_PROXY"));
+    }
+
+    #[test]
+    fn test_clear_removes_https_proxy() {
+        let mut settings: Value = serde_json::from_str(r#"{
+            "env": {
+                "HTTPS_PROXY": "http://proxy:8080",
+                "ANTHROPIC_TEMPERATURE": "0.5"
+            }
+        }"#).unwrap();
+
+        clear_profile_env_keys(&mut settings);
+
+        let env = settings.get("env").unwrap().as_object().unwrap();
+        assert!(!env.contains_key("HTTPS_PROXY"));
+        assert_eq!(env.get("ANTHROPIC_TEMPERATURE").unwrap(), "0.5");
     }
 }

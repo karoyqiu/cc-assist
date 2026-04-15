@@ -254,6 +254,7 @@ mod tests {
             api_key: "sk-ant".into(),
             models: Default::default(),
             provider_id: Some("anthropic".into()),
+            proxy_url: None,
         });
         save_config(tmp.path(), &store).unwrap();
 
