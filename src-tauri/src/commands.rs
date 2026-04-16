@@ -293,7 +293,7 @@ pub fn terminal_list_sessions(
 ) -> Result<Vec<terminal::SessionInfo>, String> {
     Ok(terminal::list_sessions(&state)
         .into_iter()
-        .map(|(id, name)| terminal::SessionInfo { session_id: id, name })
+        .map(|(id, name, cwd)| terminal::SessionInfo { session_id: id, name, cwd })
         .collect())
 }
 

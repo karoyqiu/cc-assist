@@ -286,12 +286,34 @@ export function TerminalWindow({
   useEffect(() => {
     startOutputListener();
 
-    const exitUnlisten = listen<string>('session-exited', (event) => {
-      const id = event.payload;
+    const exitUnlisten = listen<{ session_id: string; cwd: string }>('session-exited', (event) => {
+      const { session_id: id, cwd } = event.payload;
       setExitedSessionId(id);
       const st = terminalsRef.current.get(id);
       if (st) {
-        st.terminal.write(`\r\n\x1b[90m${t('terminal.pressAnyKeyToClose')}\x1b[0m `);
+        st.terminal.write(
+          `\r\n\x1b[90m${t('terminal.pressEscToClose')} / ${t('terminal.pressEnterToNewSession')}\x1b[0m `,
+        );
+        st.terminal.onData((data) => {
+          const code = data.charCodeAt(0);
+          if (code === 0x1b) {
+            // ESC
+            setExitedSessionId(null);
+            closeSession(id).catch(console.error);
+            removeSession(id);
+            disposeTerminal(id);
+            syncSessions();
+          } else if (code === 0x0d) {
+            // Enter
+            setExitedSessionId(null);
+            setNewSessionDir(cwd);
+            setShowNewSession(true);
+            closeSession(id).catch(console.error);
+            removeSession(id);
+            disposeTerminal(id);
+            syncSessions();
+          }
+        });
       }
     });
 
@@ -366,7 +388,7 @@ export function TerminalWindow({
     if (!newSessionProfileId) return;
     try {
       const result = await createSession(newSessionProfileId, newSessionDir);
-      addSession({ id: result.session_id, name: result.name });
+      addSession({ id: result.session_id, name: result.name, cwd: result.cwd });
       setActiveSessionId(result.session_id);
       setActiveId(result.session_id);
       setShowNewSession(false);
@@ -476,23 +498,29 @@ export function TerminalWindow({
               <DialogTitle>{t('terminal.newSession')}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-3">
-              <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('terminal.profileId')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {profiles.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <DirectoryCombobox
-                directories={recentDirectories}
-                value={newSessionDir}
-                onChange={setNewSessionDir}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-muted text-xs">{t('terminal.profile')}</label>
+                <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('terminal.profileId')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-muted text-xs">{t('terminal.directory')}</label>
+                <DirectoryCombobox
+                  directories={recentDirectories}
+                  value={newSessionDir}
+                  onChange={setNewSessionDir}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNewSession(false)}>

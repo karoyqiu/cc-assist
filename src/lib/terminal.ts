@@ -5,11 +5,13 @@ export interface Session {
   id: string;
   name: string;
   order: number;
+  cwd: string;
 }
 
 export interface CreateSessionResult {
   session_id: string;
   name: string;
+  cwd: string;
 }
 
 export interface TerminalFontSettings {
@@ -166,8 +168,8 @@ export async function closeSession(sessionId: string): Promise<void> {
 }
 
 export async function listSessions(): Promise<Session[]> {
-  const result = await invoke<{ session_id: string; name: string }[]>('terminal_list_sessions');
-  return result.map((s, i) => ({ id: s.session_id, name: s.name, order: i }));
+  const result = await invoke<{ session_id: string; name: string; cwd: string }[]>('terminal_list_sessions');
+  return result.map((s, i) => ({ id: s.session_id, name: s.name, cwd: s.cwd, order: i }));
 }
 
 export async function launchTerminal(): Promise<void> {

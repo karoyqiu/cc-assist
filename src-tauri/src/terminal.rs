@@ -22,6 +22,7 @@ use crate::types::ProfileConfig;
 pub struct CreateSessionResult {
     pub session_id: String,
     pub name: String,
+    pub cwd: PathBuf,
 }
 
 /// Info about an active session (returned by list command).
@@ -29,6 +30,7 @@ pub struct CreateSessionResult {
 pub struct SessionInfo {
     pub session_id: String,
     pub name: String,
+    pub cwd: PathBuf,
 }
 
 /// Payload emitted with `terminal-output` events.
@@ -36,6 +38,13 @@ pub struct SessionInfo {
 pub struct OutputEvent {
     pub session_id: String,
     pub data: String,
+}
+
+/// Payload emitted when a session exits.
+#[derive(Debug, Clone, Serialize)]
+pub struct SessionExitedEvent {
+    pub session_id: String,
+    pub cwd: PathBuf,
 }
 
 /// Create a new PTY session for a profile + directory.
@@ -100,6 +109,7 @@ pub fn create_session(
     let temp_path_cmd = temp_path_buf.clone();
     let sid_for_cmd = session_id.clone();
     let app_for_cmd = app.clone();
+    let cwd_for_cmd = dir.clone();
 
     // Command thread — handles Write, Resize, Close, and detects child exit
     thread::spawn(move || {
@@ -125,13 +135,15 @@ pub fn create_session(
                     match child.try_wait() {
                         Ok(Some(_)) => {
                             let _ = std::fs::remove_file(&temp_path_cmd);
-                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            let event = SessionExitedEvent { session_id: sid_for_cmd.clone(), cwd: cwd_for_cmd.clone() };
+                            let _ = app_for_cmd.emit("session-exited", &event);
                             return;
                         }
                         Ok(None) => {}
                         Err(_) => {
                             let _ = std::fs::remove_file(&temp_path_cmd);
-                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            let event = SessionExitedEvent { session_id: sid_for_cmd.clone(), cwd: cwd_for_cmd.clone() };
+                            let _ = app_for_cmd.emit("session-exited", &event);
                             return;
                         }
                     }
@@ -186,19 +198,20 @@ pub fn create_session(
         session_id.clone(),
         SessionHandle {
             name: name.clone(),
+            cwd: dir.clone(),
             cmd_sender: cmd_tx,
         },
     );
 
-    Ok(CreateSessionResult { session_id, name })
+    Ok(CreateSessionResult { session_id, name, cwd: dir.clone() })
 }
 
 /// List all active terminal sessions.
-pub fn list_sessions(state: &AppState) -> Vec<(String, String)> {
+pub fn list_sessions(state: &AppState) -> Vec<(String, String, PathBuf)> {
     let sessions = state.sessions.lock().unwrap();
     sessions
         .iter()
-        .map(|(id, handle)| (id.clone(), handle.name.clone()))
+        .map(|(id, handle)| (id.clone(), handle.name.clone(), handle.cwd.clone()))
         .collect()
 }
 

@@ -18,6 +18,7 @@ pub enum PtyCommand {
 #[derive(Clone)]
 pub struct SessionHandle {
     pub name: String,
+    pub cwd: PathBuf,
     pub cmd_sender: mpsc::Sender<PtyCommand>,
 }
 
