@@ -213,14 +213,19 @@ export function TerminalWindow({
 
     term.open(container);
 
-    // Right-click paste from system clipboard
+    // Right-click: copy if selection, paste if not
     term.element?.addEventListener('contextmenu', (e: MouseEvent) => {
       e.preventDefault();
-      readText()
-        .then((text) => {
-          if (text) term.paste(text);
-        })
-        .catch(console.error);
+      const selection = term.getSelection();
+      if (selection) {
+        writeText(selection).catch(console.error);
+      } else {
+        readText()
+          .then((text) => {
+            if (text) term.paste(text);
+          })
+          .catch(console.error);
+      }
     });
 
     // Register output writer — PTY output for this session writes to this terminal
