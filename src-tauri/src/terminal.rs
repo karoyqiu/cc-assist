@@ -48,13 +48,15 @@ pub fn create_session(
     let profile_name = profile.name.clone();
     let dir = directory.clone();
 
-    // Build temp settings file
+    // Build temp settings file with all profile env vars (empty if unset)
     cleanup_stale_temp_files();
 
-    let mut settings_json =
-        settings::read_settings_json_or_empty().map_err(|e| e.to_string())?;
-    settings::clear_profile_env_keys(&mut settings_json);
-    settings::merge_profile_into_settings(profile, &mut settings_json);
+    let env_map = settings::build_full_env_map(profile);
+    let mut env = serde_json::Map::new();
+    for (key, value) in env_map {
+        env.insert(key, serde_json::Value::String(value));
+    }
+    let settings_json = serde_json::json!({ "env": serde_json::Value::Object(env) });
 
     let temp_dir = std::env::temp_dir();
     let mut temp_file =

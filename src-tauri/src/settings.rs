@@ -74,6 +74,35 @@ pub fn build_env_map(profile: &ProfileConfig) -> BTreeMap<String, String> {
     map
 }
 
+/// Build a map of ANTHROPIC_* env vars. All 7 keys always inserted.
+/// Empty string for unspecified values.
+pub fn build_full_env_map(profile: &ProfileConfig) -> BTreeMap<String, String> {
+    let mut map = BTreeMap::new();
+    map.insert("ANTHROPIC_BASE_URL".to_string(), profile.base_url.clone());
+    map.insert("ANTHROPIC_AUTH_TOKEN".to_string(), profile.api_key.clone());
+    map.insert(
+        "ANTHROPIC_MODEL".to_string(),
+        profile.models.main.clone().unwrap_or_default(),
+    );
+    map.insert(
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL".to_string(),
+        profile.models.haiku.clone().unwrap_or_default(),
+    );
+    map.insert(
+        "ANTHROPIC_DEFAULT_SONNET_MODEL".to_string(),
+        profile.models.sonnet.clone().unwrap_or_default(),
+    );
+    map.insert(
+        "ANTHROPIC_DEFAULT_OPUS_MODEL".to_string(),
+        profile.models.opus.clone().unwrap_or_default(),
+    );
+    map.insert(
+        "HTTPS_PROXY".to_string(),
+        profile.proxy_url.clone().unwrap_or_default(),
+    );
+    map
+}
+
 /// Keys managed by cc-assist in settings["env"].
 /// When switching profiles, these are cleared before merging the new profile
 /// to prevent stale values from a previous profile persisting.
