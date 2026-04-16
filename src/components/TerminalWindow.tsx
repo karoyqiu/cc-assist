@@ -294,17 +294,18 @@ export function TerminalWindow({
         st.terminal.write(
           `\r\n\x1b[90m${t('terminal.pressEscToClose')} / ${t('terminal.pressEnterToNewSession')}\x1b[0m `,
         );
-        st.terminal.onData((data) => {
-          const code = data.charCodeAt(0);
-          if (code === 0x1b) {
-            // ESC
+        const handler = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
             setExitedSessionId(null);
             closeSession(id).catch(console.error);
             removeSession(id);
             disposeTerminal(id);
             syncSessions();
-          } else if (code === 0x0d) {
-            // Enter
+            return false;
+          }
+          if (e.key === 'Enter') {
+            e.preventDefault();
             setExitedSessionId(null);
             setNewSessionDir(cwd);
             setShowNewSession(true);
@@ -312,8 +313,12 @@ export function TerminalWindow({
             removeSession(id);
             disposeTerminal(id);
             syncSessions();
+            return false;
           }
-        });
+          // Block all other keys — don't close
+          return false;
+        };
+        st.terminal.attachCustomKeyEventHandler(handler);
       }
     });
 
