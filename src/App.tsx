@@ -8,6 +8,7 @@ import './lib/i18n';
 import type { ProfileConfig, ProfilesStore, ProviderConfig } from './types';
 
 import './App.css';
+import { ChatWindow } from './components/ChatWindow';
 import { FontCombobox } from './components/FontCombobox';
 import { ProfileEditor } from './components/ProfileEditor';
 import { ProfileList } from './components/ProfileList';
@@ -70,6 +71,42 @@ export function TerminalWindowApp() {
       activeProfileColor={profile?.icon_color ?? '#D4915D'}
       recentDirectories={store.recent_directories}
       onOpenSettings={() => invoke('toggle_settings_window')}
+    />
+  );
+}
+
+export function ChatApp() {
+  const { i18n } = useTranslation();
+  const [store, setStore] = useState<ProfilesStore | null>(null);
+
+  useEffect(() => {
+    invoke<ProfilesStore>('get_config').then((s) => {
+      setStore(s);
+      return i18n.changeLanguage(s.locale);
+    });
+  }, [i18n]);
+
+  useEffect(() => {
+    const unlisten = listen<string>('locale-changed', async (event) => {
+      await i18n.changeLanguage(event.payload);
+      setStore((s) => (s ? { ...s, locale: event.payload } : s));
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [i18n]);
+
+  useEffect(() => {
+    getCurrentWindow().show().catch(console.error);
+  }, []);
+
+  if (!store) return null;
+
+  return (
+    <ChatWindow
+      profiles={store.profiles}
+      activeProfileId={store.active_profile_id}
+      onBack={() => invoke('toggle_settings_window')}
     />
   );
 }

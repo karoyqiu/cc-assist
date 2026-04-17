@@ -171,7 +171,7 @@ pub fn spawn_session_thread(
         // Session state
         let mut current_state = SessionState::Idle;
         let mut message_queue: VecDeque<QueuedMessage> = VecDeque::new();
-        let mut token_tracker = TokenUsageTracker::new();
+        let _token_tracker = TokenUsageTracker::new(); // TODO: wire into chat_get_usage
         let mut current_message_id: Option<String> = None;
         let mut streaming_done_rx: Option<oneshot::Receiver<StreamingDone>> = None;
 
@@ -209,7 +209,7 @@ pub fn spawn_session_thread(
                             let client_arc = client.clone();
 
                             // Set up abort channel
-                            let (abort_tx, abort_rx) = oneshot::channel();
+                            let (_abort_tx, abort_rx) = oneshot::channel();
                             let (done_tx, done_rx) = oneshot::channel();
                             streaming_done_rx = Some(done_rx);
 
