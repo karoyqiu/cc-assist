@@ -70,6 +70,18 @@ In QA mode, flag any code that doesn't match DESIGN.md.
 
 - All new code files (ts, tsx, and json) must be formatted with `pnpm oxfmt` and checked with `pnpm oxlint`. All lint errors must be fixed.
 
+## assistant-ui
+
+This project uses assistant-ui for chat interfaces.
+
+Documentation: https://www.assistant-ui.com/llms-full.txt
+
+Key patterns:
+- Use AssistantRuntimeProvider at the app root
+- Thread component for full chat interface
+- AssistantModal for floating chat widget
+- useChatRuntime hook with AI SDK transport
+
 ## gstack
 
 For all web browsing tasks, use gstack's `/browse` skill. Do not use `mcp__claude-in-chrome__*` tools.
