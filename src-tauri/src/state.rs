@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::sync::Mutex;
 
+use crate::session_manager::ChatSessionHandle;
 use crate::types::ProfilesStore;
 
 /// Messages sent to the command thread.
@@ -26,4 +27,5 @@ pub struct AppState {
     pub store: Mutex<ProfilesStore>,
     pub app_data_dir: Mutex<PathBuf>,
     pub sessions: Mutex<HashMap<String, SessionHandle>>,
+    pub chat_sessions: Mutex<HashMap<String, ChatSessionHandle>>,
 }

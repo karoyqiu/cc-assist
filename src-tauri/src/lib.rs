@@ -87,6 +87,7 @@ pub fn run() {
             store: Mutex::new(store),
             app_data_dir: Mutex::new(early_log_dir.clone()),
             sessions: Mutex::new(HashMap::new()),
+            chat_sessions: Mutex::new(HashMap::new()),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -146,6 +147,17 @@ pub fn run() {
             commands::terminal_close_session,
             commands::terminal_list_sessions,
             commands::save_terminal_font_settings,
+            chat_commands::chat_create_session,
+            chat_commands::chat_send_message,
+            chat_commands::chat_tool_approve,
+            chat_commands::chat_tool_deny,
+            chat_commands::chat_send_input,
+            chat_commands::chat_stop,
+            chat_commands::chat_close_session,
+            chat_commands::chat_get_state,
+            chat_commands::chat_get_sessions,
+            chat_commands::chat_get_usage,
+            chat_commands::chat_compact_context,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
