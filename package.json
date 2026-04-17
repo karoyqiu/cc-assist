@@ -18,6 +18,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-clipboard-manager": "^2",
+    "@assistant-ui/react": "latest",
     "@xterm/addon-clipboard": "^0.2",
     "@xterm/addon-fit": "^0.10",
     "@xterm/xterm": "^5.5",

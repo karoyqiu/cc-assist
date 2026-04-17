@@ -32,6 +32,7 @@ portable-pty = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util"] }
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-system-fonts = "2.0.2"
+cc-sdk = "0.8"
 
 [profile.dev]
 incremental = true
