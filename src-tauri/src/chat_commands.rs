@@ -279,3 +279,53 @@ pub async fn chat_compact_context(
     // Requires investigation of SDK control protocol
     Ok(0.0)
 }
+
+/// Stored session info from Claude Code's session store.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoredSession {
+    pub session_id: String,
+    pub summary: String,
+    pub last_modified: i64,
+    pub custom_title: Option<String>,
+    pub first_prompt: Option<String>,
+    pub cwd: Option<String>,
+}
+
+/// List all stored sessions from Claude Code's session store.
+#[tauri::command]
+pub async fn chat_list_stored_sessions(
+    directory: Option<String>,
+    limit: Option<usize>,
+) -> Result<Vec<StoredSession>, String> {
+    let sessions = cc_sdk::sessions::list_sessions(
+        directory.as_deref(),
+        limit,
+        true, // include_worktrees
+    )
+    .await
+    .map_err(|e| format!("Failed to list sessions: {}", e))?;
+
+    let result: Vec<StoredSession> = sessions
+        .into_iter()
+        .map(|s| StoredSession {
+            session_id: s.session_id,
+            summary: s.summary,
+            last_modified: s.last_modified,
+            custom_title: s.custom_title,
+            first_prompt: s.first_prompt,
+            cwd: s.cwd,
+        })
+        .collect();
+    Ok(result)
+}
+
+/// Rename a stored session.
+#[tauri::command]
+pub async fn chat_rename_session(
+    session_id: String,
+    title: String,
+) -> Result<(), String> {
+    cc_sdk::sessions::rename_session(&session_id, &title)
+        .await
+        .map_err(|e| format!("Failed to rename session: {}", e))
+}

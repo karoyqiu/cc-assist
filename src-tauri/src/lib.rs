@@ -158,6 +158,8 @@ pub fn run() {
             chat_commands::chat_get_sessions,
             chat_commands::chat_get_usage,
             chat_commands::chat_compact_context,
+            chat_commands::chat_list_stored_sessions,
+            chat_commands::chat_rename_session,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
