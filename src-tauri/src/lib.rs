@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
 
+mod chat_commands;
 mod commands;
 mod config;
+mod session_manager;
 mod settings;
 mod state;
 mod terminal;

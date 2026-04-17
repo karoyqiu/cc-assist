@@ -30,6 +30,8 @@ simplelog = "0.12"
 tempfile = "3"
 portable-pty = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util"] }
+tokio-stream = "0.1"
+futures = "0.3"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-system-fonts = "2.0.2"
 cc-sdk = "0.8"
