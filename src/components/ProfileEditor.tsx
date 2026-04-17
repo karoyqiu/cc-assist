@@ -50,10 +50,7 @@ function Field({ label, value, onChange, disabled, placeholder, mono, password }
         onChange={(e) => onChange?.(e.target.value)}
         disabled={disabled}
         placeholder={placeholder}
-        className={cn(
-          'w-full text-sm',
-          mono && 'font-mono',
-        )}
+        className={cn('w-full text-sm', mono && 'font-mono')}
       />
     </div>
   );
