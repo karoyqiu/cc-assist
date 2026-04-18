@@ -347,10 +347,10 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
   useNotificationSound(sessionId, sessionState);
 
   useEffect(() => {
-    let unlistenState: (() => void) | undefined;
-    let unlistenTool: (() => void) | undefined;
+    let cancelled = false;
 
-    onChatSessionState((event) => {
+    const stateP = onChatSessionState((event) => {
+      if (cancelled) return;
       if (event.session_id !== sessionId) return;
       const state = event.state as SessionState;
       setSessionState(state);
@@ -358,11 +358,10 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
       if (state !== 'waiting_permission') {
         setActiveToolCall(null);
       }
-    }).then((fn) => {
-      unlistenState = fn;
     });
 
-    onChatToolCall((event) => {
+    const toolP = onChatToolCall((event) => {
+      if (cancelled) return;
       if (event.session_id !== sessionId) return;
       setActiveToolCall({
         toolCallId: event.tool_call_id,
@@ -370,13 +369,12 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
         arguments: event.arguments,
       });
       setSessionState('waiting_permission');
-    }).then((fn) => {
-      unlistenTool = fn;
     });
 
     return () => {
-      unlistenState?.();
-      unlistenTool?.();
+      cancelled = true;
+      stateP.then((fn) => fn());
+      toolP.then((fn) => fn());
     };
   }, [sessionId]);
 
@@ -427,7 +425,10 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
                   <span className="max-w-[120px] truncate">{attachment.name}</span>
                   <button
                     className="hover:text-danger ml-auto shrink-0"
-                    onClick={() => {}}
+                    onClick={() => {
+                      // TODO: implement attachment removal via attachment.remove() or runtime API
+                      console.info('Remove attachment:', attachment.name);
+                    }}
                     title="Remove attachment"
                   >
                     ×

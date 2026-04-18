@@ -35,6 +35,7 @@ futures = "0.3"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-system-fonts = "2.0.2"
 cc-sdk = "0.8"
+async-trait = "0.1"
 
 [profile.dev]
 incremental = true

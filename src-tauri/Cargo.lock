@@ -508,6 +508,7 @@ dependencies = [
 name = "cc-assist"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "cc-sdk",
  "dirs 6.0.0",
  "futures",

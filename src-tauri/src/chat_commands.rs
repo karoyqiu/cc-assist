@@ -1,15 +1,12 @@
 //! Tauri commands for chat session management.
 
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 
-use crate::session_manager::{self, ChatSessionHandle, SessionState};
+use crate::session_manager;
 use crate::state::AppState;
-use crate::types::ProfileConfig;
 
 /// Live chat session with metadata for the frontend.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,9 +87,9 @@ pub async fn chat_send_message(
     let msg_id = uuid::Uuid::new_v4().to_string();
 
     // Register event listeners for this message
-    let app_clone = app.clone();
-    let msg_id_clone = msg_id.clone();
-    let sid_clone = session_id.clone();
+    let _app_clone = app.clone();
+    let _msg_id_clone = msg_id.clone();
+    let _sid_clone = session_id.clone();
 
     // Listen for stream chunks from this session and forward via a oneshot
     // Since we use app.emit for all chunks, we just need to validate the session is active
@@ -223,7 +220,7 @@ pub async fn chat_close_session(
 /// Get the current state of a session.
 #[tauri::command]
 pub async fn chat_get_state(
-    session_id: String,
+    _session_id: String,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     let _sessions = state.chat_sessions.lock().map_err(|e| e.to_string())?;
@@ -254,7 +251,7 @@ pub async fn chat_get_sessions(state: State<'_, AppState>) -> Result<Vec<LiveSes
 /// inside the session manager.
 #[tauri::command]
 pub async fn chat_get_usage(
-    session_id: String,
+    _session_id: String,
     state: State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
     let _sessions = state.chat_sessions.lock().map_err(|e| e.to_string())?;
@@ -271,7 +268,7 @@ pub async fn chat_get_usage(
 /// Trigger context compaction for a session.
 #[tauri::command]
 pub async fn chat_compact_context(
-    session_id: String,
+    _session_id: String,
     state: State<'_, AppState>,
 ) -> Result<f64, String> {
     let _sessions = state.chat_sessions.lock().map_err(|e| e.to_string())?;

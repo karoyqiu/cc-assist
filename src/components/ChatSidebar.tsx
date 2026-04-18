@@ -50,19 +50,22 @@ export function ChatSidebar({
   }
 
   useEffect(() => {
+    let cancelled = false;
+
     loadLiveSessions();
     loadStoredSessions();
 
-    let unlisten: (() => void) | undefined;
-    onChatSessionsUpdated(() => {
-      loadLiveSessions();
-      loadStoredSessions();
-    }).then((fn) => {
-      unlisten = fn;
+    const listenP = onChatSessionsUpdated(() => {
+      if (!cancelled) {
+        loadLiveSessions();
+        loadStoredSessions();
+      }
     });
 
     return () => {
-      unlisten?.();
+      // Signal the callback to skip state updates after unmount
+      cancelled = true;
+      listenP.then((fn) => fn());
     };
   }, []);
 

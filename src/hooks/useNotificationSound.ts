@@ -60,9 +60,16 @@ function playNotificationSound() {
     oscillator.stop(ctx.currentTime + 0.3);
 
     // Clean up AudioContext after sound finishes
-    oscillator.onended = () => {
-      ctx.close();
+    const cleanup = () => {
+      try {
+        ctx.close();
+      } catch {
+        // already closed
+      }
     };
+    oscillator.onended = cleanup;
+    // Fallback: close after max 1 second
+    setTimeout(cleanup, 1000);
   } catch {
     // AudioContext not available — silently ignore
   }
