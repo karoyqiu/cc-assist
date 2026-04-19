@@ -373,9 +373,14 @@ export function TerminalWindow({
               <DialogTitle>{t('terminal.newSession')}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-3">
-              <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
+              <Select
+                value={newSessionProfileId}
+                onValueChange={(val) => { if (val !== null) setNewSessionProfileId(val); }}
+              >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('terminal.profileId')} />
+                  <SelectValue placeholder={t('terminal.profileId')}>
+                    {(val) => profiles.find((p) => p.id === val)?.name ?? val}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {profiles.map((p) => (

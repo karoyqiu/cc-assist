@@ -2,7 +2,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Combobox, CommandItem } from '@/components/ui/combobox';
+import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
+import { Input } from '@/components/ui/input';
 
 interface DirectoryComboboxProps {
   directories: string[];
@@ -22,55 +23,58 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
       if (dir !== null) {
         onChange(dir);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('pick_directory failed:', e);
     }
   }
 
   return (
-    <Combobox
-      value={value}
-      onValueChange={(val) => {
-        if (val !== value) {
-          onChange(val);
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      <PopoverPrimitive.Trigger
+        className="w-full"
+        render={
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={t('terminal.directory')}
+            className="w-full font-mono text-sm"
+          />
         }
-      }}
-      open={open}
-      onOpenChange={setOpen}
-      placeholder={t('terminal.directory')}
-      trigger={
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="w-full truncate px-3 py-2 text-left font-mono text-xs hover:bg-accent"
-        >
-          {value || t('terminal.directory')}
-        </button>
-      }
-    >
-      {directories.length === 0 ? (
-        <div className="py-2 px-3 text-xs text-muted-foreground">
-          {t('directoryPicker.noRecentDirectories')}
-        </div>
-      ) : (
-        <>
-          {directories.map((dir) => (
-            <CommandItem
-              key={dir}
-              value={dir}
-              onSelect={() => {
-                onChange(dir);
-                setOpen(false);
-              }}
-            >
-              {dir}
-            </CommandItem>
-          ))}
-          <CommandItem value="__browse__" onSelect={handleBrowse}>
-            {browseLabel}
-          </CommandItem>
-        </>
-      )}
-    </Combobox>
+      />
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Positioner side="bottom" sideOffset={4} align="start" className="z-50">
+          <PopoverPrimitive.Popup className="w-[400px] rounded-lg bg-popover p-0 text-popover-foreground shadow-md ring-1 ring-foreground/10">
+            <div className="flex flex-col">
+              {directories.length === 0 ? (
+                <div className="p-2 text-xs text-muted-foreground">
+                  {t('directoryPicker.noRecentDirectories')}
+                </div>
+              ) : (
+                <>
+                  {directories.map((dir) => (
+                    <button
+                      key={dir}
+                      onClick={() => {
+                        onChange(dir);
+                        setOpen(false);
+                      }}
+                      className="cursor-pointer truncate px-3 py-2 text-left font-mono text-xs hover:bg-accent"
+                    >
+                      {dir}
+                    </button>
+                  ))}
+                </>
+              )}
+              <button
+                onClick={handleBrowse}
+                className="cursor-pointer border-t px-3 py-2 text-left text-xs hover:bg-accent"
+              >
+                {browseLabel}
+              </button>
+            </div>
+          </PopoverPrimitive.Popup>
+        </PopoverPrimitive.Positioner>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }

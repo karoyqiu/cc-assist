@@ -526,9 +526,14 @@ function NewSessionScreen({
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label>{t('chat.profile')}</Label>
-            <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+            <Select
+              value={selectedProfileId}
+              onValueChange={(val) => { if (val !== null) setSelectedProfileId(val); }}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('chat.profile')} />
+                <SelectValue placeholder={t('chat.profile')}>
+                  {(val) => profiles.find((p) => p.id === val)?.name ?? val}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {profiles.map((p) => (
