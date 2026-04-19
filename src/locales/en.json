@@ -55,7 +55,8 @@
     "claudeNotOnPath": "Claude CLI not found on PATH. Please install Claude Code.",
     "settingsNotFound": "Claude has not been configured yet. Please run Claude Code first.",
     "launchFailed": "Failed to launch Claude: {{message}}",
-    "loadConfigFailed": "Failed to load configuration"
+    "loadConfigFailed": "Failed to load configuration",
+    "directoryRequired": "Directory is required"
   },
   "languages": {
     "en": "English",
@@ -88,5 +89,25 @@
     "fontSize": "Font Size",
     "fontSizeUnit": "px",
     "apply": "Apply"
+  },
+  "chat": {
+    "newSession": "New Chat Session",
+    "profile": "Profile",
+    "workingDirectory": "Working Directory",
+    "cancel": "Cancel",
+    "startSession": "Start Session",
+    "noMessages": "No messages yet. Start a conversation.",
+    "thinking": "Thinking...",
+    "inputRequired": "Input Required",
+    "submit": "Submit",
+    "approve": "Approve",
+    "deny": "Deny",
+    "arguments": "Arguments",
+    "back": "Back",
+    "streaming": "Streaming...",
+    "context": "Context",
+    "subscription": "Subscription",
+    "tokens": "Tokens",
+    "cost": "Cost"
   }
 }

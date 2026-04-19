@@ -1,5 +1,6 @@
 import { useAuiState } from '@assistant-ui/react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type ChatUsage, chatGetUsage } from '../lib/chat';
 
@@ -8,6 +9,7 @@ interface ChatStatusBarProps {
 }
 
 export function ChatStatusBar({ sessionId }: ChatStatusBarProps) {
+  const { t } = useTranslation();
   const isRunning = useAuiState((s) => s.thread.isRunning);
   const [usage, setUsage] = useState<ChatUsage | null>(null);
 
@@ -43,9 +45,13 @@ export function ChatStatusBar({ sessionId }: ChatStatusBarProps) {
       {/* Context usage */}
       {usage && (
         <>
-          <span>Context {usage.context_percent.toFixed(0)}%</span>
+          <span>
+            {t('chat.context')} {usage.context_percent.toFixed(0)}%
+          </span>
           <span>·</span>
-          <span>Subscription {usage.subscription_percent.toFixed(0)}%</span>
+          <span>
+            {t('chat.subscription')} {usage.subscription_percent.toFixed(0)}%
+          </span>
           <span>·</span>
         </>
       )}
@@ -54,7 +60,7 @@ export function ChatStatusBar({ sessionId }: ChatStatusBarProps) {
       {usage && usage.input_tokens > 0 && (
         <>
           <span>
-            {usage.input_tokens.toLocaleString()} in / {usage.output_tokens.toLocaleString()} out
+            {usage.input_tokens.toLocaleString()} in / {usage.output_tokens.toLocaleString()} {t('chat.tokens')}
           </span>
           <span>·</span>
         </>
@@ -63,13 +69,17 @@ export function ChatStatusBar({ sessionId }: ChatStatusBarProps) {
       {/* Cost */}
       {usage && usage.total_cost_usd > 0 && (
         <>
-          <span>${usage.total_cost_usd.toFixed(4)}</span>
+          <span>
+            {t('chat.cost')} ${usage.total_cost_usd.toFixed(4)}
+          </span>
           <span>·</span>
         </>
       )}
 
       {/* Streaming indicator */}
-      {isRunning && <span className="text-primary animate-pulse">Streaming...</span>}
+      {isRunning && (
+        <span className="text-primary animate-pulse">{t('chat.streaming')}</span>
+      )}
     </div>
   );
 }

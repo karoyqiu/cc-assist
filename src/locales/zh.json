@@ -55,7 +55,8 @@
     "claudeNotOnPath": "未找到 Claude CLI。请先安装 Claude Code。",
     "settingsNotFound": "Claude 尚未配置。请先运行 Claude Code。",
     "launchFailed": "启动 Claude 失败：{{message}}",
-    "loadConfigFailed": "加载配置失败"
+    "loadConfigFailed": "加载配置失败",
+    "directoryRequired": "请选择目录"
   },
   "languages": {
     "en": "English",
@@ -88,5 +89,25 @@
     "fontSize": "字号",
     "fontSizeUnit": "像素",
     "apply": "应用"
+  },
+  "chat": {
+    "newSession": "新建会话",
+    "profile": "配置",
+    "workingDirectory": "工作目录",
+    "cancel": "取消",
+    "startSession": "开始会话",
+    "noMessages": "暂无消息。开始对话吧。",
+    "thinking": "思考中...",
+    "inputRequired": "需要输入",
+    "submit": "提交",
+    "approve": "批准",
+    "deny": "拒绝",
+    "arguments": "参数",
+    "back": "返回",
+    "streaming": "传输中...",
+    "context": "上下文",
+    "subscription": "订阅",
+    "tokens": "令牌",
+    "cost": "费用"
   }
 }

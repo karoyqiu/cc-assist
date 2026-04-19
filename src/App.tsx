@@ -106,6 +106,7 @@ export function ChatApp() {
     <ChatWindow
       profiles={store.profiles}
       activeProfileId={store.active_profile_id}
+      recentDirectories={store.recent_directories}
       onBack={() => invoke('toggle_settings_window')}
     />
   );

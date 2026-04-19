@@ -8,11 +8,11 @@ import { AssistantRuntimeProvider, useLocalRuntime, useAuiState } from '@assista
 import { ThreadPrimitive, ComposerPrimitive } from '@assistant-ui/react';
 import { useEffect, useRef, useState } from 'react';
 
-import type { ProfileConfig } from '../types';
+import type { ProfileConfig, RecentDirectories } from '../types';
 
+import { DirectoryCombobox } from '@/components/DirectoryCombobox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslation } from 'react-i18next';
 import { useNotificationSound } from '../hooks/useNotificationSound';
 import {
   type LiveSession,
@@ -205,6 +206,7 @@ function ToolApprovalCard({
   sessionId: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [argsText, setArgsText] = useState(() => JSON.stringify(tool.arguments, null, 2));
   const [modifiedArgs, setModifiedArgs] = useState<Record<string, unknown> | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -242,18 +244,21 @@ function ToolApprovalCard({
         <CardTitle>Tool: {tool.toolName}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <Textarea
-          value={argsText}
-          onChange={(e) => handleArgsChange(e.target.value)}
-          rows={Math.min(8, (argsText.match(/\n/g) ?? []).length + 2)}
-          className="font-mono"
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-muted text-xs uppercase">{t('chat.arguments')}</Label>
+          <Textarea
+            value={argsText}
+            onChange={(e) => handleArgsChange(e.target.value)}
+            rows={Math.min(8, (argsText.match(/\n/g) ?? []).length + 2)}
+            className="font-mono"
+          />
+        </div>
         <div className="flex gap-2">
           <Button size="sm" onClick={handleApprove}>
-            Approve
+            {t('chat.approve')}
           </Button>
           <Button size="sm" variant="destructive" onClick={handleDeny}>
-            Deny
+            {t('chat.deny')}
           </Button>
         </div>
         {err && <p className="text-destructive text-xs">{err}</p>}
@@ -262,11 +267,11 @@ function ToolApprovalCard({
   );
 }
 
-// =============================================================================
 // WaitingInputCard
 // =============================================================================
 
 function WaitingInputCard({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
 
   async function handleSubmit() {
@@ -278,18 +283,18 @@ function WaitingInputCard({ sessionId, onClose }: { sessionId: string; onClose: 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Input Required</CardTitle>
+        <CardTitle>{t('chat.inputRequired')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Type your response..."
+          placeholder={t('chat.inputRequired')}
           autoFocus
           rows={3}
         />
         <Button size="sm" onClick={handleSubmit}>
-          Submit
+          {t('chat.submit')}
         </Button>
       </CardContent>
     </Card>
@@ -301,12 +306,13 @@ function WaitingInputCard({ sessionId, onClose }: { sessionId: string; onClose: 
 // =============================================================================
 
 function MessageList({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const messages = useAuiState((s) => s.thread.messages);
 
   if (messages.length === 0) {
     return (
       <div className={`flex flex-col gap-3 p-4 ${className ?? ''}`}>
-        <div className="text-muted text-sm">No messages yet. Start a conversation.</div>
+        <div className="text-muted text-sm">{t('chat.noMessages')}</div>
       </div>
     );
   }
@@ -331,7 +337,7 @@ function MessageList({ className }: { className?: string }) {
             >
               {textParts && <div className="text-sm whitespace-pre-wrap">{textParts}</div>}
               {isRunning && (
-                <div className="text-muted mt-1 animate-pulse text-xs">Thinking...</div>
+                <div className="text-muted mt-1 animate-pulse text-xs">{t('chat.thinking')}</div>
               )}
             </div>
           </div>
@@ -346,6 +352,7 @@ function MessageList({ className }: { className?: string }) {
 // =============================================================================
 
 function ChatInterface({ sessionId }: { sessionId: string }) {
+  const { t } = useTranslation();
   const isRunning = useAuiState((s) => s.thread.isRunning);
   const [sessionState, setSessionState] = useState<SessionState>('idle');
   const [activeToolCall, setActiveToolCall] = useState<ActiveToolCall | null>(null);
@@ -390,7 +397,7 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
       {/* State banner */}
       {sessionState === 'running' && (
         <div className="bg-primary/10 text-primary flex items-center justify-center py-1 text-xs">
-          Thinking...
+          {t('chat.thinking')}
         </div>
       )}
 
@@ -482,21 +489,24 @@ function ChatInterface({ sessionId }: { sessionId: string }) {
 function NewSessionScreen({
   profiles,
   defaultProfileId,
+  recentDirectories,
   onStart,
   onCancel,
 }: {
   profiles: ProfileConfig[];
   defaultProfileId: string;
+  recentDirectories: RecentDirectories;
   onStart: (profileId: string, directory: string) => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   const [selectedProfileId, setSelectedProfileId] = useState(defaultProfileId);
   const [directory, setDirectory] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   async function handleStart() {
     if (!directory.trim()) {
-      setError('Directory is required');
+      setError(t('errors.directoryRequired'));
       return;
     }
     setError(null);
@@ -511,14 +521,14 @@ function NewSessionScreen({
     <div className="flex h-full items-center justify-center">
       <Card className="w-[420px]">
         <CardHeader>
-          <CardTitle>New Chat Session</CardTitle>
+          <CardTitle>{t('chat.newSession')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Profile</Label>
+            <Label>{t('chat.profile')}</Label>
             <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a profile" />
+                <SelectValue placeholder={t('chat.profile')} />
               </SelectTrigger>
               <SelectContent>
                 {profiles.map((p) => (
@@ -531,14 +541,11 @@ function NewSessionScreen({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label>Working Directory</Label>
-            <Input
+            <Label>{t('chat.workingDirectory')}</Label>
+            <DirectoryCombobox
+              directories={recentDirectories}
               value={directory}
-              onChange={(e) => setDirectory(e.target.value)}
-              placeholder="C:\path\to\project"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleStart();
-              }}
+              onChange={setDirectory}
             />
           </div>
 
@@ -546,10 +553,10 @@ function NewSessionScreen({
 
           <div className="flex justify-end gap-3">
             <Button variant="ghost" size="sm" onClick={onCancel}>
-              Cancel
+              {t('chat.cancel')}
             </Button>
             <Button size="sm" onClick={handleStart}>
-              Start Session
+              {t('chat.startSession')}
             </Button>
           </div>
         </CardContent>
@@ -565,12 +572,15 @@ function NewSessionScreen({
 export function ChatWindow({
   profiles,
   activeProfileId,
+  recentDirectories,
   onBack,
 }: {
   profiles: ProfileConfig[];
   activeProfileId: string;
+  recentDirectories: RecentDirectories;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<Map<string, LiveSession>>(new Map());
   const [createError, setCreateError] = useState<string | null>(null);
@@ -623,6 +633,7 @@ export function ChatWindow({
           <NewSessionScreen
             profiles={profiles}
             defaultProfileId={activeProfileId}
+            recentDirectories={recentDirectories}
             onStart={handleStart}
             onCancel={() => {
               setShowNewSession(false);
@@ -637,15 +648,16 @@ export function ChatWindow({
               {/* Header */}
               <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
                 <div className="flex items-center gap-3">
-                  <button
-                    className="text-muted hover:text-text text-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setActiveSessionId(null);
                       setShowNewSession(false);
                     }}
                   >
-                    ← Back
-                  </button>
+                    {t('chat.back')}
+                  </Button>
                   <span className="text-text text-sm font-medium">{activeSession.name}</span>
                 </div>
                 {createError && <span className="text-danger text-xs">{createError}</span>}
