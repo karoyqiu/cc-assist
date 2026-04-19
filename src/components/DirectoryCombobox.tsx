@@ -2,12 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Combobox, CommandItem } from '@/components/ui/combobox';
 
 interface DirectoryComboboxProps {
   directories: string[];
@@ -21,57 +16,61 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
   const browseLabel = t('directoryPicker.browse');
 
   async function handleBrowse() {
+    setOpen(false);
     try {
       const dir = await invoke<string | null>('pick_directory');
-      if (dir) {
+      if (dir !== null) {
         onChange(dir);
       }
     } catch (e) {
       console.error('pick_directory failed:', e);
     }
-    setOpen(false);
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild className="w-full">
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={t('terminal.directory')}
-          className="w-full font-mono text-sm"
-        />
-      </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start" sideOffset={4}>
-        <div className="flex flex-col">
-          {directories.length === 0 ? (
-            <div className="p-2 text-xs text-muted-foreground">
-              {t('directoryPicker.noRecentDirectories')}
-            </div>
-          ) : (
-            <>
-              {directories.map((dir) => (
-                <button
-                  key={dir}
-                  onClick={() => {
-                    onChange(dir);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer truncate px-3 py-2 text-left font-mono text-xs hover:bg-accent"
-                >
-                  {dir}
-                </button>
-              ))}
-            </>
-          )}
-          <button
-            onClick={handleBrowse}
-            className="cursor-pointer border-t px-3 py-2 text-left text-xs hover:bg-accent"
-          >
-            {browseLabel}
-          </button>
+    <Combobox
+      value={value}
+      onValueChange={(val) => {
+        if (val !== value) {
+          onChange(val);
+        }
+      }}
+      open={open}
+      onOpenChange={setOpen}
+      placeholder={t('terminal.directory')}
+      trigger={
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full truncate px-3 py-2 text-left font-mono text-xs hover:bg-accent"
+        >
+          {value || t('terminal.directory')}
+        </button>
+      }
+    >
+      {directories.length === 0 ? (
+        <div className="py-2 px-3 text-xs text-muted-foreground">
+          {t('directoryPicker.noRecentDirectories')}
         </div>
-      </PopoverContent>
-    </Popover>
+      ) : (
+        <>
+          {directories.map((dir) => (
+            <CommandItem
+              key={dir}
+              value={dir}
+              onSelect={() => {
+                onChange(dir);
+                setOpen(false);
+              }}
+            >
+              {dir}
+            </CommandItem>
+          ))}
+          <CommandItem value="__browse__" onSelect={handleBrowse}>
+            {browseLabel}
+          </CommandItem>
+        </>
+      )}
+    </Combobox>
   );
 }

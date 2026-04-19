@@ -10,16 +10,20 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@assistant-ui/core": "^0.1.14",
+    "@assistant-ui/react": "latest",
+    "@base-ui/react": "^1.4.0",
     "@dnd-kit/collision": "^0.3.2",
     "@dnd-kit/helpers": "^0.3.2",
     "@dnd-kit/react": "^0.3.2",
+    "@fontsource-variable/figtree": "^5.2.10",
     "@fontsource-variable/noto-sans": "^5.2.10",
+    "@hugeicons/core-free-icons": "^4.1.1",
+    "@hugeicons/react": "^1.1.6",
     "@remixicon/react": "^4.9.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-clipboard-manager": "^2",
-    "@assistant-ui/core": "^0.1.14",
-    "@assistant-ui/react": "latest",
     "@xterm/addon-clipboard": "^0.2",
     "@xterm/addon-fit": "^0.10",
     "@xterm/xterm": "^5.5",
@@ -31,6 +35,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-i18next": "^17.0.2",
+    "shadcn": "^4.3.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
     "tauri-plugin-system-fonts-api": "^2.0.2",
@@ -44,7 +49,6 @@
     "@vitejs/plugin-react": "^4.6.0",
     "oxfmt": "^0.44.0",
     "oxlint": "^1.59.0",
-    "shadcn": "^4.2.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4"
   }
