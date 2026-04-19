@@ -4,11 +4,14 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 export interface Session {
   id: string;
   name: string;
+  order: number;
+  cwd: string;
 }
 
 export interface CreateSessionResult {
   session_id: string;
   name: string;
+  cwd: string;
 }
 
 export interface TerminalFontSettings {
@@ -66,7 +69,7 @@ export function applyFontToAllTerminals(settings: TerminalFontSettings) {
 }
 
 export function getSessions(): Session[] {
-  return [...sessions];
+  return [...sessions].sort((a, b) => a.order - b.order);
 }
 
 export function getActiveSessionId(): string | null {
@@ -86,8 +89,15 @@ export function setExitedSessionId(id: string | null) {
   exitedSessionId = id;
 }
 
-export function addSession(session: Session) {
-  sessions = [...sessions, session];
+export function addSession(session: Omit<Session, 'order'>) {
+  sessions = [...sessions, { ...session, order: sessions.length }];
+}
+
+export function reorderSessions(fromIndex: number, toIndex: number) {
+  const sorted = [...sessions].sort((a, b) => a.order - b.order);
+  const [moved] = sorted.splice(fromIndex, 1);
+  sorted.splice(toIndex, 0, moved);
+  sessions = sorted.map((s, i) => ({ ...s, order: i }));
 }
 
 export function removeSession(id: string) {
@@ -158,8 +168,8 @@ export async function closeSession(sessionId: string): Promise<void> {
 }
 
 export async function listSessions(): Promise<Session[]> {
-  const result = await invoke<{ session_id: string; name: string }[]>('terminal_list_sessions');
-  return result.map((s) => ({ id: s.session_id, name: s.name }));
+  const result = await invoke<{ session_id: string; name: string; cwd: string }[]>('terminal_list_sessions');
+  return result.map((s, i) => ({ id: s.session_id, name: s.name, cwd: s.cwd, order: i }));
 }
 
 export async function launchTerminal(): Promise<void> {

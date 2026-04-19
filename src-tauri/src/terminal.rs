@@ -22,6 +22,7 @@ use crate::types::ProfileConfig;
 pub struct CreateSessionResult {
     pub session_id: String,
     pub name: String,
+    pub cwd: PathBuf,
 }
 
 /// Info about an active session (returned by list command).
@@ -29,6 +30,7 @@ pub struct CreateSessionResult {
 pub struct SessionInfo {
     pub session_id: String,
     pub name: String,
+    pub cwd: PathBuf,
 }
 
 /// Payload emitted with `terminal-output` events.
@@ -36,6 +38,13 @@ pub struct SessionInfo {
 pub struct OutputEvent {
     pub session_id: String,
     pub data: String,
+}
+
+/// Payload emitted when a session exits.
+#[derive(Debug, Clone, Serialize)]
+pub struct SessionExitedEvent {
+    pub session_id: String,
+    pub cwd: PathBuf,
 }
 
 /// Create a new PTY session for a profile + directory.
@@ -48,13 +57,15 @@ pub fn create_session(
     let profile_name = profile.name.clone();
     let dir = directory.clone();
 
-    // Build temp settings file
+    // Build temp settings file with all profile env vars (empty if unset)
     cleanup_stale_temp_files();
 
-    let mut settings_json =
-        settings::read_settings_json_or_empty().map_err(|e| e.to_string())?;
-    settings::clear_profile_env_keys(&mut settings_json);
-    settings::merge_profile_into_settings(profile, &mut settings_json);
+    let env_map = settings::build_full_env_map(profile);
+    let mut env = serde_json::Map::new();
+    for (key, value) in env_map {
+        env.insert(key, serde_json::Value::String(value));
+    }
+    let settings_json = serde_json::json!({ "env": serde_json::Value::Object(env) });
 
     let temp_dir = std::env::temp_dir();
     let mut temp_file =
@@ -98,6 +109,7 @@ pub fn create_session(
     let temp_path_cmd = temp_path_buf.clone();
     let sid_for_cmd = session_id.clone();
     let app_for_cmd = app.clone();
+    let cwd_for_cmd = dir.clone();
 
     // Command thread — handles Write, Resize, Close, and detects child exit
     thread::spawn(move || {
@@ -123,13 +135,15 @@ pub fn create_session(
                     match child.try_wait() {
                         Ok(Some(_)) => {
                             let _ = std::fs::remove_file(&temp_path_cmd);
-                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            let event = SessionExitedEvent { session_id: sid_for_cmd.clone(), cwd: cwd_for_cmd.clone() };
+                            let _ = app_for_cmd.emit("session-exited", &event);
                             return;
                         }
                         Ok(None) => {}
                         Err(_) => {
                             let _ = std::fs::remove_file(&temp_path_cmd);
-                            let _ = app_for_cmd.emit("session-exited", &*sid_for_cmd);
+                            let event = SessionExitedEvent { session_id: sid_for_cmd.clone(), cwd: cwd_for_cmd.clone() };
+                            let _ = app_for_cmd.emit("session-exited", &event);
                             return;
                         }
                     }
@@ -184,19 +198,20 @@ pub fn create_session(
         session_id.clone(),
         SessionHandle {
             name: name.clone(),
+            cwd: dir.clone(),
             cmd_sender: cmd_tx,
         },
     );
 
-    Ok(CreateSessionResult { session_id, name })
+    Ok(CreateSessionResult { session_id, name, cwd: dir.clone() })
 }
 
 /// List all active terminal sessions.
-pub fn list_sessions(state: &AppState) -> Vec<(String, String)> {
+pub fn list_sessions(state: &AppState) -> Vec<(String, String, PathBuf)> {
     let sessions = state.sessions.lock().unwrap();
     sessions
         .iter()
-        .map(|(id, handle)| (id.clone(), handle.name.clone()))
+        .map(|(id, handle)| (id.clone(), handle.name.clone(), handle.cwd.clone()))
         .collect()
 }
 
