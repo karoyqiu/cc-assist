@@ -103,11 +103,13 @@ export function ChatApp() {
   if (!store) return null;
 
   return (
-    <ChatWindow
-      profiles={store.profiles}
-      activeProfileId={store.active_profile_id}
-      recentDirectories={store.recent_directories}
-    />
+    <div className="flex h-screen w-screen flex-col overflow-hidden">
+      <ChatWindow
+        profiles={store.profiles}
+        activeProfileId={store.active_profile_id}
+        recentDirectories={store.recent_directories}
+      />
+    </div>
   );
 }
 
