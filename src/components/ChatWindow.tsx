@@ -518,8 +518,8 @@ function NewSessionScreen({
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-6">
-      <Card className="w-[420px] max-h-full overflow-y-auto">
+    <div className="flex h-full w-full flex-col gap-6 p-6">
+      <Card className="w-[480px]">
         <CardHeader>
           <CardTitle>{t('chat.newSession')}</CardTitle>
         </CardHeader>
@@ -542,13 +542,11 @@ function NewSessionScreen({
 
           <div className="flex flex-col gap-2">
             <Label>{t('chat.workingDirectory')}</Label>
-            <div className="overflow-visible">
-              <DirectoryCombobox
-                directories={recentDirectories}
-                value={directory}
-                onChange={setDirectory}
-              />
-            </div>
+            <DirectoryCombobox
+              directories={recentDirectories}
+              value={directory}
+              onChange={setDirectory}
+            />
           </div>
 
           {error && <p className="text-destructive text-sm">{error}</p>}
@@ -618,7 +616,7 @@ export function ChatWindow({
   const activeSession = activeSessionId ? (sessions.get(activeSessionId) ?? null) : null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full">
       {/* Sidebar */}
       <ChatSidebar
         activeSessionId={activeSessionId}
@@ -628,7 +626,7 @@ export function ChatWindow({
       />
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-visible">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {showNewSession || !activeSession ? (
           <NewSessionScreen
             profiles={profiles}
