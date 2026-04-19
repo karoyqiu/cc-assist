@@ -10,6 +10,15 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ProfileConfig } from '../types';
 
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useNotificationSound } from '../hooks/useNotificationSound';
 import {
   type LiveSession,
@@ -506,25 +515,24 @@ function NewSessionScreen({
         <h2 className="text-text mb-5 text-lg font-semibold">New Chat Session</h2>
 
         <div className="mb-4">
-          <label className="text-muted mb-1.5 block text-xs uppercase">Profile</label>
-          <select
-            className="bg-subtle text-text w-full rounded p-2.5 text-sm"
-            value={selectedProfileId}
-            onChange={(e) => setSelectedProfileId(e.target.value)}
-          >
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          <Label>Profile</Label>
+          <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a profile" />
+            </SelectTrigger>
+            <SelectContent>
+              {profiles.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="mb-5">
-          <label className="text-muted mb-1.5 block text-xs uppercase">Working Directory</label>
-          <input
-            className="bg-subtle text-text w-full rounded p-2.5 text-sm"
-            type="text"
+          <Label>Working Directory</Label>
+          <Input
             value={directory}
             onChange={(e) => setDirectory(e.target.value)}
             placeholder="C:\path\to\project"
