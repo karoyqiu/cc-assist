@@ -10,6 +10,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ProfileConfig } from '../types';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useNotificationSound } from '../hooks/useNotificationSound';
 import {
   type LiveSession,
@@ -234,33 +237,28 @@ function ToolApprovalCard({
   }
 
   return (
-    <div className="border-border bg-app mb-2 rounded border p-3">
-      <div className="text-text mb-1 text-sm font-medium">Tool: {tool.toolName}</div>
-      <div className="mb-2">
-        <label className="text-muted mb-1 block text-xs uppercase">Arguments</label>
-        <textarea
-          className="bg-subtle text-text w-full resize-none rounded p-2 font-mono text-xs"
-          rows={Math.min(8, (argsText.match(/\n/g) ?? []).length + 2)}
+    <Card>
+      <CardHeader>
+        <CardTitle>Tool: {tool.toolName}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Textarea
           value={argsText}
           onChange={(e) => handleArgsChange(e.target.value)}
+          rows={Math.min(8, (argsText.match(/\n/g) ?? []).length + 2)}
+          className="font-mono"
         />
-      </div>
-      <div className="flex gap-2">
-        <button
-          className="bg-primary text-primary-foreground rounded px-3 py-1.5 text-xs font-medium hover:opacity-90"
-          onClick={handleApprove}
-        >
-          Approve
-        </button>
-        <button
-          className="bg-danger rounded px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
-          onClick={handleDeny}
-        >
-          Deny
-        </button>
-      </div>
-      {err && <div className="text-danger mt-2 text-xs">{err}</div>}
-    </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleApprove}>
+            Approve
+          </Button>
+          <Button size="sm" variant="destructive" onClick={handleDeny}>
+            Deny
+          </Button>
+        </div>
+        {err && <p className="text-destructive text-xs">{err}</p>}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -278,23 +276,23 @@ function WaitingInputCard({ sessionId, onClose }: { sessionId: string; onClose: 
   }
 
   return (
-    <div className="border-border bg-app mb-2 rounded border p-3">
-      <div className="text-text mb-2 text-sm font-medium">Input Required</div>
-      <textarea
-        className="bg-subtle text-text w-full resize-none rounded p-2 text-xs"
-        rows={3}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Type your response..."
-        autoFocus
-      />
-      <button
-        className="bg-primary text-primary-foreground mt-2 rounded px-3 py-1.5 text-xs font-medium hover:opacity-90"
-        onClick={handleSubmit}
-      >
-        Submit
-      </button>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Input Required</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Type your response..."
+          autoFocus
+          rows={3}
+        />
+        <Button size="sm" onClick={handleSubmit}>
+          Submit
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -511,54 +509,51 @@ function NewSessionScreen({
 
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="border-border bg-app w-[420px] rounded-lg border p-6 shadow-md">
-        <h2 className="text-text mb-5 text-lg font-semibold">New Chat Session</h2>
+      <Card className="w-[420px]">
+        <CardHeader>
+          <CardTitle>New Chat Session</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Profile</Label>
+            <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a profile" />
+              </SelectTrigger>
+              <SelectContent>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="mb-4">
-          <Label>Profile</Label>
-          <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a profile" />
-            </SelectTrigger>
-            <SelectContent>
-              {profiles.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex flex-col gap-2">
+            <Label>Working Directory</Label>
+            <Input
+              value={directory}
+              onChange={(e) => setDirectory(e.target.value)}
+              placeholder="C:\path\to\project"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleStart();
+              }}
+            />
+          </div>
 
-        <div className="mb-5">
-          <Label>Working Directory</Label>
-          <Input
-            value={directory}
-            onChange={(e) => setDirectory(e.target.value)}
-            placeholder="C:\path\to\project"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void handleStart();
-            }}
-          />
-        </div>
+          {error && <p className="text-destructive text-sm">{error}</p>}
 
-        {error && <div className="text-danger mb-4 text-sm">{error}</div>}
-
-        <div className="flex justify-end gap-3">
-          <button
-            className="text-muted hover:text-text rounded px-4 py-2 text-sm"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="bg-primary text-primary-foreground rounded px-5 py-2 text-sm font-medium hover:opacity-90"
-            onClick={handleStart}
-          >
-            Start Session
-          </button>
-        </div>
-      </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleStart}>
+              Start Session
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
