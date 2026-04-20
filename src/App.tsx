@@ -16,6 +16,18 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { setFontSettings } from './lib/terminal';
+import { ChatWindowApp } from './windows/ChatWindowApp';
+
+export function App() {
+  const window = getCurrentWindow();
+  const label = window.label;
+
+  if (label === 'chat') {
+    return <ChatWindowApp />;
+  }
+
+  return <TerminalWindowApp />;
+}
 
 export function TerminalWindowApp() {
   const { i18n } = useTranslation();
