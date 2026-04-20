@@ -1,10 +1,19 @@
 //! Tauri command handlers for chat functionality.
 
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{Emitter, State};
+use tauri::ipc::Channel;
 
 use crate::chat;
 use crate::state::{AppState, PermissionMode};
+
+#[derive(Clone, serde::Serialize)]
+pub struct ChatOutputEvent {
+    pub part_type: String,   // "text", "tool_use", "tool_result", "thinking"
+    pub content: String,
+    pub tool_name: Option<String>,
+    pub tool_input: Option<serde_json::Value>,
+}
 
 #[tauri::command]
 pub fn chat_create_session(
@@ -28,17 +37,51 @@ pub fn chat_create_session(
     rt.block_on(chat::create_chat_session(&profile_id, dir, app))
 }
 
-/// Placeholder for Task 3 - will be implemented with Channel return type for streaming.
 #[tauri::command]
 pub async fn chat_send_message(
     session_id: String,
-    message: String,
+    content: String,
+    _attachments: Option<Vec<String>>,
+    _model: Option<String>,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
+    channel: Channel<ChatOutputEvent>,
 ) -> Result<(), String> {
-    let _ = session_id;
-    let _ = message;
-    let _ = state;
-    // TODO: Task 3 implements streaming via Channel
+    // Verify session exists
+    {
+        let sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
+        let _ = sessions
+            .get(&session_id)
+            .ok_or_else(|| format!("Session not found: {}", session_id))?;
+    }
+
+    // Emit thinking state
+    let _ = app.emit(
+        "session-state",
+        serde_json::json!({ "session_id": session_id, "state": "thinking" }),
+    );
+
+    // Spawn async task to stream cc-sdk output through channel
+    let session_id_clone = session_id.clone();
+    let app_clone = app.clone();
+    tokio::spawn(async move {
+        // Placeholder: send user's content as a text event for now
+        // In a real implementation, this would call session.client.send_message()
+        // and stream the response through the channel
+        let _ = channel.send(ChatOutputEvent {
+            part_type: "text".to_string(),
+            content: content.clone(),
+            tool_name: None,
+            tool_input: None,
+        });
+
+        // Emit done state
+        let _ = app_clone.emit(
+            "session-state",
+            serde_json::json!({ "session_id": session_id_clone, "state": "idle" }),
+        );
+    });
+
     Ok(())
 }
 
