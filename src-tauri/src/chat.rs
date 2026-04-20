@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -73,6 +73,15 @@ pub async fn create_chat_session(
         .lock()
         .map_err(|e| format!("failed to lock chat sessions: {}", e))?
         .insert(session_id.clone(), session);
+
+    // Emit idle state after creation
+    let _ = app.emit(
+        "session-state",
+        serde_json::json!({
+            "session_id": session_id,
+            "state": "idle"
+        }),
+    );
 
     Ok(CreateChatSessionResult {
         session_id,
