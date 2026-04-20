@@ -1,11 +1,20 @@
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, State};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
 use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient};
 
 use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
+
+/// Full info about a chat session, returned by list_sessions.
+#[derive(serde::Serialize)]
+pub struct ChatSessionInfo {
+    pub session_id: String,
+    pub name: String,
+    pub state: SessionState,
+    pub cwd: PathBuf,
+}
 
 /// Result of creating a new chat session.
 #[derive(serde::Serialize)]
@@ -93,9 +102,8 @@ pub async fn create_chat_session(
 /// Closes and removes a chat session.
 pub async fn close_chat_session(
     session_id: &str,
-    app: AppHandle,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let state = app.state::<AppState>();
     let mut sessions = state
         .chat_sessions
         .sessions
@@ -114,9 +122,8 @@ pub async fn close_chat_session(
 pub async fn set_permission_mode(
     session_id: &str,
     mode: PermissionMode,
-    app: AppHandle,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let state = app.state::<AppState>();
     let mut sessions = state
         .chat_sessions
         .sessions
