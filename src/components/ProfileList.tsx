@@ -1,7 +1,7 @@
 import { arrayMove } from '@dnd-kit/helpers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
-import { XIcon } from 'lucide-react';
+import { PlusIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -126,11 +126,12 @@ export function ProfileList({
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleDragEnd(event: any) {
-    const { operation } = event;
-    if (operation.canceled) return;
-    const sourceId = operation.source?.id;
-    const targetIndex = operation.target?.index;
+    const { source, target } = event.operation;
+    if (!source || !target) return;
+    const sourceId = source.id as string;
+    const targetIndex = target.index;
     if (!sourceId || targetIndex === undefined) return;
 
     const oldIndex = profiles.findIndex((p) => p.id === sourceId);
@@ -222,7 +223,7 @@ export function ProfileList({
           size="icon"
           title={t('profileList.addProfile')}
         >
-          +
+          <PlusIcon />
         </Button>
       </div>
 

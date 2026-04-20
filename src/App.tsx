@@ -61,13 +61,10 @@ export function TerminalWindowApp() {
 
   if (!store) return null;
 
-  const profile = store.profiles.find((p) => p.id === store.active_profile_id);
-
   return (
     <TerminalWindow
       profiles={store.profiles}
       activeProfileId={store.active_profile_id}
-      activeProfileColor={profile?.icon_color ?? '#D4915D'}
       recentDirectories={store.recent_directories}
       onOpenSettings={() => invoke('toggle_settings_window')}
     />

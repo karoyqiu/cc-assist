@@ -1,19 +1,5 @@
-import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { DragDropProvider, KeyboardSensor, PointerSensor } from '@dnd-kit/react';
+import { useSortable } from '@dnd-kit/react/sortable';
 import { listen } from '@tauri-apps/api/event';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { FitAddon } from '@xterm/addon-fit';
@@ -74,45 +60,31 @@ interface SessionTerminal {
 
 function SortableSession({
   session,
+  index,
   activeId,
-  activeProfileColor,
   onSelect,
-  onClose,
 }: {
   session: Session;
+  index: number;
   activeId: string | null;
-  activeProfileColor: string;
   onSelect: (id: string) => void;
   onClose: (e: React.MouseEvent, id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const sortable = useSortable({
     id: session.id,
+    index,
   });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    borderLeft:
-      session.id === activeId ? `2px solid ${activeProfileColor}` : '2px solid transparent',
-  };
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      ref={sortable.ref}
       onClick={() => onSelect(session.id)}
       className={`group flex cursor-pointer items-center justify-between px-4 py-5 text-sm ${
-        session.id === activeId ? 'bg-surface' : 'hover:bg-surface'
+        session.id === activeId
+          ? 'border-primary bg-surface border-l-2'
+          : 'hover:bg-surface border-l-2 border-transparent'
       }`}
-      {...attributes}
-      {...listeners}
     >
       <span className="truncate">{session.name}</span>
-      <button
-        onClick={(e) => onClose(e, session.id)}
-        className="text-muted hover:text-text hidden group-hover:block"
-      >
-        ×
-      </button>
     </div>
   );
 }
@@ -120,7 +92,6 @@ function SortableSession({
 interface TerminalWindowProps {
   profiles: ProfileConfig[];
   activeProfileId: string;
-  activeProfileColor: string;
   recentDirectories: RecentDirectories;
   onOpenSettings: () => void;
 }
@@ -128,7 +99,6 @@ interface TerminalWindowProps {
 export function TerminalWindow({
   profiles,
   activeProfileId,
-  activeProfileColor,
   recentDirectories,
   onOpenSettings,
 }: TerminalWindowProps) {
@@ -141,16 +111,12 @@ export function TerminalWindow({
   const [newSessionProfileId, setNewSessionProfileId] = useState(activeProfileId);
   const { t } = useTranslation();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = sessions.findIndex((s) => s.id === active.id);
-    const newIndex = sessions.findIndex((s) => s.id === over.id);
+  //
+  function handleDragEnd(event: any) {
+    const { source, target } = event.operation;
+    if (!source || !target || source.id === target.id) return;
+    const oldIndex = sessions.findIndex((s) => s.id === source.id);
+    const newIndex = sessions.findIndex((s) => s.id === target.id);
     if (oldIndex !== -1 && newIndex !== -1) {
       reorderSessions(oldIndex, newIndex);
       syncSessions();
@@ -462,27 +428,18 @@ export function TerminalWindow({
               <div className="mt-1 text-xs">{t('terminal.noSessionsHint')}</div>
             </div>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sessions.map((s) => s.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sessions.map((session) => (
-                  <SortableSession
-                    key={session.id}
-                    session={session}
-                    activeId={activeId}
-                    activeProfileColor={activeProfileColor}
-                    onSelect={handleSelectSession}
-                    onClose={handleCloseSession}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+            <DragDropProvider sensors={[PointerSensor, KeyboardSensor]} onDragEnd={handleDragEnd}>
+              {sessions.map((session, index) => (
+                <SortableSession
+                  key={session.id}
+                  session={session}
+                  index={index}
+                  activeId={activeId}
+                  onSelect={handleSelectSession}
+                  onClose={handleCloseSession}
+                />
+              ))}
+            </DragDropProvider>
           )}
         </div>
 
@@ -506,7 +463,10 @@ export function TerminalWindow({
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs">{t('terminal.profile')}</label>
-                <Select value={newSessionProfileId} onValueChange={(v) => v && setNewSessionProfileId(v)}>
+                <Select
+                  value={newSessionProfileId}
+                  onValueChange={(v) => v && setNewSessionProfileId(v)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t('terminal.profileId')}>
                       {profiles.find((p) => p.id === newSessionProfileId)?.name}
