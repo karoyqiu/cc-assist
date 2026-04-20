@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Mutex;
 
+mod chat;
 mod commands;
 mod config;
 mod settings;
@@ -11,7 +12,7 @@ mod tray;
 mod types;
 mod window;
 
-use state::AppState;
+use state::{AppState, ChatSessionManager};
 use tauri::Manager;
 
 fn default_store() -> crate::types::ProfilesStore {
@@ -85,6 +86,9 @@ pub fn run() {
             store: Mutex::new(store),
             app_data_dir: Mutex::new(early_log_dir.clone()),
             sessions: Mutex::new(HashMap::new()),
+            chat_sessions: ChatSessionManager {
+                sessions: Mutex::new(HashMap::new()),
+            },
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait

@@ -1,0 +1,123 @@
+use std::path::PathBuf;
+use tauri::{AppHandle, Manager};
+use time::OffsetDateTime;
+use uuid::Uuid;
+
+use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient};
+
+use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
+
+/// Result of creating a new chat session.
+#[derive(serde::Serialize)]
+pub struct CreateChatSessionResult {
+    pub session_id: String,
+    pub name: String,
+    pub cwd: PathBuf,
+}
+
+/// Lightweight info about a recent session.
+#[derive(serde::Serialize, Clone)]
+pub struct RecentSessionInfo {
+    pub session_id: String,
+    pub name: String,
+    pub cwd: PathBuf,
+    pub last_active: OffsetDateTime,
+}
+
+/// Creates a new chat session for the given profile and working directory.
+pub async fn create_chat_session(
+    profile_id: &str,
+    directory: PathBuf,
+    app: AppHandle,
+) -> Result<CreateChatSessionResult, String> {
+    // Get the profile config
+    let state = app.state::<AppState>();
+    let store = state
+        .store
+        .lock()
+        .map_err(|e| format!("failed to lock store: {}", e))?;
+
+    let _profile = store
+        .profiles
+        .iter()
+        .find(|p| p.id == profile_id)
+        .ok_or_else(|| format!("profile not found: {}", profile_id))?;
+
+    drop(store);
+
+    // Build ClaudeCodeOptions with project settings
+    let options = ClaudeCodeOptions::builder()
+        .setting_sources(vec![cc_sdk::SettingSource::Project])
+        .cwd(directory.clone())
+        .build();
+
+    // Create the cc-sdk client
+    let client = ClaudeSDKClient::new(options);
+
+    // Generate session name and ID
+    let session_id = Uuid::new_v4().to_string();
+    let name = format!("session-{}", &session_id[..8]);
+
+    // Store the session
+    let session = ChatSession {
+        client,
+        permission_mode: PermissionMode::Default,
+        state: SessionState::Idle,
+        cwd: directory.clone(),
+        session_name: name.clone(),
+    };
+
+    state
+        .chat_sessions
+        .sessions
+        .lock()
+        .map_err(|e| format!("failed to lock chat sessions: {}", e))?
+        .insert(session_id.clone(), session);
+
+    Ok(CreateChatSessionResult {
+        session_id,
+        name,
+        cwd: directory,
+    })
+}
+
+/// Closes and removes a chat session.
+pub async fn close_chat_session(
+    session_id: &str,
+    app: AppHandle,
+) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut sessions = state
+        .chat_sessions
+        .sessions
+        .lock()
+        .map_err(|e| format!("failed to lock chat sessions: {}", e))?;
+
+    sessions
+        .remove(session_id)
+        .ok_or_else(|| format!("session not found: {}", session_id))?;
+
+    Ok(())
+}
+
+/// Updates the permission mode for an existing session.
+#[allow(dead_code)]
+pub async fn set_permission_mode(
+    session_id: &str,
+    mode: PermissionMode,
+    app: AppHandle,
+) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let mut sessions = state
+        .chat_sessions
+        .sessions
+        .lock()
+        .map_err(|e| format!("failed to lock chat sessions: {}", e))?;
+
+    let session = sessions
+        .get_mut(session_id)
+        .ok_or_else(|| format!("session not found: {}", session_id))?;
+
+    session.permission_mode = mode;
+    Ok(())
+}

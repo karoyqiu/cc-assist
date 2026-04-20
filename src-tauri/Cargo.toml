@@ -23,13 +23,15 @@ tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rfd = "0.15"
-uuid = { version = "1", features = ["v4"] }
 dirs = "6"
 log = "0.4"
 simplelog = "0.12"
 tempfile = "3"
 portable-pty = "0.8"
-tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util", "macros", "rt"] }
+time = { version = "0.3", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+cc-sdk = "0.8.1"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-system-fonts = "2.0.2"
 
