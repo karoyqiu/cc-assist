@@ -13,23 +13,27 @@
 - **Reference:** Terminal meets native macOS app.
 
 ## Typography
-- **System default:** Uses the OS/system default sans-serif font for all text.
-- **Scale:** Uses Tailwind relative text classes — `text-xs` (labels/muted) / `text-sm` (body/default) / `text-base` (headings).
+- **Font:** System default (`system-ui, sans-serif`). No custom font loading.
+- **Scale:** Tailwind relative text classes — `text-xs` (labels/muted) / `text-sm` (body/default) / `text-base` (headings).
 
 ## Color
 - **Approach:** Restrained neutral with per-provider accent. The active profile's accent color is the ONLY color in an otherwise monochrome UI — switching profiles switches the one color on screen.
-- **Background:** `#0F0F0F` — near-black app background
-- **Surface:** `#1A1A1A` — cards, panels, input backgrounds
-- **Border:** `#2A2A2A` — subtle dividers and borders
-- **Text:** `#E5E5E5` — primary text
-- **Muted:** `#737373` — labels, secondary text, placeholders
+- **Dark mode:** Default. App is always dark — `.dark` class applied globally. Uses shadcn CSS variable system with oklch notation. Light mode is a secondary consideration.
+- **Dark mode shadcn tokens** (`.dark` block):
+  - `background/foreground`: oklch(0.145 / 0.985)
+  - `primary/primary-foreground`: oklch(0.795 0.184 86.047) / oklch(0.421 0.095 57.708)
+  - `secondary/secondary-foreground`: oklch(0.274 0.006 286.033) / oklch(0.985 0 0)
+  - `muted/muted-foreground`: oklch(0.269 0 0) / oklch(0.708 0 0)
+  - `accent/accent-foreground`: oklch(0.269 0 0) / oklch(0.985 0 0)
+  - `destructive/destructive-foreground`: oklch(0.704 0.191 22.216) / oklch(0.985 0 0)
+  - `border`: oklch(1 0 0 / 10%), `input`: oklch(1 0 0 / 15%), `ring`: oklch(0.556 0 0)
+- **Custom tokens** (app-specific, not shadcn standard): `--app` (#0f0f0f), `--surface` (#1a1a1a), `--subtle` (#2a2a2a), `--hover` (#252525)
 - **Provider accents:**
   - Claude Official: `#D4915D` (warm copper)
   - z.ai International / z.ai CN: `#0F62FE` (IBM blue)
   - MiniMax CN / MiniMax International: `#FF6B6B` (coral red)
   - Kimi: `#6366F1` (indigo)
   - DeepSeek: `#1E88E5` (blue)
-- **Dark mode:** Default. Light mode is a secondary consideration.
 
 ## Spacing
 - **Base unit:** 4px
@@ -40,10 +44,10 @@
 - **Approach:** Two-panel — left panel (profile list, 240px fixed), right panel (editor, fills remaining space). Clean vertical split.
 - **Window:** 700x500, resizable, centered on open, min-width prevents panel collapse.
 - **Directory picker:** Modal overlay (centered, 512px / w-128 wide).
-- **Border radius:** sm: 4px, md: 6px. No large radius anywhere.
+- **Border radius:** shadcn scale (base 0.625rem ≈ 10px). Compact feel preserved via tight padding, not small radius.
 
 ## Motion
-- **Approach:** Minimal-functional only. Fade-in on modal open (150ms ease-out). No choreography, no spring animations — this is a config tool, not a consumer app.
+- **Approach:** Minimal-functional only. Uses `tw-animate-css` for shadcn component animations (fadeIn, etc.). No choreography, no spring animations — this is a config tool, not a consumer app.
 - **Easing:** ease-out for enters. No exit animations needed.
 
 ## Component Inventory
@@ -88,3 +92,8 @@
 | 2026-04-11 | All pixel sizes → Tailwind canonical classes | Consistency, smaller output, design alignment |
 | 2026-04-11 | Provider picker: left-aligned buttons, taller touch targets | Better usability and alignment with design |
 | 2026-04-11 | Directory picker: 500px → w-128 (512px) | Use Tailwind width scale for layout values |
+| 2026-04-20 | Migrate radix-ui → base-ui | shadcn base-mira style uses base-ui primitives; radix-ui removed |
+| 2026-04-20 | Color: hex → oklch notation | shadcn standard; dark mode via `.dark` class |
+| 2026-04-20 | tw-animate-css for animations | Required by shadcn base-mira components |
+| 2026-04-20 | System default font, no fontsource | Simpler, no loading overhead |
+| 2026-04-20 | Full oklch color palette documented | DESIGN.md reflects exact current values |

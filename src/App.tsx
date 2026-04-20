@@ -244,7 +244,7 @@ export function SettingsApp() {
 
   if (!store) {
     return (
-      <div className="bg-app text-muted flex h-screen w-screen items-center justify-center text-sm">
+      <div className="bg-app text-muted-foreground flex h-screen w-screen items-center justify-center text-sm">
         {t('errors.loadConfigFailed')}
       </div>
     );
@@ -259,7 +259,7 @@ export function SettingsApp() {
           className={`px-4 py-2.5 text-sm ${
             activeTab === 'profiles'
               ? 'text-primary border-primary border-b-2'
-              : 'text-muted hover:text-text'
+              : 'text-muted-foreground'
           }`}
         >
           {t('terminal.tabProfiles')}
@@ -269,7 +269,7 @@ export function SettingsApp() {
           className={`px-4 py-2.5 text-sm ${
             activeTab === 'terminal'
               ? 'text-primary border-primary border-b-2'
-              : 'text-muted hover:text-text'
+              : 'text-muted-foreground'
           }`}
         >
           {t('terminal.tabTerminal')}
@@ -303,7 +303,9 @@ export function SettingsApp() {
           {/* Fields */}
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
             <div className="flex flex-col gap-1">
-              <Label className="text-muted text-xs uppercase">{t('terminal.fontFamily')}</Label>
+              <Label className="text-muted-foreground text-xs uppercase">
+                {t('terminal.fontFamily')}
+              </Label>
               <FontCombobox
                 value={draftFontFamily}
                 onChange={setDraftFontFamily}
@@ -311,7 +313,9 @@ export function SettingsApp() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <Label className="text-muted text-xs uppercase">{t('terminal.fontSize')}</Label>
+              <Label className="text-muted-foreground text-xs uppercase">
+                {t('terminal.fontSize')}
+              </Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -326,7 +330,7 @@ export function SettingsApp() {
                   }}
                   className="w-20 text-sm"
                 />
-                <span className="text-muted text-xs">{t('terminal.fontSizeUnit')}</span>
+                <span className="text-muted-foreground text-xs">{t('terminal.fontSizeUnit')}</span>
               </div>
             </div>
           </div>

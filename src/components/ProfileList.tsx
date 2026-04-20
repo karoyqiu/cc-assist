@@ -1,6 +1,7 @@
 import { arrayMove } from '@dnd-kit/helpers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
+import { XIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -68,7 +69,7 @@ function SortableProfileItem({
       <button
         type="button"
         ref={handleRef}
-        className="text-muted hover:text-primary cursor-grab touch-none p-0.5"
+        className="text-muted-foreground hover:text-primary cursor-grab touch-none p-0.5"
         title={t('profileList.dragToReorder')}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -143,7 +144,7 @@ export function ProfileList({
       <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
         {/* Header */}
         <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
-          <span className="text-muted text-xs font-medium tracking-wider uppercase">
+          <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
             {t('profileList.chooseProvider')}
           </span>
           <Button
@@ -152,7 +153,7 @@ export function ProfileList({
             size="icon"
             title={t('profileList.cancel')}
           >
-            {'\u00d7'}
+            <XIcon />
           </Button>
         </div>
 
@@ -166,7 +167,7 @@ export function ProfileList({
                 setShowPicker(false);
                 onAdd(provider);
               }}
-              className="flex w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-5 text-left"
+              className="w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-5"
             >
               <Avatar
                 profile={{
@@ -198,10 +199,10 @@ export function ProfileList({
             }}
             className="flex w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-6 text-left"
           >
-            <div className="bg-subtle text-muted flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
+            <div className="bg-subtle text-muted-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
               +
             </div>
-            <span className="text-muted text-sm">{t('profileList.customProvider')}</span>
+            <span className="text-muted-foreground text-sm">{t('profileList.customProvider')}</span>
           </Button>
         </div>
       </div>
@@ -212,7 +213,7 @@ export function ProfileList({
     <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
       {/* Header */}
       <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
-        <span className="text-muted text-xs font-medium tracking-wider uppercase">
+        <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
           {t('profileList.title')}
         </span>
         <Button
@@ -228,7 +229,7 @@ export function ProfileList({
       {/* List */}
       <div className="flex-1 overflow-y-auto py-1">
         {profiles.length === 0 ? (
-          <div className="text-muted px-3 py-6 text-center text-sm">
+          <div className="text-muted-foreground px-3 py-6 text-center text-sm">
             {t('profileList.emptyState')}
           </div>
         ) : (

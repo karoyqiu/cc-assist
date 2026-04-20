@@ -43,17 +43,14 @@ interface FieldProps {
 function Field({ label, value, onChange, disabled, placeholder, mono, password }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-muted text-xs uppercase">{label}</Label>
+      <Label className="text-muted-foreground text-xs uppercase">{label}</Label>
       <Input
         type={password ? 'password' : 'text'}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         disabled={disabled}
         placeholder={placeholder}
-        className={cn(
-          'w-full text-sm',
-          mono && 'font-mono',
-        )}
+        className={cn('w-full text-sm', mono && 'font-mono')}
       />
     </div>
   );
@@ -87,7 +84,7 @@ export function ProfileEditor({
 
   if (!profile || !draft) {
     return (
-      <div className="text-muted flex flex-1 items-center justify-center text-sm">
+      <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
         {t('profileEditor.noProfileSelected')}
       </div>
     );
@@ -135,7 +132,11 @@ export function ProfileEditor({
         {/* Action buttons */}
         {!official && (
           <div className="flex gap-1.5">
-            <Button variant="outline" onClick={() => onDuplicate(draft)} className="text-muted">
+            <Button
+              variant="outline"
+              onClick={() => onDuplicate(draft)}
+              className="text-muted-foreground"
+            >
               {t('profileEditor.duplicate')}
             </Button>
             <Button
@@ -186,7 +187,7 @@ export function ProfileEditor({
 
         {/* Models */}
         <div>
-          <div className="text-muted mb-2 text-xs font-medium tracking-[0.08em] uppercase">
+          <div className="text-muted-foreground mb-2 text-xs font-medium tracking-[0.08em] uppercase">
             {t('profileEditor.models')}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -258,7 +259,7 @@ export function ProfileEditor({
             <AlertDialogTitle className="text-primary font-semibold">
               {t('profileEditor.deleteConfirmTitle')}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted text-sm leading-relaxed">
+            <AlertDialogDescription className="text-muted-foreground text-sm leading-relaxed">
               {t('profileEditor.deleteConfirmMessage', { name: draft.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>

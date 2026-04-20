@@ -18,9 +18,11 @@ import { listen } from '@tauri-apps/api/event';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
+import { PlusIcon, SettingsIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import '@xterm/xterm/css/xterm.css';
+
 import type { Session } from '@/lib/terminal';
 import type { ProfileConfig, RecentDirectories } from '@/types';
 
@@ -441,20 +443,21 @@ export function TerminalWindow({
       <div className="border-border flex w-60 flex-col border-r">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-muted text-sm">{t('terminal.sessions')}</span>
-          <button
+          <span className="text-muted-foreground text-sm">{t('terminal.sessions')}</span>
+          <Button
             onClick={() => setShowNewSession(true)}
-            className="text-muted hover:bg-surface hover:text-text flex h-7 w-7 items-center justify-center rounded"
             title={t('terminal.newSession')}
+            size="icon"
+            variant="ghost"
           >
-            +
-          </button>
+            <PlusIcon />
+          </Button>
         </div>
 
         {/* Session list */}
         <div className="flex-1 overflow-y-auto">
           {sessions.length === 0 ? (
-            <div className="text-muted px-4 py-8 text-center text-sm">
+            <div className="text-muted-foreground px-4 py-8 text-center text-sm">
               <div>{t('terminal.noSessions')}</div>
               <div className="mt-1 text-xs">{t('terminal.noSessionsHint')}</div>
             </div>
@@ -485,12 +488,10 @@ export function TerminalWindow({
 
         {/* Bottom bar */}
         <div className="border-border border-t p-2">
-          <button
-            onClick={onOpenSettings}
-            className="text-muted hover:bg-surface hover:text-text flex w-full items-center justify-center gap-2 rounded px-3 py-2 text-sm"
-          >
-            ⚙ {t('tray.settings')}
-          </button>
+          <Button onClick={onOpenSettings} variant="ghost" className="w-full">
+            <SettingsIcon />
+            {t('tray.settings')}
+          </Button>
         </div>
       </div>
 
@@ -504,7 +505,7 @@ export function TerminalWindow({
             </DialogHeader>
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-muted text-xs">{t('terminal.profile')}</label>
+                <label className="text-muted-foreground text-xs">{t('terminal.profile')}</label>
                 <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t('terminal.profileId')} />
@@ -519,7 +520,7 @@ export function TerminalWindow({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-muted text-xs">{t('terminal.directory')}</label>
+                <label className="text-muted-foreground text-xs">{t('terminal.directory')}</label>
                 <DirectoryCombobox
                   directories={recentDirectories}
                   value={newSessionDir}
@@ -545,7 +546,7 @@ export function TerminalWindow({
 
         {/* Empty state */}
         {!activeId && !showNewSession && (
-          <div className="text-muted flex flex-1 items-center justify-center text-sm">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
             {t('terminal.selectSession')}
           </div>
         )}
