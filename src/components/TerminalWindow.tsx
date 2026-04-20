@@ -506,9 +506,11 @@ export function TerminalWindow({
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs">{t('terminal.profile')}</label>
-                <Select value={newSessionProfileId} onValueChange={setNewSessionProfileId}>
+                <Select value={newSessionProfileId} onValueChange={(v) => v && setNewSessionProfileId(v)}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('terminal.profileId')} />
+                    <SelectValue placeholder={t('terminal.profileId')}>
+                      {profiles.find((p) => p.id === newSessionProfileId)?.name}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {profiles.map((p) => (
