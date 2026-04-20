@@ -35,6 +35,14 @@
         "minHeight": 300,
         "create": false,
         "url": "settings.html"
+      },
+      {
+        "title": "Chat",
+        "label": "chat",
+        "width": 1000,
+        "height": 700,
+        "resizable": true,
+        "visible": false
       }
     ],
     "security": {

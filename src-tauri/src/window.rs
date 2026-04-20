@@ -2,6 +2,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
 
 const MAIN_LABEL: &str = "main";
 const SETTINGS_LABEL: &str = "settings";
+const CHAT_LABEL: &str = "chat";
 
 /// Show the main (terminal) window, creating it from config if it doesn't exist.
 pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
@@ -89,5 +90,36 @@ pub fn toggle_main_window<R: Runtime>(app: &AppHandle<R>) {
         }
     } else {
         show_main_window(app);
+    }
+}
+
+/// Show the chat window, creating it from config if it doesn't exist.
+pub fn show_chat_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window(CHAT_LABEL) {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let window_config = app.config().app.windows.iter().find(|w| w.label == CHAT_LABEL);
+
+    let builder = match window_config {
+        Some(config) => {
+            WebviewWindowBuilder::from_config(app, config).unwrap_or_else(|_| {
+                WebviewWindowBuilder::new(app, CHAT_LABEL, WebviewUrl::App("chat.html".into()))
+            })
+        }
+        None => {
+            WebviewWindowBuilder::new(app, CHAT_LABEL, WebviewUrl::App("chat.html".into()))
+        }
+    };
+
+    match builder.build() {
+        Ok(_) => {
+            log::info!("Chat window built and shown");
+        }
+        Err(e) => {
+            log::error!("Failed to create chat window: {}", e);
+        }
     }
 }

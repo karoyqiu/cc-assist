@@ -12,6 +12,7 @@ use crate::window;
 // Menu item ID constants — cross-referenced across build_tray_menu and handle_menu_event.
 const ID_SETTINGS: &str = "settings";
 const ID_OPEN_TERMINAL: &str = "open-terminal";
+const ID_OPEN_CHAT: &str = "open-chat";
 const ID_LANG_EN: &str = "lang-en";
 const ID_LANG_ZH: &str = "lang-zh";
 
@@ -19,6 +20,7 @@ const ID_LANG_ZH: &str = "lang-zh";
 struct TrayStrings {
     settings: &'static str,
     open_terminal: &'static str,
+    open_chat: &'static str,
     lang_en: &'static str,
     lang_zh: &'static str,
     quit: &'static str,
@@ -29,6 +31,7 @@ fn tray_strings(locale: &str) -> TrayStrings {
         "zh" => TrayStrings {
             settings: "设置",
             open_terminal: "打开终端",
+            open_chat: "打开聊天",
             lang_en: "English",
             lang_zh: "中文",
             quit: "退出",
@@ -36,6 +39,7 @@ fn tray_strings(locale: &str) -> TrayStrings {
         _ => TrayStrings {
             settings: "Settings",
             open_terminal: "Open Terminal",
+            open_chat: "Open Chat",
             lang_en: "English",
             lang_zh: "中文",
             quit: "Quit",
@@ -113,6 +117,10 @@ fn build_tray_menu<R: Runtime>(
         MenuItemBuilder::with_id(ID_OPEN_TERMINAL, ts.open_terminal).build(app)?;
     menu_builder = menu_builder.item(&open_terminal_item);
 
+    // Open Chat
+    let open_chat_item = MenuItemBuilder::with_id(ID_OPEN_CHAT, ts.open_chat).build(app)?;
+    menu_builder = menu_builder.item(&open_chat_item);
+
     menu_builder = menu_builder.separator();
 
     // Language: English
@@ -168,7 +176,7 @@ pub fn rebuild_menu<R: Runtime>(app: &AppHandle<R>) {
 /// Handle a menu item click by ID.
 pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
     // Profile switch — catches all IDs not explicitly listed below.
-    if !id.starts_with("lang-") && id != ID_SETTINGS && id != ID_OPEN_TERMINAL {
+    if !id.starts_with("lang-") && id != ID_SETTINGS && id != ID_OPEN_TERMINAL && id != ID_OPEN_CHAT {
         let id_string = id.to_string();
         let state = app.state::<AppState>();
         let app_data_dir = state.app_data_dir.lock().unwrap().clone();
@@ -203,6 +211,9 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
         ID_OPEN_TERMINAL => {
             window::show_main_window(app);
+        }
+        ID_OPEN_CHAT => {
+            window::show_chat_window(app);
         }
         ID_LANG_EN => {
             let app_clone = app.clone();
