@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 mod chat;
 mod commands;
+mod commands_chat;
 mod config;
 mod settings;
 mod state;
@@ -89,6 +90,7 @@ pub fn run() {
             chat_sessions: ChatSessionManager {
                 sessions: Mutex::new(HashMap::new()),
             },
+            app_handle: Mutex::new(None),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -120,6 +122,9 @@ pub fn run() {
             };
             *state.store.lock().unwrap() = store;
 
+            // Store app handle for use in commands
+            *state.app_handle.lock().unwrap() = Some(app.handle().clone());
+
             // Set up tray
             if let Err(e) = tray::setup_tray(app.handle()) {
                 log::error!("Failed to setup tray: {}", e);
@@ -148,6 +153,19 @@ pub fn run() {
             commands::terminal_close_session,
             commands::terminal_list_sessions,
             commands::save_terminal_font_settings,
+            commands_chat::chat_create_session,
+            commands_chat::chat_send_message,
+            commands_chat::chat_list_sessions,
+            commands_chat::chat_get_recent_sessions,
+            commands_chat::chat_delete_sessions,
+            commands_chat::chat_rename_session,
+            commands_chat::chat_resume_session,
+            commands_chat::chat_close_session,
+            commands_chat::chat_set_permission_mode,
+            commands_chat::chat_get_token_usage,
+            commands_chat::chat_cancel,
+            commands_chat::chat_undo,
+            commands_chat::chat_redo,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

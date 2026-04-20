@@ -75,4 +75,5 @@ pub struct AppState {
     pub app_data_dir: Mutex<PathBuf>,
     pub sessions: Mutex<HashMap<String, SessionHandle>>,
     pub chat_sessions: ChatSessionManager,
+    pub app_handle: Mutex<Option<tauri::AppHandle>>,
 }
