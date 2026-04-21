@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { PermissionBadge } from './PermissionBadge';
+import { playNotification } from '../lib/audio';
 
 interface StatusBarProps {
   sessionId: string;
@@ -49,6 +50,9 @@ export function StatusBar({ sessionId }: StatusBarProps) {
       (event) => {
         if (event.payload.session_id !== sessionId) return;
         setSessionState(event.payload.state);
+        if (event.payload.state !== 'thinking') {
+          playNotification();
+        }
       },
     );
     return () => { unlisten.then((fn) => fn()); };
