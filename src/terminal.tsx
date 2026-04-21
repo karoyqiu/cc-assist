@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import { SettingsApp } from './windows';
+import './lib/i18n';
+import { TerminalWindowApp } from './windows';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <SettingsApp />
+    <TerminalWindowApp />
   </React.StrictMode>,
 );

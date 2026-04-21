@@ -37,12 +37,13 @@
         "url": "settings.html"
       },
       {
-        "title": "Chat",
+        "title": "Terminal",
         "label": "chat",
         "width": 1000,
         "height": 700,
         "resizable": true,
-        "visible": false
+        "visible": false,
+        "url": "terminal.html"
       }
     ],
     "security": {

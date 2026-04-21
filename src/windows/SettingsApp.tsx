@@ -4,84 +4,16 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import './lib/i18n';
-import type { ProfileConfig, ProfilesStore, ProviderConfig } from './types';
+import '../lib/i18n';
+import type { ProfileConfig, ProfilesStore, ProviderConfig } from '../types';
 
-import './App.css';
-import { FontCombobox } from './components/FontCombobox';
-import { ProfileEditor } from './components/ProfileEditor';
-import { ProfileList } from './components/ProfileList';
-import { TerminalWindow } from './components/TerminalWindow';
-import { Button } from './components/ui/button';
-import { Input } from './components/ui/input';
-import { Label } from './components/ui/label';
-import { setFontSettings } from './lib/terminal';
-import { ChatWindowApp } from './windows/ChatWindowApp';
-
-export function App() {
-  const window = getCurrentWindow();
-  const label = window.label;
-
-  if (label === 'settings') {
-    return <SettingsApp />;
-  }
-
-  return <ChatWindowApp />;
-}
-
-export function TerminalWindowApp() {
-  const { i18n } = useTranslation();
-  const [store, setStore] = useState<ProfilesStore | null>(null);
-
-  useEffect(() => {
-    invoke<ProfilesStore>('get_config').then((s) => {
-      setStore(s);
-      setFontSettings({
-        fontFamily: s.terminal_font_family,
-        fontSize: s.terminal_font_size,
-      });
-      return i18n.changeLanguage(s.locale);
-    });
-  }, [i18n]);
-
-  // Listen for locale-changed events from tray menu
-  useEffect(() => {
-    const unlisten = listen<string>('locale-changed', async (event) => {
-      await i18n.changeLanguage(event.payload);
-      setStore((s) => (s ? { ...s, locale: event.payload } : s));
-    });
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, [i18n]);
-
-  // Listen for profile changes from settings window
-  useEffect(() => {
-    const unlisten = listen('profiles-changed', async () => {
-      const s = await invoke<ProfilesStore>('get_config');
-      setStore(s);
-    });
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, []);
-
-  // Show window once loaded
-  useEffect(() => {
-    getCurrentWindow().show().catch(console.error);
-  }, []);
-
-  if (!store) return null;
-
-  return (
-    <TerminalWindow
-      profiles={store.profiles}
-      activeProfileId={store.active_profile_id}
-      recentDirectories={store.recent_directories}
-      onOpenSettings={() => invoke('toggle_settings_window')}
-    />
-  );
-}
+import '../App.css';
+import { FontCombobox } from '../components/FontCombobox';
+import { ProfileEditor } from '../components/ProfileEditor';
+import { ProfileList } from '../components/ProfileList';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 export function SettingsApp() {
   const { i18n, t } = useTranslation();
@@ -94,7 +26,6 @@ export function SettingsApp() {
   const [draftFontSize, setDraftFontSize] = useState(14);
   const initialized = useRef(false);
 
-  // Load config and providers on mount
   useEffect(() => {
     Promise.all([invoke<ProfilesStore>('get_config'), invoke<ProviderConfig[]>('get_providers')])
       .then(([s, p]) => {
@@ -114,7 +45,6 @@ export function SettingsApp() {
       });
   }, [i18n, setStore, setSelectedId]);
 
-  // Listen for locale-changed events from tray menu
   useEffect(() => {
     const unlisten = listen<string>('locale-changed', async (event) => {
       await i18n.changeLanguage(event.payload);
@@ -261,7 +191,6 @@ export function SettingsApp() {
 
   return (
     <div className="bg-app flex h-screen w-screen flex-col overflow-hidden">
-      {/* Tab bar */}
       <div className="border-border flex border-b">
         <button
           onClick={() => setActiveTab('profiles')}
@@ -285,7 +214,6 @@ export function SettingsApp() {
         </button>
       </div>
 
-      {/* Tab content */}
       {activeTab === 'profiles' ? (
         <div className="flex flex-1 overflow-hidden">
           <ProfileList
@@ -309,7 +237,6 @@ export function SettingsApp() {
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Fields */}
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
             <div className="flex flex-col gap-1">
               <Label className="text-muted-foreground text-xs uppercase">
@@ -344,7 +271,6 @@ export function SettingsApp() {
             </div>
           </div>
 
-          {/* Footer with Apply */}
           <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
             <Button onClick={handleApplyFontSettings} disabled={!fontDirty}>
               {t('terminal.apply')}
