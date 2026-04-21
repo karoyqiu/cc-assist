@@ -1,7 +1,5 @@
 import {
   ComposerPrimitive,
-  useComposer,
-  useAui,
 } from '@assistant-ui/react';
 import { useState } from 'react';
 
@@ -12,8 +10,6 @@ const MODELS = [
 ];
 
 export function ChatComposer() {
-  const { thread } = useAui();
-  const composer = useComposer();
   const [selectedModel, setSelectedModel] = useState('sonnet');
 
   return (
