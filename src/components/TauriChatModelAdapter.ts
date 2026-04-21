@@ -41,9 +41,9 @@ function toRunResult(event: ChatOutputEvent): ChatModelRunResult {
 
 export function createTauriChatModelAdapter(sessionId: string) {
   const adapter: ChatModelAdapter = {
-    async *run({ messages, abortSignal }) {
+    async *run({ messages, abortSignal, runConfig }) {
       // Promise-based message queue
-      let pendingResolve: ((event: ChatOutputEvent) => void) | null = null;
+      let pendingResolve: ((event: ChatOutputEvent | null) => void) | null = null;
       const queue: ChatOutputEvent[] = [];
 
       // invoke() returns a Channel — stream events directly from it
@@ -51,7 +51,7 @@ export function createTauriChatModelAdapter(sessionId: string) {
         sessionId,
         content: JSON.stringify(messages),
         attachments: null,
-        model: null,
+        model: (runConfig?.custom as { model?: string } | undefined)?.model ?? null,
       });
 
       // Set up the channel handler once — each message gets resolved from the queue
@@ -82,18 +82,22 @@ export function createTauriChatModelAdapter(sessionId: string) {
             continue;
           }
 
-          // Wait for next event from channel
-          const event = await new Promise<ChatOutputEvent | null>((resolve) => {
-            pendingResolve = resolve;
-            // Timeout to check abort
-            setTimeout(() => {
-              if (abortController.signal.aborted) {
-                resolve(null);
-              }
-            }, 100);
-          });
+          // Wait for next event or abort
+          const event = await Promise.race([
+            new Promise<ChatOutputEvent | null>((resolve) => {
+              pendingResolve = resolve;
+            }),
+            new Promise<null>((resolve) => {
+              abortController.signal.addEventListener('abort', () => resolve(null), { once: true });
+            }),
+          ]);
 
-          if (!event) break; // channel closed or aborted
+          pendingResolve = null;
+
+          if (!event) {
+            channel.onmessage = null as unknown as (response: ChatOutputEvent) => void;
+            break;
+          }
           yield toRunResult(event);
         }
       } finally {
