@@ -15,6 +15,7 @@ interface RecentSession {
   session_id: string;
   name: string;
   last_used_at: string;
+  profile_name?: string;
 }
 
 interface SessionMenuProps {
@@ -60,7 +61,10 @@ export function SessionMenu({ onSessionCreated }: SessionMenuProps) {
                 className="flex flex-col items-start gap-0.5 py-2"
               >
                 <span className="truncate w-full">{s.name}</span>
-                <span className="text-muted-foreground text-xs">{formatTime(s.last_used_at)}</span>
+                <span className="text-muted-foreground flex gap-1 text-xs">
+                  {s.profile_name && <span>{s.profile_name}</span>}
+                  <span>{formatTime(s.last_used_at)}</span>
+                </span>
               </DropdownMenuItem>
             ))}
             {recentSessions.length > 0 && <DropdownMenuSeparator />}

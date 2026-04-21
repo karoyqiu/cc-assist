@@ -1,8 +1,19 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use time::OffsetDateTime;
+use tokio::sync::Mutex as TokioMutex;
 use uuid::Uuid;
+
+fn find_claude_exe() -> Result<PathBuf, String> {
+    for name in &["claude", "claude-code"] {
+        if let Ok(path) = which::which(name) {
+            return Ok(path);
+        }
+    }
+    Err("claude not found in PATH. Install Claude Code CLI: npm install -g @anthropic-ai/claude-code".to_string())
+}
 
 use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient};
 
@@ -33,6 +44,8 @@ pub struct RecentSessionInfo {
     pub name: String,
     pub cwd: PathBuf,
     pub last_active: OffsetDateTime,
+    pub profile_id: String,
+    pub profile_name: String,
 }
 
 /// Creates a new chat session for the given profile and working directory.
@@ -80,12 +93,16 @@ pub async fn create_chat_session(
         }
     }
 
+    // Verify claude CLI is available
+    let _ = find_claude_exe()?;
+
     // Build ClaudeCodeOptions with merged env vars and project settings
-    let options = ClaudeCodeOptions::builder()
-        .env(merged_env)
-        .setting_sources(vec![cc_sdk::SettingSource::Project])
-        .cwd(directory.clone())
-        .build();
+    let options = ClaudeCodeOptions {
+        env: merged_env,
+        setting_sources: Some(vec![cc_sdk::SettingSource::Project]),
+        cwd: Some(directory.clone()),
+        ..Default::default()
+    };
 
     // Create the cc-sdk client
     let client = ClaudeSDKClient::new(options);
@@ -96,11 +113,12 @@ pub async fn create_chat_session(
 
     // Store the session
     let session = ChatSession {
-        client,
+        client: Arc::new(TokioMutex::new(client)),
         permission_mode: PermissionMode::Default,
         state: SessionState::Idle,
         cwd: directory.clone(),
         session_name: name.clone(),
+        profile_id: profile_id.to_string(),
     };
 
     state

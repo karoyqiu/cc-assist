@@ -3,6 +3,7 @@ import {
   AssistantRuntimeProvider,
   useLocalRuntime,
   ThreadPrimitive,
+  MessagePrimitive,
 } from '@assistant-ui/react';
 import { ChatComposer } from './ChatComposer';
 import { StatusBar } from './StatusBar';
@@ -18,12 +19,12 @@ function ChatPanel({ sessionId }: { sessionId: string }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex-1 overflow-hidden">
           <ThreadPrimitive.Root>
-            <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto px-4 py-3">
+            <ThreadPrimitive.Viewport className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
               <ThreadPrimitive.Messages>
-                {({ message }) => (
-                  <div className="text-sm">
-                    [{message.role}] {JSON.stringify(message).slice(0, 100)}
-                  </div>
+                {() => (
+                  <MessagePrimitive.Root>
+                    <MessagePrimitive.Content />
+                  </MessagePrimitive.Root>
                 )}
               </ThreadPrimitive.Messages>
             </ThreadPrimitive.Viewport>

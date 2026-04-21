@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex as StdMutex};
+
+use tokio::sync::Mutex as TokioMutex;
 
 use cc_sdk::{ClaudeSDKClient, PermissionMode as SdkPermissionMode};
 use serde::{Deserialize, Serialize};
@@ -58,25 +60,26 @@ pub enum SessionState {
 
 /// A chat session backed by a cc-sdk client.
 pub struct ChatSession {
-    pub client: ClaudeSDKClient,
+    pub client: Arc<TokioMutex<ClaudeSDKClient>>,
     pub permission_mode: PermissionMode,
     pub state: SessionState,
     pub cwd: PathBuf,
     pub session_name: String,
+    pub profile_id: String,
 }
 
 /// Manager for all active chat sessions.
 pub struct ChatSessionManager {
-    pub sessions: Mutex<HashMap<String, ChatSession>>,
+    pub sessions: StdMutex<HashMap<String, ChatSession>>,
 }
 
 /// AppState — shared across all Tauri commands.
 pub struct AppState {
-    pub store: Mutex<ProfilesStore>,
-    pub app_data_dir: Mutex<PathBuf>,
-    pub sessions: Mutex<HashMap<String, SessionHandle>>,
+    pub store: StdMutex<ProfilesStore>,
+    pub app_data_dir: StdMutex<PathBuf>,
+    pub sessions: StdMutex<HashMap<String, SessionHandle>>,
     pub chat_sessions: ChatSessionManager,
-    pub app_handle: Mutex<Option<tauri::AppHandle>>,
-    pub allowlist: Mutex<Allowlist>,
-    pub allowlist_path: Mutex<PathBuf>,
+    pub app_handle: StdMutex<Option<tauri::AppHandle>>,
+    pub allowlist: StdMutex<Allowlist>,
+    pub allowlist_path: StdMutex<PathBuf>,
 }

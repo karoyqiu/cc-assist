@@ -2,8 +2,10 @@
 
 use std::path::PathBuf;
 use tauri::{Emitter, State};
-use tauri::ipc::Channel;
 
+use cc_sdk::Message;
+use futures::StreamExt;
+use log::error;
 use crate::chat;
 use crate::state::{AppState, PermissionMode};
 
@@ -13,6 +15,35 @@ pub struct ChatOutputEvent {
     pub content: String,
     pub tool_name: Option<String>,
     pub tool_input: Option<serde_json::Value>,
+}
+
+fn message_to_text(msg: &Message) -> String {
+    match msg {
+        Message::Assistant { message, .. } => {
+            let mut parts = Vec::new();
+            for block in &message.content {
+                match block {
+                    cc_sdk::ContentBlock::Text(tc) => parts.push(tc.text.clone()),
+                    _ => {}
+                }
+            }
+            parts.join("\n")
+        }
+        Message::Result { result, is_error, .. } => {
+            if *is_error {
+                format!("[Error] {}", result.as_deref().unwrap_or("Unknown error"))
+            } else {
+                result.clone().unwrap_or_default()
+            }
+        }
+        Message::System { subtype, data, .. } => {
+            format!("[{}] {}", subtype, data)
+        }
+        Message::User { message, .. } => {
+            message.content.clone()
+        }
+        _ => serde_json::to_string(msg).unwrap_or_default(),
+    }
 }
 
 #[tauri::command]
@@ -45,15 +76,15 @@ pub async fn chat_send_message(
     _model: Option<String>,
     state: State<'_, AppState>,
     app: tauri::AppHandle,
-    channel: Channel<ChatOutputEvent>,
 ) -> Result<(), String> {
-    // Verify session exists
-    {
+    // Get client handle
+    let client = {
         let sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
-        let _ = sessions
+        let session = sessions
             .get(&session_id)
             .ok_or_else(|| format!("Session not found: {}", session_id))?;
-    }
+        session.client.clone()
+    };
 
     // Emit thinking state
     let _ = app.emit(
@@ -61,21 +92,74 @@ pub async fn chat_send_message(
         serde_json::json!({ "session_id": session_id, "state": "thinking" }),
     );
 
-    // Spawn async task to stream cc-sdk output through channel
+    // Spawn async task to connect and send message
     let session_id_clone = session_id.clone();
     let app_clone = app.clone();
     tokio::spawn(async move {
-        // Placeholder: send user's content as a text event for now
-        // In a real implementation, this would call session.client.send_message()
-        // and stream the response through the channel
-        let _ = channel.send(ChatOutputEvent {
-            part_type: "text".to_string(),
-            content: content.clone(),
-            tool_name: None,
-            tool_input: None,
-        });
+        // Lock client and connect
+        let mut client = client.lock().await;
+        if let Err(e) = client.connect(None).await {
+            error!("Failed to connect: {}", e);
+            let _ = app_clone.emit(
+                "chat-message",
+                ChatOutputEvent {
+                    part_type: "text".to_string(),
+                    content: format!("[Connection Error] {}", e),
+                    tool_name: None,
+                    tool_input: None,
+                },
+            );
+            let _ = app_clone.emit(
+                "session-state",
+                serde_json::json!({ "session_id": session_id_clone, "state": "error" }),
+            );
+            return;
+        }
 
-        // Emit done state
+        // Send message and stream response
+        // Start receiving BEFORE sending (receive_messages() sets up the channel)
+        let mut stream = client.receive_messages().await;
+        match client.send_request(content.clone(), None).await {
+            Ok(()) => {
+                // Receive and forward messages
+                while let Some(msg_result) = stream.next().await {
+                    match msg_result {
+                        Ok(msg) => {
+                            let text = message_to_text(&msg);
+                            if !text.is_empty() {
+                                let _ = app_clone.emit(
+                                    "chat-message",
+                                    ChatOutputEvent {
+                                        part_type: "text".to_string(),
+                                        content: text,
+                                        tool_name: None,
+                                        tool_input: None,
+                                    },
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            error!("Message error: {}", e);
+                            break;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                error!("Send error: {}", e);
+                let _ = app_clone.emit(
+                    "chat-message",
+                    ChatOutputEvent {
+                        part_type: "text".to_string(),
+                        content: format!("[Send Error] {}", e),
+                        tool_name: None,
+                        tool_input: None,
+                    },
+                );
+            }
+        }
+
+        // Emit idle state
         let _ = app_clone.emit(
             "session-state",
             serde_json::json!({ "session_id": session_id_clone, "state": "idle" }),
@@ -108,15 +192,26 @@ pub fn chat_get_recent_sessions(
     state: State<'_, AppState>,
 ) -> Result<Vec<chat::RecentSessionInfo>, String> {
     let sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
+    let store = state.store.lock().map_err(|e| e.to_string())?;
     let limit = limit.unwrap_or(10);
     Ok(sessions
         .iter()
         .take(limit)
-        .map(|(id, h)| chat::RecentSessionInfo {
-            session_id: id.clone(),
-            name: h.session_name.clone(),
-            cwd: h.cwd.clone(),
-            last_active: time::OffsetDateTime::now_utc(),
+        .map(|(id, h)| {
+            let profile_name = store
+                .profiles
+                .iter()
+                .find(|p| p.id == h.profile_id)
+                .map(|p| p.name.clone())
+                .unwrap_or_default();
+            chat::RecentSessionInfo {
+                session_id: id.clone(),
+                name: h.session_name.clone(),
+                cwd: h.cwd.clone(),
+                last_active: time::OffsetDateTime::now_utc(),
+                profile_id: h.profile_id.clone(),
+                profile_name,
+            }
         })
         .collect())
 }

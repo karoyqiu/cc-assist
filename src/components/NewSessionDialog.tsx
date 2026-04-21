@@ -30,11 +30,13 @@ export function NewSessionDialog({ open, onClose, onCreated }: NewSessionDialogP
   const [profileId, setProfileId] = useState('');
   const [directory, setDirectory] = useState('');
   const [profiles, setProfiles] = useState<ProfilesStore['profiles']>([]);
+  const [recentDirs, setRecentDirs] = useState<ProfilesStore['recent_directories']>([]);
 
-  // Load profiles on mount
+  // Load profiles and recent directories on mount
   useEffect(() => {
     invoke<ProfilesStore>('get_config').then((store) => {
       setProfiles(store.profiles);
+      setRecentDirs(store.recent_directories);
     }).catch(console.error);
   }, []);
 
@@ -74,7 +76,7 @@ export function NewSessionDialog({ open, onClose, onCreated }: NewSessionDialogP
           <div className="flex flex-col gap-1.5">
             <label className="text-muted-foreground text-xs">Directory</label>
             <DirectoryCombobox
-              directories={[]}
+              directories={recentDirs}
               value={directory}
               onChange={setDirectory}
             />
