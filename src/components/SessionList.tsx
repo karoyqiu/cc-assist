@@ -29,10 +29,10 @@ export function SessionList({ activeSessionId, onSelect }: SessionListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
-  // Load sessions on mount
+  // Load sessions on mount and whenever activeSessionId changes
   useEffect(() => {
     invoke<Session[]>('chat_list_sessions').then(setSessions).catch(console.error);
-  }, []);
+  }, [activeSessionId]);
 
   function handleDoubleClick(session: Session) {
     setEditingId(session.session_id);

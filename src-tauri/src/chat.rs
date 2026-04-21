@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter, Manager, State};
 use time::OffsetDateTime;
@@ -5,6 +6,7 @@ use uuid::Uuid;
 
 use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient};
 
+use crate::settings;
 use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
 
 /// Full info about a chat session, returned by list_sessions.
@@ -46,16 +48,41 @@ pub async fn create_chat_session(
         .lock()
         .map_err(|e| format!("failed to lock store: {}", e))?;
 
-    let _profile = store
+    let profile = store
         .profiles
         .iter()
         .find(|p| p.id == profile_id)
-        .ok_or_else(|| format!("profile not found: {}", profile_id))?;
+        .ok_or_else(|| format!("profile not found: {}", profile_id))?
+        .clone();
 
     drop(store);
 
-    // Build ClaudeCodeOptions with project settings
+    // Read base env from ~/.claude/settings.json, then merge profile vars on top
+    let base_env: HashMap<String, String> = settings::read_settings_json_or_empty()
+        .ok()
+        .and_then(|v| v.get("env")?.as_object().cloned())
+        .map(|obj| {
+            obj.into_iter()
+                .filter_map(|(k, v)| v.as_str().map(|s| (k, s.to_string())))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Build full env map from profile, with profile vars overriding base
+    let profile_env: HashMap<String, String> = settings::build_env_map(&profile)
+        .into_iter()
+        .collect();
+
+    let mut merged_env = base_env;
+    for (k, v) in profile_env {
+        if !v.is_empty() {
+            merged_env.insert(k, v);
+        }
+    }
+
+    // Build ClaudeCodeOptions with merged env vars and project settings
     let options = ClaudeCodeOptions::builder()
+        .env(merged_env)
         .setting_sources(vec![cc_sdk::SettingSource::Project])
         .cwd(directory.clone())
         .build();
