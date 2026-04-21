@@ -6,6 +6,7 @@ mod chat;
 mod commands;
 mod commands_chat;
 mod config;
+mod permission_allowlist;
 mod settings;
 mod state;
 mod terminal;
@@ -91,6 +92,8 @@ pub fn run() {
                 sessions: Mutex::new(HashMap::new()),
             },
             app_handle: Mutex::new(None),
+            allowlist: Mutex::new(crate::permission_allowlist::Allowlist::default()),
+            allowlist_path: Mutex::new(early_log_dir.clone().join("permission_allowlist.json")),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -124,6 +127,12 @@ pub fn run() {
 
             // Store app handle for use in commands
             *state.app_handle.lock().unwrap() = Some(app.handle().clone());
+
+            // Load permission allowlist
+            let allowlist_path = app_data_dir.join("permission_allowlist.json");
+            let allowlist = crate::permission_allowlist::Allowlist::load(&allowlist_path);
+            *state.allowlist_path.lock().unwrap() = allowlist_path;
+            *state.allowlist.lock().unwrap() = allowlist;
 
             // Set up tray
             if let Err(e) = tray::setup_tray(app.handle()) {
