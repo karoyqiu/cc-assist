@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -51,23 +52,25 @@ export function SessionMenu({ onSessionCreated }: SessionMenuProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4} className="w-64">
           <DropdownMenuLabel className="text-xs">Recent Sessions</DropdownMenuLabel>
-          {recentSessions.map((s) => (
+          <DropdownMenuGroup>
+            {recentSessions.map((s) => (
+              <DropdownMenuItem
+                key={s.session_id}
+                onClick={() => onSessionCreated(s.session_id)}
+                className="flex flex-col items-start gap-0.5 py-2"
+              >
+                <span className="truncate w-full">{s.name}</span>
+                <span className="text-muted-foreground text-xs">{formatTime(s.last_used_at)}</span>
+              </DropdownMenuItem>
+            ))}
+            {recentSessions.length > 0 && <DropdownMenuSeparator />}
             <DropdownMenuItem
-              key={s.session_id}
-              onClick={() => onSessionCreated(s.session_id)}
-              className="flex flex-col items-start gap-0.5 py-2"
+              onClick={() => setShowNewSession(true)}
+              className="py-2"
             >
-              <span className="truncate w-full">{s.name}</span>
-              <span className="text-muted-foreground text-xs">{formatTime(s.last_used_at)}</span>
+              + New session
             </DropdownMenuItem>
-          ))}
-          {recentSessions.length > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuItem
-            onClick={() => setShowNewSession(true)}
-            className="py-2"
-          >
-            + New session
-          </DropdownMenuItem>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
