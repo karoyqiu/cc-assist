@@ -36,7 +36,7 @@ function ChatPanel({ sessionId }: { sessionId: string }) {
   );
 }
 
-export function ChatWindowApp() {
+export function ChatWindow() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   return (
