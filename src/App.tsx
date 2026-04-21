@@ -22,11 +22,11 @@ export function App() {
   const window = getCurrentWindow();
   const label = window.label;
 
-  if (label === 'chat') {
-    return <ChatWindowApp />;
+  if (label === 'settings') {
+    return <SettingsApp />;
   }
 
-  return <TerminalWindowApp />;
+  return <ChatWindowApp />;
 }
 
 export function TerminalWindowApp() {
