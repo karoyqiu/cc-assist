@@ -43,7 +43,7 @@ interface ChatComposerProps {
   onSend?: (content: string, attachments: string[]) => void;
 }
 
-export function ChatComposer({ sessionId, onSend }: ChatComposerProps) {
+export function ChatComposer({ sessionId }: ChatComposerProps) {
   const [selectedModel, setSelectedModel] = useState('sonnet');
   const [permissionMode, setPermissionMode] = useState('default');
   const [showModePopover, setShowModePopover] = useState(false);
