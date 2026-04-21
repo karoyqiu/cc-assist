@@ -168,7 +168,8 @@ export async function closeSession(sessionId: string): Promise<void> {
 }
 
 export async function listSessions(): Promise<Session[]> {
-  const result = await invoke<{ session_id: string; name: string; cwd: string }[]>('terminal_list_sessions');
+  const result =
+    await invoke<{ session_id: string; name: string; cwd: string }[]>('terminal_list_sessions');
   return result.map((s, i) => ({ id: s.session_id, name: s.name, cwd: s.cwd, order: i }));
 }
 
