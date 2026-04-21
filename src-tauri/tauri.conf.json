@@ -37,12 +37,13 @@
         "url": "settings.html"
       },
       {
-        "title": "Terminal",
-        "label": "chat",
+        "title": "CC Assist",
+        "label": "terminal",
         "width": 1000,
         "height": 700,
         "resizable": true,
         "visible": false,
+        "create": false,
         "url": "terminal.html"
       }
     ],
