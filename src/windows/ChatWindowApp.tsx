@@ -1,13 +1,9 @@
-// ChatWindowApp - placeholder shell
-// TODO: Wire up assistant-ui runtime with TauriChatModelAdapter
-// The correct approach in @assistant-ui/react v0.12:
-// 1. Wrap in AuiProvider with AssistantClient
-// 2. Use useLocalRuntime(chatModelAdapter) to create AssistantRuntime
-// 3. ThreadPrimitive components consume runtime from context
-
 import { useState } from 'react';
 
+import { useShowWindowOnMount } from '../hooks/useShowWindowOnMount';
+
 export function ChatWindowApp() {
+  useShowWindowOnMount();
   const [activeSessionId] = useState<string | null>(null);
 
   return (

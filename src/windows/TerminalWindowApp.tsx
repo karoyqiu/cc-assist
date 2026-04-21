@@ -1,9 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useShowWindowOnMount } from '../hooks/useShowWindowOnMount';
 import '../lib/i18n';
 import type { ProfilesStore } from '../types';
 
@@ -46,9 +46,7 @@ export function TerminalWindowApp() {
     };
   }, []);
 
-  useEffect(() => {
-    getCurrentWindow().show().catch(console.error);
-  }, []);
+  useShowWindowOnMount();
 
   if (!store) return null;
 

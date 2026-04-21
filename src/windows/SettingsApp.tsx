@@ -1,9 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useShowWindowOnMount } from '../hooks/useShowWindowOnMount';
 import '../lib/i18n';
 import type { ProfileConfig, ProfilesStore, ProviderConfig } from '../types';
 
@@ -55,9 +55,7 @@ export function SettingsApp() {
     };
   }, [i18n, setStore]);
 
-  useEffect(() => {
-    getCurrentWindow().show().catch(console.error);
-  }, []);
+  useShowWindowOnMount();
 
   const selectedProfile = store?.profiles.find((p) => p.id === selectedId) ?? null;
 
