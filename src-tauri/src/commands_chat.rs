@@ -214,3 +214,40 @@ pub fn chat_redo(session_id: String, state: State<'_, AppState>) -> Result<(), S
     let _ = state;
     Ok(())
 }
+
+#[derive(Debug, serde::Serialize)]
+pub struct SlashCommand {
+    pub name: String,
+    pub description: String,
+    pub argument_hint: Option<String>,
+}
+
+/// Get available slash commands for a session.
+/// Falls back to static list — cc-sdk does not expose dynamic command discovery.
+#[tauri::command]
+pub fn chat_get_slash_commands(
+    _session_id: String,
+    _state: State<'_, AppState>,
+) -> Result<Vec<SlashCommand>, String> {
+    // Static list — cc-sdk built-in slash commands
+    let builtin = vec![
+        SlashCommand { name: "help".into(), description: "Show available commands".into(), argument_hint: None },
+        SlashCommand { name: "clear".into(), description: "Clear the conversation".into(), argument_hint: None },
+        SlashCommand { name: "model".into(), description: "Switch model".into(), argument_hint: Some("<model-id>".into()) },
+        SlashCommand { name: "cancel".into(), description: "Cancel the current request".into(), argument_hint: None },
+        SlashCommand { name: "context".into(), description: "Show context usage".into(), argument_hint: None },
+        SlashCommand { name: "debug".into(), description: "Toggle debug mode".into(), argument_hint: None },
+        SlashCommand { name: "resume".into(), description: "Resume an existing session".into(), argument_hint: None },
+        SlashCommand { name: "fork".into(), description: "Fork the current session".into(), argument_hint: None },
+    ];
+
+    // 'rewind' is a native cc-sdk command — always available
+    let mut commands = builtin;
+    commands.push(SlashCommand {
+        name: "rewind".into(),
+        description: "Rewind tracked files to a previous user message".into(),
+        argument_hint: Some("[user-message-uuid]".into()),
+    });
+
+    Ok(commands)
+}

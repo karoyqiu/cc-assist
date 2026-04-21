@@ -1,10 +1,28 @@
 import {
   ComposerPrimitive,
 } from '@assistant-ui/react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 
 import { PermissionModePopover } from './PermissionModePopover';
+
+interface SlashCommand {
+  name: string;
+  description: string;
+  argument_hint?: string;
+}
+
+const STATIC_COMMANDS: SlashCommand[] = [
+  { name: 'help', description: 'Show available commands' },
+  { name: 'clear', description: 'Clear the conversation' },
+  { name: 'model', description: 'Switch model', argument_hint: '<model-id>' },
+  { name: 'cancel', description: 'Cancel the current request' },
+  { name: 'context', description: 'Show context usage' },
+  { name: 'debug', description: 'Toggle debug mode' },
+  { name: 'resume', description: 'Resume an existing session' },
+  { name: 'fork', description: 'Fork the current session' },
+  { name: 'rewind', description: 'Rewind tracked files to a previous user message', argument_hint: '[uuid]' },
+];
 
 const MODELS = [
   { id: 'sonnet', label: 'Sonnet 4' },
@@ -31,6 +49,13 @@ export function ChatComposer({ sessionId, onSend }: ChatComposerProps) {
   const [showModePopover, setShowModePopover] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState('');
+  const slashRef = useRef<HTMLDivElement>(null);
+
+  const filteredCommands = STATIC_COMMANDS.filter((c) =>
+    c.name.includes(slashQuery.toLowerCase())
+  );
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -87,6 +112,18 @@ export function ChatComposer({ sessionId, onSend }: ChatComposerProps) {
               setShowModePopover(true);
               setTimeout(() => setShowModePopover(false), 1500);
             }
+            if (e.key === '/' && !slashOpen) {
+              setSlashOpen(true);
+              setSlashQuery('');
+            }
+            if (slashOpen && e.key === 'Escape') {
+              setSlashOpen(false);
+            }
+          }}
+          onChange={(e) => {
+            if (slashOpen) {
+              setSlashQuery(e.target.value.slice(1));
+            }
           }}
         />
         <select
@@ -119,6 +156,24 @@ export function ChatComposer({ sessionId, onSend }: ChatComposerProps) {
                 ×
               </button>
             </span>
+          ))}
+        </div>
+      )}
+      {/* Slash command popup */}
+      {slashOpen && filteredCommands.length > 0 && (
+        <div ref={slashRef} className="absolute bottom-full left-0 mb-1 w-64 rounded border bg-surface shadow-lg">
+          {filteredCommands.map((cmd) => (
+            <button
+              key={cmd.name}
+              onClick={() => {
+                setSlashOpen(false);
+                setSlashQuery('');
+              }}
+              className="flex w-full cursor-pointer flex-col items-start px-3 py-2 text-left text-sm hover:bg-subtle"
+            >
+              <span className="font-mono">/{cmd.name}</span>
+              <span className="text-muted-foreground text-xs">{cmd.description}</span>
+            </button>
           ))}
         </div>
       )}

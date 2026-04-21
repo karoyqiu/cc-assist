@@ -166,6 +166,7 @@ pub fn run() {
             commands_chat::chat_cancel,
             commands_chat::chat_undo,
             commands_chat::chat_redo,
+            commands_chat::chat_get_slash_commands,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
