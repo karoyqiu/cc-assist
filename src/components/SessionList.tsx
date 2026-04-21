@@ -51,7 +51,7 @@ export function SessionList({ activeSessionId, onSelect }: SessionListProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="relative flex flex-1 flex-col overflow-hidden">
       {/* Header with session menu */}
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-muted-foreground text-sm">Sessions</span>
