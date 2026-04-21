@@ -51,8 +51,8 @@ export function SessionMenu({ onSessionCreated }: SessionMenuProps) {
           +
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4} className="w-64">
-          <DropdownMenuLabel className="text-xs">Recent Sessions</DropdownMenuLabel>
           <DropdownMenuGroup>
+            <DropdownMenuLabel className="text-xs">Recent Sessions</DropdownMenuLabel>
             {recentSessions.map((s) => (
               <DropdownMenuItem
                 key={s.session_id}
