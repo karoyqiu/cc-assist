@@ -3,7 +3,13 @@ import {
 } from '@assistant-ui/react';
 import { useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { PermissionModePopover } from './PermissionModePopover';
 
 interface SlashCommand {
@@ -126,17 +132,18 @@ export function ChatComposer({ sessionId }: ChatComposerProps) {
             }
           }}
         />
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="bg-surface text-muted-foreground rounded px-2 py-1 text-xs"
-        >
-          {MODELS.map((m) => (
-            <option key={m.id} value={m.id}>{m.label}</option>
-          ))}
-        </select>
-        <ComposerPrimitive.Send className="bg-primary text-primary-foreground rounded px-3 py-1 text-sm">
-          Send
+        <Select value={selectedModel} onValueChange={(v) => setSelectedModel(v ?? 'sonnet')}>
+          <SelectTrigger className="bg-surface h-7 w-20 rounded px-2 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            {MODELS.map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <ComposerPrimitive.Send className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded px-0">
+          →
         </ComposerPrimitive.Send>
         {showModePopover && <PermissionModePopover mode={permissionMode} />}
       </div>
