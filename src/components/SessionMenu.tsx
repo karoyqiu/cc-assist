@@ -1,5 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 import { NewSessionDialog } from './NewSessionDialog';
 
 interface RecentSession {
@@ -13,28 +21,13 @@ interface SessionMenuProps {
 }
 
 export function SessionMenu({ onSessionCreated }: SessionMenuProps) {
-  const [open, setOpen] = useState(false);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [showNewSession, setShowNewSession] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) {
-      invoke<RecentSession[]>('chat_get_recent_sessions', { limit: 10 })
-        .then(setRecentSessions)
-        .catch(console.error);
-    }
-  }, [open]);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    invoke<RecentSession[]>('chat_get_recent_sessions', { limit: 10 })
+      .then(setRecentSessions)
+      .catch(console.error);
   }, []);
 
   function formatTime(iso: string) {
@@ -52,44 +45,31 @@ export function SessionMenu({ onSessionCreated }: SessionMenuProps) {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(!open)}
-        className="text-muted-foreground cursor-pointer p-1 hover:text-foreground"
-      >
-        +
-      </button>
-
-      {open && (
-        <div ref={menuRef} className="absolute left-0 top-full z-50 mt-1 w-64 rounded border bg-surface shadow-lg">
-          <div className="border-b p-2 text-xs text-muted-foreground">Recent Sessions</div>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="text-muted-foreground cursor-pointer p-1 hover:text-foreground">
+          +
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" sideOffset={4} className="w-64">
+          <DropdownMenuLabel className="text-xs">Recent Sessions</DropdownMenuLabel>
           {recentSessions.map((s) => (
-            <button
+            <DropdownMenuItem
               key={s.session_id}
-              onClick={() => {
-                onSessionCreated(s.session_id);
-                setOpen(false);
-              }}
-              className="flex w-full cursor-pointer items-start gap-2 px-3 py-2 text-left text-sm hover:bg-subtle"
+              onClick={() => onSessionCreated(s.session_id)}
+              className="flex flex-col items-start gap-0.5 py-2"
             >
-              <div className="min-w-0 flex-1">
-                <div className="truncate">{s.name}</div>
-                <div className="text-muted-foreground text-xs">{formatTime(s.last_used_at)}</div>
-              </div>
-            </button>
+              <span className="truncate w-full">{s.name}</span>
+              <span className="text-muted-foreground text-xs">{formatTime(s.last_used_at)}</span>
+            </DropdownMenuItem>
           ))}
-
-          <div className="border-t" />
-          <button
-            onClick={() => {
-              setShowNewSession(true);
-              setOpen(false);
-            }}
-            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm hover:bg-subtle"
+          {recentSessions.length > 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem
+            onClick={() => setShowNewSession(true)}
+            className="py-2"
           >
             + New session
-          </button>
-        </div>
-      )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <NewSessionDialog
         open={showNewSession}
