@@ -4,7 +4,7 @@ const MAIN_LABEL: &str = "main";
 const SETTINGS_LABEL: &str = "settings";
 const TERMINAL_LABEL: &str = "terminal";
 
-/// Show the main (terminal) window, creating it from config if it doesn't exist.
+/// Show the main (chat) window, creating it from config if it doesn't exist.
 pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window(MAIN_LABEL) {
         let _ = window.show();
@@ -114,7 +114,7 @@ pub fn show_terminal_window<R: Runtime>(app: &AppHandle<R>) {
 
 /// Toggle the main (terminal) window.
 pub fn toggle_main_window<R: Runtime>(app: &AppHandle<R>) {
-    if let Some(window) = app.get_webview_window("main") {
+    if let Some(window) = app.get_webview_window(MAIN_LABEL) {
         match window.is_visible() {
             Ok(true) => {
                 let _ = window.close();
@@ -126,5 +126,22 @@ pub fn toggle_main_window<R: Runtime>(app: &AppHandle<R>) {
         }
     } else {
         show_main_window(app);
+    }
+}
+
+/// Toggle the terminal window.
+pub fn toggle_terminal_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window(TERMINAL_LABEL) {
+        match window.is_visible() {
+            Ok(true) => {
+                let _ = window.close();
+            }
+            Ok(false) | Err(_) => {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+    } else {
+        show_terminal_window(app);
     }
 }
