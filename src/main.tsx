@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './lib/i18n';
 
 // Placeholder — replaced in Task 14
 function ChatApp() {
