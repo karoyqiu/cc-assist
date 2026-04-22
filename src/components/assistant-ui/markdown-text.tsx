@@ -1,13 +1,9 @@
-import type { TextMessagePart } from '@assistant-ui/react';
-
-import { useMessage } from '@assistant-ui/react';
+import { useMessagePartText } from '@assistant-ui/react';
 import ReactMarkdown from 'react-markdown';
 
 export function MarkdownText() {
-  const text = useMessage((m) => {
-    const part = m.content.find((p): p is TextMessagePart => p.type === 'text');
-    return part ? part.text : '';
-  });
+  const part = useMessagePartText();
+  const text = part.type === 'text' ? part.text : '';
 
   return (
     <ReactMarkdown
