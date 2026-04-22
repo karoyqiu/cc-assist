@@ -113,6 +113,10 @@ Source: `assistant-ui` Claude example (`claude.tsx`). Adapted per DESIGN.md:
 └───────────────────┴──────────────────────────────────────┘
 ```
 
+### Content Max Width
+
+Messages and composer are both constrained to `max-w-3xl` (48rem / 768px), centered with `mx-auto w-full`. The status bar footer spans full width.
+
 ### Thread Background
 
 - Light: `bg-background` (maps to Parchment `#f5f4ed` via CSS var)
