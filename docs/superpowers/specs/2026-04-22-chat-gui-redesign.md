@@ -275,11 +275,84 @@ Card read-only. Selected choice highlighted with `bg-muted`, others dimmed. Butt
 
 ---
 
-## 7. New Tauri Command
+## 7. New Tauri Commands
 
 | Command | Args | Returns | Description |
 |---------|------|---------|-------------|
 | `chat_compact` | `{ session_id }` | `()` | Trigger `/compact` on the cc-sdk session |
+
+---
+
+## 8. Permission Allowlist (amends original spec)
+
+Builds on the allowlist design in `2026-04-20-chat-gui-design.md`. New additions:
+
+### cd-Prefix Stripping
+
+Claude often prefixes commands with `cd <dir> && <actual-command>`. Before checking the allowlist, strip this prefix if the cd target matches the session's current working directory or any known git worktree path.
+
+**Algorithm:**
+
+```
+fn resolve_command(raw: &str, session_cwd: &Path, worktrees: &[PathBuf]) -> &str {
+    // Match: cd <path> && <rest>
+    if let Some((cd_target, rest)) = parse_cd_prefix(raw) {
+        let trusted = std::fs::canonicalize(cd_target)
+            .map(|p| p == session_cwd || worktrees.contains(&p))
+            .unwrap_or(false);
+        if trusted { return rest; }
+    }
+    raw  // no strip — check full command as-is
+}
+```
+
+- `parse_cd_prefix` handles: `cd /path && cmd`, `cd /path; cmd`
+- Only strips a **single** leading `cd` — nested/chained `cd` calls fall back to full command
+- If cd target not recognized → full command checked as-is (no special handling)
+- `worktrees` populated via `git worktree list --porcelain` at session start and on demand
+
+### Allowlist Matching
+
+After cd-prefix resolution, extract the command family (first token) and check allowlist:
+
+```rust
+fn should_auto_approve(resolved: &str, allowlist: &[AllowlistEntry]) -> bool {
+    let cmd = resolved.split_whitespace().next().unwrap_or(resolved);
+    allowlist.iter().any(|e| e.command == cmd)
+}
+```
+
+### Settings Tab — Approved Commands
+
+New tab in the Settings dialog: **"Permissions"**.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Permissions                                    [x] │
+├─────────────────────────────────────────────────────┤
+│  Approved Commands                                  │
+│  ┌───────────────────────────────────────────────┐  │
+│  │ grep          approved 42×   last: 2 min ago  │  │
+│  │ find          approved 12×   last: 1 hour ago │  │
+│  │ git           approved 8×    last: yesterday  │  │
+│  └───────────────────────────────────────────────┘  │
+│                                                     │
+│  [Remove Selected]   [Clear All]                    │
+└─────────────────────────────────────────────────────┘
+```
+
+- Each row: command name, approval count, last approved timestamp, checkbox
+- **Remove Selected**: removes checked commands from allowlist
+- **Clear All**: empties allowlist (confirmation dialog)
+- No manual add — commands earn their way in via user approval only
+
+### New Tauri Commands (allowlist)
+
+| Command | Args | Returns | Description |
+|---------|------|---------|-------------|
+| `chat_get_allowlist` | — | `[{ command, approved_count, last_approved_at }]` | List all entries |
+| `chat_remove_from_allowlist` | `{ commands: [String] }` | `()` | Remove one or more entries |
+| `chat_clear_allowlist` | — | `()` | Clear entire list |
 
 ---
 
@@ -290,6 +363,5 @@ All other sections of `2026-04-20-chat-gui-design.md` remain in effect:
 - Permission mode (shift+tab cycling)
 - Slash commands and mentions
 - Chain of thought
-- Permission allowlist
 - Session management UI
 - Localization
