@@ -15,13 +15,26 @@
       {
         "title": "CC Assist",
         "label": "main",
+        "width": 1000,
+        "height": 700,
+        "resizable": true,
+        "center": true,
+        "visible": false,
+        "minWidth": 600,
+        "minHeight": 400
+      },
+      {
+        "title": "CC Assist — Terminal",
+        "label": "terminal",
         "width": 800,
         "height": 600,
         "resizable": true,
         "center": true,
         "visible": false,
         "minWidth": 400,
-        "minHeight": 300
+        "minHeight": 300,
+        "create": false,
+        "url": "terminal.html"
       },
       {
         "title": "CC Assist — Settings",

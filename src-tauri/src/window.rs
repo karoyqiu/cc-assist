@@ -2,6 +2,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
 
 const MAIN_LABEL: &str = "main";
 const SETTINGS_LABEL: &str = "settings";
+const TERMINAL_LABEL: &str = "terminal";
 
 /// Show the main (terminal) window, creating it from config if it doesn't exist.
 pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
@@ -71,6 +72,42 @@ pub fn show_settings_window<R: Runtime>(app: &AppHandle<R>) {
         }
         Err(e) => {
             log::error!("Failed to create settings window: {}", e);
+        }
+    }
+}
+
+/// Show the terminal window, creating it from config if it doesn't exist.
+pub fn show_terminal_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window(TERMINAL_LABEL) {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let window_config = app
+        .config()
+        .app
+        .windows
+        .iter()
+        .find(|w| w.label == TERMINAL_LABEL);
+
+    let builder = match window_config {
+        Some(config) => {
+            WebviewWindowBuilder::from_config(app, config).unwrap_or_else(|_| {
+                WebviewWindowBuilder::new(app, TERMINAL_LABEL, WebviewUrl::App("terminal.html".into()))
+            })
+        }
+        None => {
+            WebviewWindowBuilder::new(app, TERMINAL_LABEL, WebviewUrl::App("terminal.html".into()))
+        }
+    };
+
+    match builder.build() {
+        Ok(_) => {
+            log::info!("Terminal window built and shown");
+        }
+        Err(e) => {
+            log::error!("Failed to create terminal window: {}", e);
         }
     }
 }
