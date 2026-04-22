@@ -233,7 +233,7 @@ export function SettingsApp() {
 
   if (error) {
     return (
-      <div className="text-app bg-danger fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-sm font-medium">
+      <div className="bg-destructive text-destructive-foreground fixed right-4 bottom-4 z-50 max-w-90 rounded px-4 py-2.5 text-sm font-medium">
         {error}
       </div>
     );
@@ -241,14 +241,14 @@ export function SettingsApp() {
 
   if (!store) {
     return (
-      <div className="bg-app text-muted-foreground flex h-screen w-screen items-center justify-center text-sm">
+      <div className="bg-background text-muted-foreground flex h-screen w-screen items-center justify-center text-sm">
         {t('errors.loadConfigFailed')}
       </div>
     );
   }
 
   return (
-    <div className="bg-app flex h-screen w-screen flex-col overflow-hidden">
+    <div className="bg-background flex h-screen w-screen flex-col overflow-hidden">
       {/* Tab bar */}
       <div className="border-border flex border-b">
         <button
@@ -333,7 +333,7 @@ export function SettingsApp() {
           </div>
 
           {/* Footer with Apply */}
-          <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
+          <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
             <Button onClick={handleApplyFontSettings} disabled={!fontDirty}>
               {t('terminal.apply')}
             </Button>

@@ -100,7 +100,7 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
         className="w-full font-mono text-sm"
       />
       {open && totalItems > 0 && (
-        <div className="border-subtle bg-surface absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border py-1 shadow-lg">
+        <div className="border-border bg-card absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border py-1 shadow-lg">
           {filtered.map((dir, i) => (
             <div
               key={dir}
@@ -108,7 +108,7 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
               onClick={() => selectItem(i)}
               onMouseEnter={() => setHighlightedIndex(i)}
               className={`cursor-pointer truncate px-2.5 py-1.5 font-mono text-xs ${
-                i === highlightedIndex ? 'bg-hover text-primary' : 'text-muted-foreground'
+                i === highlightedIndex ? 'bg-accent text-primary' : 'text-muted-foreground'
               }`}
             >
               {dir}
@@ -120,7 +120,7 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
             onMouseEnter={() => setHighlightedIndex(filtered.length)}
             className={`cursor-pointer px-2.5 py-1.5 text-xs ${
               highlightedIndex === filtered.length
-                ? 'bg-hover text-primary'
+                ? 'bg-accent text-primary'
                 : 'text-muted-foreground'
             }`}
           >

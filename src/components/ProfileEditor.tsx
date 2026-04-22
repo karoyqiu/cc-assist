@@ -113,9 +113,9 @@ export function ProfileEditor({
   }
 
   return (
-    <div className="bg-app flex flex-1 flex-col overflow-hidden">
+    <div className="bg-background flex flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-subtle flex items-center gap-3 border-b px-5 py-2">
+      <div className="border-border flex items-center gap-3 border-b px-5 py-2">
         <Avatar profile={profile} size={40} />
         <div className="flex-1">
           {official ? (
@@ -228,7 +228,7 @@ export function ProfileEditor({
       </div>
 
       {/* Footer actions */}
-      <div className="border-subtle flex justify-end gap-2 border-t px-5 py-3">
+      <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
         {/* Use / In Use button */}
         {profile.id === activeId ? (
           <Button variant="secondary" disabled>
@@ -254,7 +254,7 @@ export function ProfileEditor({
           }
         }}
       >
-        <AlertDialogContent className="border-subtle bg-surface w-95">
+        <AlertDialogContent className="border-border bg-card w-95">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-primary font-semibold">
               {t('profileEditor.deleteConfirmTitle')}
@@ -270,7 +270,7 @@ export function ProfileEditor({
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="text-app"
+              className="text-foreground"
               onClick={async () => {
                 const targetId = deleteTargetId.current;
                 if (!targetId) return;

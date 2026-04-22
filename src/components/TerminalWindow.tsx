@@ -80,8 +80,8 @@ function SortableSession({
       onClick={() => onSelect(session.id)}
       className={`group flex cursor-pointer items-center justify-between px-4 py-5 text-sm ${
         session.id === activeId
-          ? 'border-primary bg-surface border-l-2'
-          : 'hover:bg-surface border-l-2 border-transparent'
+          ? 'border-primary bg-card border-l-2'
+          : 'hover:bg-card border-l-2 border-transparent'
       }`}
     >
       <span className="truncate">{session.name}</span>
@@ -404,7 +404,7 @@ export function TerminalWindow({
   }
 
   return (
-    <div className="bg-app flex h-screen w-screen overflow-hidden">
+    <div className="bg-background flex h-screen w-screen overflow-hidden">
       {/* Sidebar */}
       <div className="border-border flex w-60 flex-col border-r">
         {/* Header */}
@@ -502,7 +502,7 @@ export function TerminalWindow({
         {/* Terminal container — holds per-session xterm instances */}
         <div
           ref={panelRef}
-          className="bg-app relative flex-1 overflow-hidden"
+          className="bg-background relative flex-1 overflow-hidden"
           style={{ display: activeId ? 'block' : 'none' }}
         />
 

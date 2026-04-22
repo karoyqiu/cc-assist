@@ -12,7 +12,7 @@ export function Avatar({ profile, size = 28 }: AvatarProps) {
   return (
     <AvatarRoot className="shrink-0" style={{ width: size, height: size }}>
       <AvatarFallback
-        className="text-app font-semibold"
+        className="text-foreground font-semibold"
         style={{
           backgroundColor: profile.icon_color,
           fontSize: size * 0.4,

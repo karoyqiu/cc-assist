@@ -62,8 +62,8 @@ function SortableProfileItem({
       ref={ref}
       className={cn(
         'flex items-center gap-2.5 px-3 py-2 transition-colors',
-        isSelected ? 'bg-surface' : 'hover:bg-surface',
-        isDragging && 'bg-surface opacity-50',
+        isSelected ? 'bg-card' : 'hover:bg-card',
+        isDragging && 'bg-card opacity-50',
       )}
     >
       <button
@@ -142,9 +142,9 @@ export function ProfileList({
 
   if (showPicker) {
     return (
-      <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
+      <div className="border-border bg-background flex h-full w-60 flex-col border-r">
         {/* Header */}
-        <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
+        <div className="border-border flex items-center justify-between border-b px-3 pt-4 pb-3">
           <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
             {t('profileList.chooseProvider')}
           </span>
@@ -189,7 +189,7 @@ export function ProfileList({
           ))}
 
           {/* Divider */}
-          <div className="bg-subtle my-1 h-px" />
+          <div className="bg-muted my-1 h-px" />
 
           {/* Custom option */}
           <Button
@@ -200,7 +200,7 @@ export function ProfileList({
             }}
             className="flex w-full cursor-pointer items-center justify-start gap-2.5 px-2.5 py-6 text-left"
           >
-            <div className="bg-subtle text-muted-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
+            <div className="bg-muted text-muted-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm">
               +
             </div>
             <span className="text-muted-foreground text-sm">{t('profileList.customProvider')}</span>
@@ -211,9 +211,9 @@ export function ProfileList({
   }
 
   return (
-    <div className="border-subtle bg-app flex h-full w-60 flex-col border-r">
+    <div className="border-border bg-background flex h-full w-60 flex-col border-r">
       {/* Header */}
-      <div className="border-subtle flex items-center justify-between border-b px-3 pt-4 pb-3">
+      <div className="border-border flex items-center justify-between border-b px-3 pt-4 pb-3">
         <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
           {t('profileList.title')}
         </span>
