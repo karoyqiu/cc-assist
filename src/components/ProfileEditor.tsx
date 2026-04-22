@@ -270,7 +270,6 @@ export function ProfileEditor({
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="text-foreground"
               onClick={async () => {
                 const targetId = deleteTargetId.current;
                 if (!targetId) return;

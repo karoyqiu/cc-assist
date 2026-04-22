@@ -100,7 +100,7 @@ export function DirectoryCombobox({ directories, value, onChange }: DirectoryCom
         className="w-full font-mono text-sm"
       />
       {open && totalItems > 0 && (
-        <div className="border-border bg-card absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border py-1 shadow-lg">
+        <div className="border-border bg-popover absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border py-1 shadow-lg">
           {filtered.map((dir, i) => (
             <div
               key={dir}
