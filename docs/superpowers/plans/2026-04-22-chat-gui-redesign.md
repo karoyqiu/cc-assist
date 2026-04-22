@@ -6,7 +6,7 @@
 
 **Architecture:** Three windows (chat=`main`, terminal=`terminal`, settings=`settings`), each owns its HTML entry file and a dedicated `XxxApp` React component. Chat panel mirrors the assistant-ui `claude.tsx` reference adapted to project CSS variables and system-ui font. A `TauriChatModelAdapter` bridges assistant-ui's `ChatModelAdapter` interface to Rust cc-sdk via Tauri `invoke()` + event listeners. Permission allowlist persisted as JSON under `app_data_dir`.
 
-**Tech Stack:** React 19, TypeScript, Tailwind CSS v4, `@assistant-ui/react ^0.12`, `@radix-ui/react-icons ^1`, `zustand ^4`, `react-markdown ^9`, Tauri 2, Rust, `cc-sdk 0.8.1`
+**Tech Stack:** React 19, TypeScript, Tailwind CSS v4, `@assistant-ui/react ^0.12`, `@radix-ui/react-icons ^1`, `zustand ^5`, `react-markdown ^10`, Tauri 2, Rust, `cc-sdk 0.8.1`
 
 **Working directory:** All commands run from `.worktrees/feature/chat-gui-redesign/`
 
