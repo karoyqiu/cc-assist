@@ -170,6 +170,14 @@
   background: var(--muted);
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 20%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(1 0 0 / 30%);
+}
+
 /* Focus visible */
 :focus-visible {
   outline: 1px solid var(--ring);
