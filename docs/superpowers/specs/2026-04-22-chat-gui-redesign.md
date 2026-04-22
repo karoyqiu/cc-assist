@@ -356,6 +356,48 @@ New tab in the Settings dialog: **"Permissions"**.
 
 ---
 
+## 9. Session Management Tab
+
+New tab in the Settings dialog: **"Sessions"**.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Sessions                                       [x] │
+├─────────────────────────────────────────────────────┤
+│  Sort: [Last used ▼]   Filter: [All profiles ▼]     │
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │ ☑ project-a   Anthropic   2 min ago  [Resume] │  │
+│  │ ☑ project-b   Custom      1 hour ago [Resume] │  │
+│  │ ☐ logs-parser Anthropic   Yesterday  [Resume] │  │
+│  └───────────────────────────────────────────────┘  │
+│                                                     │
+│  [Remove Selected]  [Remove Outdated]  [Remove Small]│
+│                                                     │
+│  Outdated: not used in > 30 days                    │
+│  Small: < 5 messages                                │
+└─────────────────────────────────────────────────────┘
+```
+
+- **Sort**: last used (default), name, message count
+- **Filter**: all profiles, or specific profile
+- **Resume**: opens session in chat window, closes settings
+- **Remove Selected**: deletes checked sessions from cc-sdk storage
+- **Remove Outdated**: deletes sessions with `last_used_at` > 30 days ago
+- **Remove Small**: deletes sessions with < 5 messages
+- All destructive actions show confirmation dialog before proceeding
+
+### New Tauri Commands (sessions)
+
+| Command | Args | Returns | Description |
+|---------|------|---------|-------------|
+| `chat_list_sessions` | — | `[{ session_id, name, profile_id, state, last_used_at, message_count }]` | All sessions |
+| `chat_delete_sessions` | `{ session_ids: [String] }` | `()` | Delete by ID |
+| `chat_delete_outdated_sessions` | `{ days: u32 }` | `{ deleted: u32 }` | Delete unused > N days |
+| `chat_delete_small_sessions` | `{ min_messages: u32 }` | `{ deleted: u32 }` | Delete with < N messages |
+
+---
+
 ## Out of Scope (unchanged from original spec)
 
 All other sections of `2026-04-20-chat-gui-design.md` remain in effect:
@@ -363,5 +405,4 @@ All other sections of `2026-04-20-chat-gui-design.md` remain in effect:
 - Permission mode (shift+tab cycling)
 - Slash commands and mentions
 - Chain of thought
-- Session management UI
 - Localization
