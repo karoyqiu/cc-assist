@@ -263,7 +263,7 @@ export function ProfileEditor({
               {t('profileEditor.deleteConfirmMessage', { name: draft.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {deleteError && <div className="text-danger text-xs">{deleteError}</div>}
+          {deleteError && <div className="text-destructive text-xs">{deleteError}</div>}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>
               {t('profileEditor.deleteConfirmCancel')}
