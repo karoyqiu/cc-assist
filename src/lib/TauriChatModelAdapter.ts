@@ -31,27 +31,38 @@ export function createTauriChatModelAdapter(sessionId: string): ChatModelAdapter
       const textPart = lastUser.content.find((p) => p.type === 'text');
       const content = textPart?.type === 'text' ? textPart.text : '';
 
-      let resolve: (() => void) | null = null;
       const chunks: string[] = [];
+      let wakeResolve: () => void = () => {};
+      let wakePromise: Promise<void> = new Promise((r) => {
+        wakeResolve = r;
+      });
+
+      function wake() {
+        wakeResolve();
+        wakePromise = new Promise((r) => {
+          wakeResolve = r;
+        });
+      }
 
       const unlistenOutput = await listen<ChatOutputPayload>('chat-output', (event) => {
         if (event.payload.sessionId !== sessionId) return;
         if (event.payload.partType === 'text') {
           chunks.push(event.payload.content);
-          resolve?.();
+          wake();
         }
       });
 
       const unlistenResult = await listen<ResultPayload>('result', (event) => {
         if (event.payload.sessionId !== sessionId) return;
         chunks.push('\x00DONE');
-        resolve?.();
+        wake();
       });
 
-      abortSignal.addEventListener('abort', () => {
+      const onAbort = () => {
         chunks.push('\x00ABORT');
-        resolve?.();
-      });
+        wake();
+      };
+      abortSignal.addEventListener('abort', onAbort, { once: true });
 
       await chatCommands.sendMessage(sessionId, content);
 
@@ -59,13 +70,10 @@ export function createTauriChatModelAdapter(sessionId: string): ChatModelAdapter
       try {
         while (true) {
           if (chunks.length === 0) {
-            await new Promise<void>((r) => {
-              resolve = r;
-            });
-            resolve = null;
+            await wakePromise;
           }
           const chunk = chunks.shift();
-          if (!chunk) continue;
+          if (chunk === undefined) continue;
           if (chunk === '\x00DONE' || chunk === '\x00ABORT') break;
           accumulated += chunk;
           yield {
@@ -75,6 +83,7 @@ export function createTauriChatModelAdapter(sessionId: string): ChatModelAdapter
       } finally {
         unlistenOutput();
         unlistenResult();
+        abortSignal.removeEventListener('abort', onAbort);
       }
     },
   };
