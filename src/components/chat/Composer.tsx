@@ -118,7 +118,7 @@ const ComposerAttachment: FC = () => {
         className="border-border overflow-hidden rounded-lg border shadow-sm hover:shadow-md"
         style={{ width: 120, height: 120, minWidth: 120, minHeight: 120 }}
       >
-        <button type="button" className="bg-card relative" style={{ width: 120, height: 120 }}>
+        <div className="bg-card relative" style={{ width: 120, height: 120 }}>
           {isImage && src ? (
             <img className="h-full w-full object-cover" alt="Attachment" src={src} />
           ) : (
@@ -126,7 +126,7 @@ const ComposerAttachment: FC = () => {
               <AttachmentPrimitive.unstable_Thumb className="text-xs" />
             </div>
           )}
-        </button>
+        </div>
       </div>
       <AttachmentPrimitive.Remove
         className="border-border bg-card/90 text-muted-foreground hover:bg-card hover:text-foreground absolute -top-2 -left-2 flex h-5 w-5 items-center justify-center rounded-full border opacity-0 backdrop-blur-sm transition-all group-focus-within/thumbnail:opacity-100 group-hover/thumbnail:opacity-100"
