@@ -36,8 +36,6 @@ function ChatAppInner() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessionStates, setSessionStates] = useState<SessionStateMap>({});
   const [tokenUsage, setTokenUsage] = useState<TokenUsage>({ contextPct: 0, subscriptionPct: 0 });
-  const [gitBranch, setGitBranch] = useState('');
-  const [gitDirty, setGitDirty] = useState(false);
   const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
   const [pendingQuestions, setPendingQuestions] = useState<PendingQuestion[]>([]);
   const [selectedModel, setSelectedModel] = useState('main');
@@ -168,6 +166,7 @@ function ChatAppInner() {
   }
 
   async function handleAllowAlwaysPermission(sessionId: string, toolName: string) {
+    // TODO(Task 15): call chat_allow_always_permission once allowlist Rust module is wired
     await chatCommands.allowPermission(sessionId, toolName);
     setPendingPermissions((prev) =>
       prev.filter((p) => !(p.sessionId === sessionId && p.toolName === toolName)),
@@ -201,10 +200,6 @@ function ChatAppInner() {
         .map(([key, value]) => ({ key, label: value }))
     : [{ key: 'main', label: 'Default' }];
 
-  // suppress unused state warning for git state setters (populated by future Rust events)
-  void setGitBranch;
-  void setGitDirty;
-
   if (!store) return null;
 
   return (
@@ -227,8 +222,8 @@ function ChatAppInner() {
           onCompact={handleCompact}
           contextPct={tokenUsage.contextPct}
           subscriptionPct={tokenUsage.subscriptionPct}
-          gitBranch={gitBranch}
-          gitDirty={gitDirty}
+          gitBranch=""
+          gitDirty={false}
           permissionMode={activePermissionMode}
           sessionState={activeSessionState}
           pendingPermissions={pendingPermissions.filter((p) => p.sessionId === activeSessionId)}
