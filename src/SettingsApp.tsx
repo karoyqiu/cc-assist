@@ -14,16 +14,23 @@ import { ProfileList } from './components/ProfileList';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
+import { chatCommands, type AllowlistEntry, type SessionInfo } from './lib/chatCommands';
+
+type TabId = 'profiles' | 'terminal' | 'permissions' | 'sessions';
 
 export function SettingsApp() {
   const { i18n, t } = useTranslation();
   const [store, setStore] = useState<ProfilesStore | null>(null);
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profiles' | 'terminal'>('profiles');
+  const [activeTab, setActiveTab] = useState<TabId>('profiles');
   const [error, setError] = useState<string | null>(null);
   const [draftFontFamily, setDraftFontFamily] = useState('');
   const [draftFontSize, setDraftFontSize] = useState(14);
+  const [allowlist, setAllowlist] = useState<AllowlistEntry[]>([]);
+  const [selectedCommands, setSelectedCommands] = useState<Set<string>>(new Set());
+  const [chatSessions, setChatSessions] = useState<SessionInfo[]>([]);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const initialized = useRef(false);
 
   // Load config and providers on mount
@@ -171,6 +178,43 @@ export function SettingsApp() {
     }
   }
 
+  async function loadAllowlist() {
+    const entries = await chatCommands.getAllowlist();
+    setAllowlist(entries);
+  }
+
+  async function handleRemoveSelected() {
+    await chatCommands.removeFromAllowlist([...selectedCommands]);
+    setSelectedCommands(new Set());
+    await loadAllowlist();
+  }
+
+  async function handleClearAllowlist() {
+    await chatCommands.clearAllowlist();
+    await loadAllowlist();
+  }
+
+  async function loadChatSessions() {
+    const list = await chatCommands.listSessions();
+    setChatSessions(list);
+  }
+
+  async function handleRemoveSelectedSessions() {
+    await chatCommands.deleteSessions([...selectedSessionIds]);
+    setSelectedSessionIds(new Set());
+    await loadChatSessions();
+  }
+
+  async function handleRemoveOutdated() {
+    await chatCommands.deleteOutdatedSessions(30);
+    await loadChatSessions();
+  }
+
+  async function handleRemoveSmall() {
+    await chatCommands.deleteSmallSessions(5);
+    await loadChatSessions();
+  }
+
   const fontDirty =
     store &&
     (draftFontFamily !== store.terminal_font_family || draftFontSize !== store.terminal_font_size);
@@ -195,30 +239,25 @@ export function SettingsApp() {
     <div className="bg-background flex h-screen w-screen flex-col overflow-hidden">
       {/* Tab bar */}
       <div className="border-border flex border-b">
-        <button
-          onClick={() => setActiveTab('profiles')}
-          className={`px-4 py-2.5 text-sm ${
-            activeTab === 'profiles'
-              ? 'text-primary border-primary border-b-2'
-              : 'text-muted-foreground'
-          }`}
-        >
-          {t('terminal.tabProfiles')}
-        </button>
-        <button
-          onClick={() => setActiveTab('terminal')}
-          className={`px-4 py-2.5 text-sm ${
-            activeTab === 'terminal'
-              ? 'text-primary border-primary border-b-2'
-              : 'text-muted-foreground'
-          }`}
-        >
-          {t('terminal.tabTerminal')}
-        </button>
+        {(['profiles', 'terminal', 'permissions', 'sessions'] as TabId[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => {
+              setActiveTab(tab);
+              if (tab === 'permissions') void loadAllowlist();
+              if (tab === 'sessions') void loadChatSessions();
+            }}
+            className={`px-4 py-2.5 text-sm capitalize ${
+              activeTab === tab ? 'text-primary border-primary border-b-2' : 'text-muted-foreground'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {/* Tab content */}
-      {activeTab === 'profiles' ? (
+      {activeTab === 'profiles' && (
         <div className="flex flex-1 overflow-hidden">
           <ProfileList
             profiles={store.profiles}
@@ -239,7 +278,9 @@ export function SettingsApp() {
             onUse={handleUseProfile}
           />
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'terminal' && (
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Fields */}
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
@@ -280,6 +321,111 @@ export function SettingsApp() {
           <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
             <Button onClick={handleApplyFontSettings} disabled={!fontDirty}>
               {t('terminal.apply')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'permissions' && (
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-5 py-4">
+            <p className="text-muted-foreground mb-2 text-xs">
+              Approved commands auto-approve future identical requests.
+            </p>
+            {allowlist.map((entry) => (
+              <div
+                key={entry.command}
+                className="border-border flex items-center gap-3 rounded border px-3 py-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCommands.has(entry.command)}
+                  onChange={(e) => {
+                    setSelectedCommands((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) {
+                        next.add(entry.command);
+                      } else {
+                        next.delete(entry.command);
+                      }
+                      return next;
+                    });
+                  }}
+                />
+                <span className="text-foreground flex-1 font-mono text-sm">{entry.command}</span>
+                <span className="text-muted-foreground text-xs">
+                  approved {entry.approvedCount}×
+                </span>
+              </div>
+            ))}
+            {allowlist.length === 0 && (
+              <p className="text-muted-foreground text-sm">No approved commands yet.</p>
+            )}
+          </div>
+          <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
+            <Button
+              variant="outline"
+              onClick={handleRemoveSelected}
+              disabled={selectedCommands.size === 0}
+            >
+              Remove Selected
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearAllowlist}
+              disabled={allowlist.length === 0}
+            >
+              Clear All
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'sessions' && (
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-5 py-4">
+            {chatSessions.map((s) => (
+              <div
+                key={s.sessionId}
+                className="border-border flex items-center gap-3 rounded border px-3 py-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSessionIds.has(s.sessionId)}
+                  onChange={(e) => {
+                    setSelectedSessionIds((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) {
+                        next.add(s.sessionId);
+                      } else {
+                        next.delete(s.sessionId);
+                      }
+                      return next;
+                    });
+                  }}
+                />
+                <span className="text-foreground flex-1 truncate text-sm">{s.name}</span>
+                <span className="text-muted-foreground text-xs">{s.messageCount} msgs</span>
+                <span className="text-muted-foreground text-xs">{s.lastUsedAt}</span>
+              </div>
+            ))}
+            {chatSessions.length === 0 && (
+              <p className="text-muted-foreground text-sm">No sessions.</p>
+            )}
+          </div>
+          <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
+            <Button
+              variant="outline"
+              onClick={handleRemoveSelectedSessions}
+              disabled={selectedSessionIds.size === 0}
+            >
+              Remove Selected
+            </Button>
+            <Button variant="outline" onClick={handleRemoveOutdated}>
+              Remove Outdated (&gt;30d)
+            </Button>
+            <Button variant="outline" onClick={handleRemoveSmall}>
+              Remove Small (&lt;5 msgs)
             </Button>
           </div>
         </div>
