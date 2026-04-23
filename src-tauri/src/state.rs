@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::sync::Mutex;
 
+use time::OffsetDateTime;
+
 use cc_sdk::{ClaudeSDKClient, PermissionMode as SdkPermissionMode};
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +33,7 @@ pub struct SessionHandle {
 #[serde(rename_all = "snake_case")]
 pub enum PermissionMode {
     Default,
+    #[serde(rename = "auto_accept_edits")]
     AcceptEdits,
     Plan,
 }
@@ -63,6 +66,9 @@ pub struct ChatSession {
     pub state: SessionState,
     pub cwd: PathBuf,
     pub session_name: String,
+    pub profile_id: String,
+    pub last_used_at: OffsetDateTime,
+    pub message_count: u32,
 }
 
 /// Manager for all active chat sessions.

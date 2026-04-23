@@ -1,5 +1,4 @@
 use tauri::{AppHandle, State};
-use time::OffsetDateTime;
 
 use crate::chat;
 use crate::permission_allowlist::AllowlistEntry;
@@ -53,11 +52,11 @@ pub async fn chat_list_sessions(state: State<'_, AppState>) -> Result<Vec<Sessio
         .map(|(id, s)| SessionInfoDto {
             session_id: id.clone(),
             name: s.session_name.clone(),
-            profile_id: String::new(),
+            profile_id: s.profile_id.clone(),
             state: s.state,
             cwd: s.cwd.clone(),
-            last_used_at: OffsetDateTime::now_utc().to_string(),
-            message_count: 0,
+            last_used_at: s.last_used_at.to_string(),
+            message_count: s.message_count,
         })
         .collect())
 }

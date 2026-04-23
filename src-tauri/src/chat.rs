@@ -65,6 +65,9 @@ pub async fn create_chat_session(
         state: SessionState::Idle,
         cwd: directory.clone(),
         session_name: name.clone(),
+        profile_id: profile_id.to_string(),
+        last_used_at: OffsetDateTime::now_utc(),
+        message_count: 0,
     };
 
     state
@@ -109,11 +112,13 @@ pub async fn send_message(
 ) -> Result<(), String> {
     use crate::state::SessionState;
     let state = app.state::<AppState>();
-    // Mark session as thinking
+    // Mark session as thinking and update usage stats
     {
         let mut sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
         if let Some(s) = sessions.get_mut(session_id) {
             s.state = SessionState::Thinking;
+            s.last_used_at = OffsetDateTime::now_utc();
+            s.message_count += 1;
         }
     }
     app.emit(
@@ -138,7 +143,6 @@ pub async fn compact_session(session_id: &str, app: AppHandle) -> Result<(), Str
 }
 
 /// Updates the permission mode for an existing session.
-#[allow(dead_code)]
 pub async fn set_permission_mode(
     session_id: &str,
     mode: PermissionMode,
