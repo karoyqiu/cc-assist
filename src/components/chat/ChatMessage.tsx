@@ -1,4 +1,4 @@
-import { ActionBarPrimitive, MessagePrimitive } from '@assistant-ui/react';
+import { ActionBarPrimitive, AuiIf, MessagePrimitive } from '@assistant-ui/react';
 import {
   ClipboardIcon,
   Pencil1Icon,
@@ -16,7 +16,7 @@ const actionBtnClass =
 export const ChatMessage: FC = () => {
   return (
     <MessagePrimitive.Root className="group relative mx-auto mt-1 mb-1 block w-full max-w-3xl">
-      <MessagePrimitive.If user>
+      <AuiIf condition={(s) => s.message.role === 'user'}>
         <div className="group/user bg-muted text-foreground relative inline-flex max-w-[75ch] flex-col gap-2 rounded-xl py-2.5 pr-6 pl-2.5 transition-all">
           <div className="relative flex flex-row gap-2">
             <div className="shrink-0 self-start">
@@ -53,9 +53,9 @@ export const ChatMessage: FC = () => {
             </ActionBarPrimitive.Root>
           </div>
         </div>
-      </MessagePrimitive.If>
+      </AuiIf>
 
-      <MessagePrimitive.If assistant>
+      <AuiIf condition={(s) => s.message.role === 'assistant'}>
         <div className="relative mb-12">
           <div className="relative leading-[1.65rem]">
             <div className="grid grid-cols-1 gap-2.5">
@@ -89,15 +89,15 @@ export const ChatMessage: FC = () => {
                   <ReloadIcon width={16} height={16} />
                 </ActionBarPrimitive.Reload>
               </div>
-              <MessagePrimitive.If last>
+              <AuiIf condition={(s) => s.message.isLast}>
                 <p className="text-muted-foreground mt-2 w-full text-right text-xs leading-relaxed opacity-90">
                   Claude can make mistakes. Please double-check responses.
                 </p>
-              </MessagePrimitive.If>
+              </AuiIf>
             </ActionBarPrimitive.Root>
           </div>
         </div>
-      </MessagePrimitive.If>
+      </AuiIf>
     </MessagePrimitive.Root>
   );
 };
