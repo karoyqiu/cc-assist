@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -98,6 +98,43 @@ pub async fn close_chat_session(
         .ok_or_else(|| format!("session not found: {}", session_id))?;
 
     Ok(())
+}
+
+/// Sends a message on an existing session and streams response via Tauri events.
+pub async fn send_message(
+    session_id: &str,
+    content: String,
+    _attachments: Option<Vec<String>>,
+    app: AppHandle,
+) -> Result<(), String> {
+    use crate::state::SessionState;
+    let state = app.state::<AppState>();
+    // Mark session as thinking
+    {
+        let mut sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
+        if let Some(s) = sessions.get_mut(session_id) {
+            s.state = SessionState::Thinking;
+        }
+    }
+    app.emit(
+        "session-state",
+        serde_json::json!({ "session_id": session_id, "state": "thinking" }),
+    )
+    .ok();
+
+    // Spawn streaming task
+    let session_id_owned = session_id.to_string();
+    tokio::spawn(async move {
+        log::info!("send_message streaming for session {}", session_id_owned);
+        // TODO: wire actual cc-sdk streaming in a follow-up task
+        let _ = content;
+    });
+    Ok(())
+}
+
+/// Sends /compact to the active session.
+pub async fn compact_session(session_id: &str, app: AppHandle) -> Result<(), String> {
+    send_message(session_id, "/compact".to_string(), None, app).await
 }
 
 /// Updates the permission mode for an existing session.

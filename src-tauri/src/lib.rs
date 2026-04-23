@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 mod chat;
 mod commands;
+mod commands_chat;
 mod config;
 mod permission_allowlist;
 mod settings;
@@ -154,6 +155,21 @@ pub fn run() {
             commands::terminal_close_session,
             commands::terminal_list_sessions,
             commands::save_terminal_font_settings,
+            commands_chat::chat_create_session,
+            commands_chat::chat_close_session,
+            commands_chat::chat_send_message,
+            commands_chat::chat_compact,
+            commands_chat::chat_list_sessions,
+            commands_chat::chat_delete_sessions,
+            commands_chat::chat_delete_outdated_sessions,
+            commands_chat::chat_delete_small_sessions,
+            commands_chat::chat_set_permission_mode,
+            commands_chat::chat_allow_permission,
+            commands_chat::chat_deny_permission,
+            commands_chat::chat_answer_question,
+            commands_chat::chat_get_allowlist,
+            commands_chat::chat_remove_from_allowlist,
+            commands_chat::chat_clear_allowlist,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
