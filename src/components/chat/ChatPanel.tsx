@@ -10,11 +10,11 @@ import { PermissionRequestCard } from './PermissionRequestCard';
 import { StatusBar, type PermissionMode, type SessionState } from './StatusBar';
 import { UserQuestionCard } from './UserQuestionCard';
 
-interface PendingPermission extends PermissionRequestPayload {
+export interface PendingPermission extends PermissionRequestPayload {
   id: string;
 }
 
-interface PendingQuestion {
+export interface PendingQuestion {
   id: string;
   sessionId: string;
   question: string;

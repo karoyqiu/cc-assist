@@ -22,8 +22,8 @@ const stateIndicator: Record<SessionInfo['state'], string> = {
 const stateColor: Record<SessionInfo['state'], string> = {
   idle: 'text-muted-foreground',
   thinking: 'text-foreground animate-pulse',
-  request_input: 'text-yellow-500',
-  request_permission: 'text-blue-500',
+  request_input: 'text-yellow-500 dark:text-yellow-400',
+  request_permission: 'text-blue-500 dark:text-blue-400',
   error: 'text-destructive',
 };
 
@@ -52,26 +52,28 @@ export const SessionList: FC<SessionListProps> = ({
       </div>
       <div className="flex-1 overflow-y-auto py-1">
         {sessions.map((s) => (
-          <div
-            key={s.sessionId}
-            className={`group hover:bg-muted relative flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition ${
-              s.sessionId === activeSessionId ? 'border-primary bg-muted border-l-2' : ''
-            }`}
-            onClick={() => {
-              onSelect(s.sessionId);
-            }}
-          >
-            <span className={`shrink-0 text-xs ${stateColor[s.state]}`}>
-              {stateIndicator[s.state]}
-            </span>
-            <span className="text-foreground flex-1 truncate">{s.name}</span>
+          <div key={s.sessionId} className="group relative">
+            <button
+              type="button"
+              onClick={() => onSelect(s.sessionId)}
+              className={`hover:bg-muted flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition ${
+                s.sessionId === activeSessionId
+                  ? 'bg-muted border-primary border-l-2'
+                  : 'border-l-2 border-transparent'
+              }`}
+            >
+              <span className={`shrink-0 text-xs ${stateColor[s.state]}`}>
+                {stateIndicator[s.state]}
+              </span>
+              <span className="text-foreground flex-1 truncate">{s.name}</span>
+            </button>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(s.sessionId);
               }}
-              className="text-muted-foreground hover:text-foreground hidden h-4 w-4 shrink-0 items-center justify-center rounded group-hover:flex"
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 hidden h-4 w-4 shrink-0 -translate-y-1/2 items-center justify-center rounded group-hover:flex"
               aria-label="Close session"
             >
               ×
