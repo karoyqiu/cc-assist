@@ -12,7 +12,6 @@ interface ModelSelectorProps {
 }
 
 export const ModelSelector: FC<ModelSelectorProps> = ({ options, value, onChange }) => {
-
   return (
     <select
       value={value}
