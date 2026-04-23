@@ -5,6 +5,7 @@ use std::sync::Mutex;
 mod chat;
 mod commands;
 mod config;
+mod permission_allowlist;
 mod settings;
 mod state;
 mod terminal;
@@ -89,6 +90,7 @@ pub fn run() {
             chat_sessions: ChatSessionManager {
                 sessions: Mutex::new(HashMap::new()),
             },
+            allowlist: Mutex::new(permission_allowlist::PermissionAllowlist::default()),
         })
         .setup(|app| {
             // Get proper app data dir from Tauri using Manager trait
@@ -119,6 +121,10 @@ pub fn run() {
                 }
             };
             *state.store.lock().unwrap() = store;
+
+            // Load permission allowlist from proper app data dir
+            let allowlist = permission_allowlist::PermissionAllowlist::load(&app_data_dir);
+            *state.allowlist.lock().unwrap() = allowlist;
 
             // Set up tray
             if let Err(e) = tray::setup_tray(app.handle()) {

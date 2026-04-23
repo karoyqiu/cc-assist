@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use cc_sdk::{ClaudeSDKClient, PermissionMode as SdkPermissionMode};
 use serde::{Deserialize, Serialize};
 
+use crate::permission_allowlist::PermissionAllowlist;
 use crate::types::ProfilesStore;
 
 /// Messages sent to the command thread.
@@ -75,4 +76,5 @@ pub struct AppState {
     pub app_data_dir: Mutex<PathBuf>,
     pub sessions: Mutex<HashMap<String, SessionHandle>>,
     pub chat_sessions: ChatSessionManager,
+    pub allowlist: Mutex<PermissionAllowlist>,
 }
