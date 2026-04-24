@@ -18,8 +18,20 @@ export const SessionPickerDropdown: FC<SessionPickerDropdownProps> = ({
   const [sessions, setSessions] = useState<RecentSessionInfo[]>([]);
 
   useEffect(() => {
-    if (!open) return;
-    chatCommands.listRecentSessions().then(setSessions).catch(console.error);
+    if (!open) {
+      setSessions([]);
+      return;
+    }
+    let cancelled = false;
+    chatCommands
+      .listRecentSessions()
+      .then((result) => {
+        if (!cancelled) setSessions(result);
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   if (!open) return null;

@@ -25,8 +25,8 @@ const stateIndicator: Record<SessionInfo['state'], string> = {
 const stateColor: Record<SessionInfo['state'], string> = {
   idle: 'text-muted-foreground',
   thinking: 'text-foreground animate-pulse',
-  request_input: 'text-yellow-500 dark:text-yellow-400',
-  request_permission: 'text-blue-500 dark:text-blue-400',
+  request_input: 'text-warning',
+  request_permission: 'text-info',
   error: 'text-destructive',
 };
 
