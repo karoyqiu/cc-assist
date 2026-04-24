@@ -2355,6 +2355,288 @@ git commit -m "chore: format and lint fixes"
 
 ---
 
+## Task 19: Hide chat panel when no active session; add empty state
+
+**Files:**
+- Modify: `src/ChatApp.tsx`
+
+- [ ] **Wrap `ChatPanel` in a conditional** — when `activeSessionId === null`, render empty state:
+
+```tsx
+{activeSessionId ? (
+  <ChatPanel ... />
+) : (
+  <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-background text-muted-foreground">
+    <p className="text-sm">No active session</p>
+    <p className="text-xs opacity-60">Select or create a session to start</p>
+  </div>
+)}
+```
+
+- [ ] **Type-check + lint**
+
+```bash
+pnpm tsc --noEmit && pnpm oxlint src/ChatApp.tsx
+```
+
+- [ ] **Commit**
+
+```bash
+git add src/ChatApp.tsx
+git commit -m "feat(chat): hide chat panel when no session; add empty state"
+```
+
+---
+
+## Task 20: Rust — list recent sessions and resume session commands
+
+**Files:**
+- Modify: `src-tauri/src/commands_chat.rs`
+- Modify: `src-tauri/src/chat.rs`
+- Modify: `src-tauri/src/lib.rs`
+
+cc-sdk 0.8.1 exposes `cc_sdk::sessions::list_sessions` and `ClaudeCodeOptions { resume: Option<String> }`. Use them directly — no disk reading needed.
+
+`cc_sdk::sessions::SessionInfo` fields: `session_id: String`, `summary: String`, `last_modified: i64` (ms epoch), `file_size: u64`, `custom_title: Option<String>`, `first_prompt: Option<String>`, `git_branch: Option<String>`, `cwd: Option<String>`.
+
+- [ ] **Add `RecentSessionDto`** to `commands_chat.rs`:
+
+```rust
+#[derive(serde::Serialize)]
+pub struct RecentSessionDto {
+    pub session_id: String,
+    pub title: String,
+    pub cwd: String,
+    pub last_modified_ms: i64,
+}
+```
+
+- [ ] **Add `chat_list_recent_sessions` command** — calls `cc_sdk::sessions::list_sessions(None, Some(10), true)`, maps to `RecentSessionDto`. Title = `custom_title` → first 60 chars of `first_prompt` → first 8 chars of `session_id`:
+
+```rust
+#[tauri::command]
+pub async fn chat_list_recent_sessions() -> Result<Vec<RecentSessionDto>, String> {
+    let sessions = cc_sdk::sessions::list_sessions(None, Some(10), true)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(sessions
+        .into_iter()
+        .map(|s| {
+            let title = s
+                .custom_title
+                .or_else(|| s.first_prompt.map(|p| p.chars().take(60).collect()))
+                .unwrap_or_else(|| s.session_id[..8.min(s.session_id.len())].to_string());
+            RecentSessionDto {
+                title,
+                cwd: s.cwd.unwrap_or_default(),
+                last_modified_ms: s.last_modified,
+                session_id: s.session_id,
+            }
+        })
+        .collect())
+}
+```
+
+- [ ] **Add `resume_chat_session` to `chat.rs`** — creates a new `ClaudeSDKClient` with `resume: Some(sdk_session_id)`:
+
+```rust
+pub async fn resume_chat_session(
+    profile_id: &str,
+    sdk_session_id: &str,
+    directory: PathBuf,
+    app: AppHandle,
+) -> Result<CreateChatSessionResult, String> {
+    let state = app.state::<AppState>();
+    let options = ClaudeCodeOptions::builder()
+        .setting_sources(vec![cc_sdk::SettingSource::Project])
+        .cwd(directory.clone())
+        .resume(sdk_session_id.to_string())
+        .build();
+    let client = ClaudeSDKClient::new(options);
+    let new_id = uuid::Uuid::new_v4().to_string();
+    let name = format!("session-{}", &new_id[..8]);
+    let session = ChatSession {
+        client,
+        permission_mode: PermissionMode::Default,
+        state: SessionState::Idle,
+        cwd: directory.clone(),
+        session_name: name.clone(),
+        profile_id: profile_id.to_string(),
+        last_used_at: OffsetDateTime::now_utc(),
+        message_count: 0,
+    };
+    state
+        .chat_sessions
+        .sessions
+        .lock()
+        .map_err(|e| e.to_string())?
+        .insert(new_id.clone(), session);
+    Ok(CreateChatSessionResult { session_id: new_id, name, cwd: directory })
+}
+```
+
+- [ ] **Add `chat_resume_session` command** to `commands_chat.rs`:
+
+```rust
+#[tauri::command]
+pub async fn chat_resume_session(
+    profile_id: String,
+    sdk_session_id: String,
+    directory: String,
+    app: AppHandle,
+) -> Result<chat::CreateChatSessionResult, String> {
+    chat::resume_chat_session(
+        &profile_id,
+        &sdk_session_id,
+        std::path::PathBuf::from(directory),
+        app,
+    )
+    .await
+}
+```
+
+- [ ] **Register both commands** in `lib.rs` `generate_handler![]`:
+
+```rust
+commands_chat::chat_list_recent_sessions,
+commands_chat::chat_resume_session,
+```
+
+- [ ] **Clippy check**
+
+```bash
+cargo clippy --manifest-path src-tauri/Cargo.toml
+```
+
+- [ ] **Commit**
+
+```bash
+git add src-tauri/src/commands_chat.rs src-tauri/src/chat.rs src-tauri/src/lib.rs
+git commit -m "feat(chat): add list_recent_sessions and resume_session commands"
+```
+
+---
+
+## Task 21: Add chatCommands wrappers for new Rust commands
+
+**Files:**
+- Modify: `src/lib/chatCommands.ts`
+
+- [ ] **Add `RecentSessionInfo` interface and two new wrappers**:
+
+```typescript
+export interface RecentSessionInfo {
+  sessionId: string;
+  title: string;
+  cwd: string;
+  lastModifiedMs: number;
+}
+
+// add to chatCommands object:
+listRecentSessions: () =>
+  invoke<RecentSessionInfo[]>('chat_list_recent_sessions'),
+
+resumeSession: (profileId: string, sdkSessionId: string, directory: string) =>
+  invoke<CreateSessionResult>('chat_resume_session', { profileId, sdkSessionId, directory }),
+```
+
+- [ ] **Type-check + lint**
+
+```bash
+pnpm tsc --noEmit && pnpm oxlint src/lib/chatCommands.ts
+```
+
+- [ ] **Commit**
+
+```bash
+git add src/lib/chatCommands.ts
+git commit -m "feat(chat): add listRecentSessions and resumeSession wrappers"
+```
+
+---
+
+## Task 22: Session picker dropdown and create/resume dialog
+
+**Files:**
+- Create: `src/components/chat/SessionDialog.tsx`
+- Create: `src/components/chat/SessionPickerDropdown.tsx`
+- Modify: `src/components/chat/SessionList.tsx`
+- Modify: `src/ChatApp.tsx`
+
+### SessionDialog
+
+Modal for creating a new session or resuming an existing one. Mirrors the terminal window's new-session dialog pattern: Radix `Dialog` + `Select` for profile + `DirectoryCombobox` for directory.
+
+Props:
+- `open: boolean; onOpenChange: (open: boolean) => void`
+- `mode: 'new' | 'resume'`
+- `sdkSessionId?: string` — cc-sdk session ID (only when `mode === 'resume'`)
+- `initialProfileId: string; initialDirectory: string`
+- `profiles: ProfileConfig[]; recentDirectories: RecentDirectories`
+- `onConfirm: (profileId: string, directory: string, sdkSessionId?: string) => Promise<void>`
+
+Behaviour:
+- Resets fields to `initialProfileId`/`initialDirectory` each time `open` becomes `true`
+- Title: "New Session" or "Resume Session"
+- Footer: Cancel + Start/Resume button (disabled while loading)
+
+### SessionPickerDropdown
+
+Popover anchored to the `+` button. Calls `chatCommands.listRecentSessions()` on open.
+
+Layout:
+- Up to 10 recent session rows: bold title (truncate), muted cwd below, full-width button
+- Divider if sessions exist
+- "New Session" row at bottom with `+` prefix
+
+Clicking a recent session row → calls `onSelectRecent(session)` then closes.
+Clicking New Session → calls `onSelectNew()` then closes.
+Backdrop div (`fixed inset-0 z-40`) closes on click.
+
+### SessionList changes
+
+- Import `SessionPickerDropdown` and `RecentSessionInfo`
+- Add `onResumeSession: (session: RecentSessionInfo) => void` to `SessionListProps`
+- Add `const [pickerOpen, setPickerOpen] = useState(false)`
+- Wrap `+` button in `<div className="relative">` and render `SessionPickerDropdown` inside it
+
+### ChatApp changes
+
+Import `SessionDialog`, `RecentSessionInfo`. Add state:
+- `dialogOpen`, `dialogMode: 'new' | 'resume'`, `dialogSdkSessionId: string | undefined`
+- `dialogInitDir: string`, `dialogInitProfile: string`
+
+Handlers:
+- `openNewSessionDialog()` — sets mode `'new'`, clears sdkSessionId, uses `store.active_profile_id`, opens dialog
+- `openResumeSessionDialog(session: RecentSessionInfo)` — sets mode `'resume'`, stores `session.sessionId` as sdkSessionId, pre-fills `session.cwd` and `store.active_profile_id`
+- `handleDialogConfirm(profileId, directory, sdkSessionId?)` — calls `chatCommands.resumeSession` or `chatCommands.createSession`, refreshes sessions, sets active session ID
+
+Replace `onNew={handleNewSession}` → `onNew={openNewSessionDialog}`. Add `onResumeSession={openResumeSessionDialog}`.
+
+Render `<SessionDialog ... />` inside `AssistantRuntimeProvider` alongside `ThreadPrimitive.Root`.
+
+- [ ] **Create `SessionDialog.tsx`**
+- [ ] **Create `SessionPickerDropdown.tsx`**
+- [ ] **Update `SessionList.tsx`** — add `onResumeSession` prop, picker open state, dropdown render
+- [ ] **Update `ChatApp.tsx`** — dialog state, handlers, replace `handleNewSession`
+
+- [ ] **Type-check + lint + format**
+
+```bash
+pnpm tsc --noEmit
+pnpm oxfmt src/components/chat/SessionDialog.tsx src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+pnpm oxlint src/components/chat/SessionDialog.tsx src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+```
+
+- [ ] **Commit**
+
+```bash
+git add src/components/chat/SessionDialog.tsx src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+git commit -m "feat(chat): session picker dropdown and create/resume dialog"
+```
+
+---
+
 ## Self-Review Notes
 
 - **cc-sdk streaming (Task 16):** The `send_message` function contains a pseudocode block. Before implementing, consult cc-sdk 0.8.x documentation for the exact `ClaudeSDKClient` query/stream API. The surrounding structure (emit events, spawn tokio task, update session state) is correct — only the inner streaming call needs the real API.
