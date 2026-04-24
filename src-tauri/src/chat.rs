@@ -12,6 +12,7 @@ use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
 
 /// Result of creating a new chat session.
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateChatSessionResult {
     pub session_id: String,
     pub name: String,

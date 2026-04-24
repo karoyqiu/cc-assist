@@ -5,6 +5,7 @@ use crate::permission_allowlist::AllowlistEntry;
 use crate::state::AppState;
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RecentSessionDto {
     pub session_id: String,
     pub title: String,
@@ -13,6 +14,7 @@ pub struct RecentSessionDto {
 }
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionInfoDto {
     pub session_id: String,
     pub name: String,
