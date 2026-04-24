@@ -30,6 +30,10 @@ fn build_options(profile: &ProfileConfig, cwd: PathBuf, resume: Option<String>) 
         .cwd(cwd)
         .build();
 
+    options.stderr_callback = Some(std::sync::Arc::new(|line: &str| {
+        log::warn!("claude stderr: {}", line);
+    }));
+
     // Profile credentials and model overrides
     options.env.insert("ANTHROPIC_AUTH_TOKEN".to_string(), profile.api_key.clone());
     if !profile.base_url.is_empty() {
@@ -209,6 +213,20 @@ pub async fn send_message(
                         )
                         .ok();
                     break;
+                }
+                Ok(Message::System { subtype, data }) => {
+                    log::info!("[{}] system message: subtype={} data={}", session_id_owned, subtype, data);
+                    if subtype == "error" {
+                        let detail = data.to_string();
+                        log::error!("[{}] CLI system error: {}", session_id_owned, detail);
+                        app_clone.emit("chat-output", serde_json::json!({
+                            "sessionId": session_id_owned,
+                            "content": format!("[CLI error] {detail}"),
+                            "partType": "text",
+                        })).ok();
+                        emit_error(&app_clone, &session_id_owned);
+                        break;
+                    }
                 }
                 Ok(_) => {}
                 Err(e) => {
