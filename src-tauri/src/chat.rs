@@ -15,15 +15,6 @@ pub struct CreateChatSessionResult {
     pub cwd: PathBuf,
 }
 
-/// Lightweight info about a recent session.
-#[derive(serde::Serialize, Clone)]
-pub struct RecentSessionInfo {
-    pub session_id: String,
-    pub name: String,
-    pub cwd: PathBuf,
-    pub last_active: OffsetDateTime,
-}
-
 /// Creates a new chat session for the given profile and working directory.
 pub async fn create_chat_session(
     profile_id: &str,
@@ -110,7 +101,6 @@ pub async fn send_message(
     _attachments: Option<Vec<String>>,
     app: AppHandle,
 ) -> Result<(), String> {
-    use crate::state::SessionState;
     let state = app.state::<AppState>();
     // Mark session as thinking and update usage stats
     {
