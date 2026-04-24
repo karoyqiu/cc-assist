@@ -115,7 +115,7 @@ pub async fn send_message(
 
     app.emit(
         "session-state",
-        serde_json::json!({ "session_id": session_id, "state": "thinking" }),
+        serde_json::json!({ "sessionId": session_id, "state": "thinking" }),
     )
     .ok();
 
@@ -126,16 +126,19 @@ pub async fn send_message(
         // Connect + send, then release the client lock before streaming.
         let stream = {
             let mut client = client_arc.lock().await;
+            log::info!("[{}] connecting to claude CLI", session_id_owned);
             if let Err(e) = client.connect(None).await {
-                log::error!("[{}] connect failed: {}", session_id_owned, e);
+                log::error!("[{}] connect failed: {e}", session_id_owned);
                 emit_error(&app_clone, &session_id_owned);
                 return;
             }
+            log::info!("[{}] sending request", session_id_owned);
             if let Err(e) = client.send_request(content, None).await {
-                log::error!("[{}] send_request failed: {}", session_id_owned, e);
+                log::error!("[{}] send_request failed: {e}", session_id_owned);
                 emit_error(&app_clone, &session_id_owned);
                 return;
             }
+            log::info!("[{}] receiving messages stream", session_id_owned);
             client.receive_messages().await
         };
 
@@ -172,7 +175,7 @@ pub async fn send_message(
                     app_clone
                         .emit(
                             "session-state",
-                            serde_json::json!({ "session_id": session_id_owned, "state": "idle" }),
+                            serde_json::json!({ "sessionId": session_id_owned, "state": "idle" }),
                         )
                         .ok();
                     break;
@@ -203,7 +206,13 @@ fn emit_error(app: &AppHandle, session_id: &str) {
     set_session_state(app, session_id, SessionState::Error);
     app.emit(
         "session-state",
-        serde_json::json!({ "session_id": session_id, "state": "error" }),
+        serde_json::json!({ "sessionId": session_id, "state": "error" }),
+    )
+    .ok();
+    // Unblock the TauriChatModelAdapter which waits for a "result" event.
+    app.emit(
+        "result",
+        serde_json::json!({ "sessionId": session_id, "usage": null }),
     )
     .ok();
 }
