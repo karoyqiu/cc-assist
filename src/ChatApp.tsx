@@ -56,13 +56,14 @@ function ChatAppInner() {
 
   // Load config on mount
   useEffect(() => {
-    Promise.all([invoke<ProfilesStore>('get_config'), chatCommands.listRecentSessions()]).then(
-      ([s, recent]) => {
-        setStore(s);
-        setRecentSessions(recent);
-        return i18n.changeLanguage(s.locale);
-      },
-    );
+    Promise.all([
+      invoke<ProfilesStore>('get_config'),
+      chatCommands.listRecentSessions().catch(() => [] as RecentSessionInfo[]),
+    ]).then(([s, recent]) => {
+      setStore(s);
+      setRecentSessions(recent);
+      return i18n.changeLanguage(s.locale);
+    });
     getCurrentWindow().show().catch(console.error);
   }, [i18n]);
 
