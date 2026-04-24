@@ -1,6 +1,8 @@
-import { type FC } from 'react';
+import { useState, type FC } from 'react';
 
-import type { SessionInfo } from '../../lib/chatCommands';
+import type { RecentSessionInfo, SessionInfo } from '../../lib/chatCommands';
+
+import { SessionPickerDropdown } from './SessionPickerDropdown';
 
 interface SessionListProps {
   sessions: SessionInfo[];
@@ -9,6 +11,7 @@ interface SessionListProps {
   onNew: () => void;
   onClose: (sessionId: string) => void;
   onOpenSettings: () => void;
+  onResumeSession: (session: RecentSessionInfo) => void;
 }
 
 const stateIndicator: Record<SessionInfo['state'], string> = {
@@ -34,21 +37,31 @@ export const SessionList: FC<SessionListProps> = ({
   onNew,
   onClose,
   onOpenSettings,
+  onResumeSession,
 }) => {
+  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <div className="border-border bg-background flex w-56 shrink-0 flex-col border-r">
       <div className="border-border flex items-center justify-between border-b px-3 py-2.5">
         <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Sessions
         </span>
-        <button
-          type="button"
-          onClick={onNew}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-6 w-6 items-center justify-center rounded text-base leading-none"
-          aria-label="New session"
-        >
-          +
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setPickerOpen((p) => !p)}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-6 w-6 items-center justify-center rounded text-base leading-none"
+            aria-label="New session"
+          >
+            +
+          </button>
+          <SessionPickerDropdown
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            onSelectRecent={onResumeSession}
+            onSelectNew={onNew}
+          />
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto py-1">
         {sessions.map((s) => (

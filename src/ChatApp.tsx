@@ -15,8 +15,9 @@ import {
   type PendingPermission,
   type PendingQuestion,
 } from './components/chat/ChatPanel';
+import { SessionDialog } from './components/chat/SessionDialog';
 import { SessionList } from './components/chat/SessionList';
-import { chatCommands, type SessionInfo } from './lib/chatCommands';
+import { chatCommands, type RecentSessionInfo, type SessionInfo } from './lib/chatCommands';
 import { createTauriChatModelAdapter } from './lib/TauriChatModelAdapter';
 import './lib/i18n';
 import './App.css';
@@ -39,6 +40,11 @@ function ChatAppInner() {
   const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
   const [pendingQuestions, setPendingQuestions] = useState<PendingQuestion[]>([]);
   const [selectedModel, setSelectedModel] = useState('main');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'new' | 'resume'>('new');
+  const [dialogSdkSessionId, setDialogSdkSessionId] = useState<string | undefined>();
+  const [dialogInitDir, setDialogInitDir] = useState('');
+  const [dialogInitProfile, setDialogInitProfile] = useState('');
   const adapterRef = useRef<ReturnType<typeof createTauriChatModelAdapter> | null>(null);
 
   // Runtime is recreated when activeSessionId changes
@@ -138,11 +144,29 @@ function ChatAppInner() {
     setSessions(list);
   }, []);
 
-  async function handleNewSession() {
-    if (!store) return;
-    const profile = store.profiles.find((p) => p.id === store.active_profile_id);
-    if (!profile) return;
-    const result = await chatCommands.createSession(profile.id, profile.models?.main ?? '');
+  function openNewSessionDialog() {
+    setDialogMode('new');
+    setDialogSdkSessionId(undefined);
+    setDialogInitDir('');
+    setDialogInitProfile(store?.active_profile_id ?? '');
+    setDialogOpen(true);
+  }
+
+  function openResumeSessionDialog(session: RecentSessionInfo) {
+    setDialogMode('resume');
+    setDialogSdkSessionId(session.sessionId);
+    setDialogInitDir(session.cwd);
+    setDialogInitProfile(store?.active_profile_id ?? '');
+    setDialogOpen(true);
+  }
+
+  async function handleDialogConfirm(profileId: string, directory: string, sdkSessionId?: string) {
+    let result;
+    if (sdkSessionId) {
+      result = await chatCommands.resumeSession(profileId, sdkSessionId, directory);
+    } else {
+      result = await chatCommands.createSession(profileId, directory);
+    }
     await refreshSessions();
     setActiveSessionId(result.sessionId);
   }
@@ -209,9 +233,10 @@ function ChatAppInner() {
           sessions={sessions}
           activeSessionId={activeSessionId}
           onSelect={setActiveSessionId}
-          onNew={handleNewSession}
+          onNew={openNewSessionDialog}
           onClose={handleCloseSession}
           onOpenSettings={() => invoke('toggle_settings_window')}
+          onResumeSession={openResumeSessionDialog}
         />
         {activeSessionId !== null ? (
           <ChatPanel
@@ -241,6 +266,17 @@ function ChatAppInner() {
           </div>
         )}
       </ThreadPrimitive.Root>
+      <SessionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        sdkSessionId={dialogSdkSessionId}
+        initialProfileId={dialogInitProfile}
+        initialDirectory={dialogInitDir}
+        profiles={store.profiles}
+        recentDirectories={store.recent_directories}
+        onConfirm={handleDialogConfirm}
+      />
     </AssistantRuntimeProvider>
   );
 }
