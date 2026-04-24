@@ -2637,6 +2637,97 @@ git commit -m "feat(chat): session picker dropdown and create/resume dialog"
 
 ---
 
+## Task 23: Refine session picker and session list items
+
+**Goal:** Improve the session picker to use shadcn DropdownMenu, show richer info in the session list, and fetch recent sessions at startup so the dropdown is never empty.
+
+### Changes required
+
+**1. Add shadcn DropdownMenu component**
+
+Run: `pnpm dlx shadcn add dropdown-menu`
+
+This creates `src/components/ui/dropdown-menu.tsx`.
+
+**2. Refactor `SessionPickerDropdown.tsx`**
+
+- Remove own `useState<RecentSessionInfo[]>` and own fetch logic entirely
+- Add `sessions: RecentSessionInfo[]` prop (data provided by parent)
+- Replace the custom backdrop + absolute-div with shadcn `DropdownMenu`:
+  - `DropdownMenuTrigger asChild` wraps the `+` button
+  - `DropdownMenuContent align="start"` holds the items
+  - Recent sessions → `DropdownMenuItem` rows (title + cwd basename)
+  - Separator → `DropdownMenuSeparator`
+  - "New Session" → `DropdownMenuItem`
+- Remove `open` / `onClose` props — DropdownMenu manages its own open state
+- Remove the `pickerOpen` state from `SessionList.tsx` and the `<div className="relative">` wrapper — `DropdownMenu` handles positioning
+
+Component signature:
+```tsx
+interface SessionPickerDropdownProps {
+  sessions: RecentSessionInfo[];
+  onSelectRecent: (session: RecentSessionInfo) => void;
+  onSelectNew: () => void;
+}
+```
+
+**3. Update `SessionList.tsx`**
+
+Props to add:
+- `profiles: ProfileConfig[]` — to resolve profile name from `profileId`
+- `recentSessions: RecentSessionInfo[]` — passed down to picker
+
+Session item display (update the `sessions.map` block):
+- Top line: session `name` (existing)
+- Second line: `<basename of cwd>` + ` · ` + profile name (from `profiles.find(p => p.id === s.profileId)?.name ?? s.profileId`)
+- State: existing icon+color indicator (keep as-is)
+
+Remove:
+- `const [pickerOpen, setPickerOpen] = useState(false)` — no longer needed
+- `<div className="relative">` wrapper around the `+` button
+- The `open/onClose` props passed to `SessionPickerDropdown`
+
+Add:
+- Pass `sessions={recentSessions}` to `SessionPickerDropdown`
+
+Import: add `ProfileConfig` from `../../types`.
+
+**4. Update `ChatApp.tsx`**
+
+- Add `const [recentSessions, setRecentSessions] = useState<RecentSessionInfo[]>([])`
+- On mount (in the existing `useEffect` for `get_config`), also call `chatCommands.listRecentSessions().then(setRecentSessions)`
+- Pass `profiles={store.profiles}` and `recentSessions={recentSessions}` to `<SessionList>`
+
+### Files to modify
+
+- `src/components/ui/dropdown-menu.tsx` — add via shadcn CLI
+- `src/components/chat/SessionPickerDropdown.tsx` — use DropdownMenu, accept sessions as prop
+- `src/components/chat/SessionList.tsx` — richer item display, pass recentSessions + profiles to picker
+- `src/ChatApp.tsx` — fetch recentSessions on mount, pass to SessionList
+
+### Checklist
+
+- [ ] **Install DropdownMenu** via `pnpm dlx shadcn add dropdown-menu`
+- [ ] **Update `SessionPickerDropdown.tsx`**
+- [ ] **Update `SessionList.tsx`**
+- [ ] **Update `ChatApp.tsx`**
+- [ ] **Type-check + lint + format**
+
+```bash
+pnpm tsc --noEmit
+pnpm oxfmt src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+pnpm oxlint src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+```
+
+- [ ] **Commit**
+
+```bash
+git add src/components/ui/dropdown-menu.tsx src/components/chat/SessionPickerDropdown.tsx src/components/chat/SessionList.tsx src/ChatApp.tsx
+git commit -m "feat(chat): refine session picker and session list items"
+```
+
+---
+
 ## Self-Review Notes
 
 - **cc-sdk streaming (Task 16):** The `send_message` function contains a pseudocode block. Before implementing, consult cc-sdk 0.8.x documentation for the exact `ClaudeSDKClient` query/stream API. The surrounding structure (emit events, spawn tokio task, update session state) is correct — only the inner streaming call needs the real API.
