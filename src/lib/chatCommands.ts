@@ -22,6 +22,13 @@ export interface AllowlistEntry {
   lastApprovedAt: string;
 }
 
+export interface RecentSessionInfo {
+  sessionId: string;
+  title: string;
+  cwd: string;
+  lastModifiedMs: number;
+}
+
 export const chatCommands = {
   createSession: (profileId: string, directory: string) =>
     invoke<CreateSessionResult>('chat_create_session', { profileId, directory }),
@@ -61,4 +68,9 @@ export const chatCommands = {
 
   answerQuestion: (sessionId: string, answer: string) =>
     invoke<void>('chat_answer_question', { sessionId, answer }),
+
+  listRecentSessions: () => invoke<RecentSessionInfo[]>('chat_list_recent_sessions'),
+
+  resumeSession: (profileId: string, sdkSessionId: string, directory: string) =>
+    invoke<CreateSessionResult>('chat_resume_session', { profileId, sdkSessionId, directory }),
 };
