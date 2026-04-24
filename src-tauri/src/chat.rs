@@ -7,6 +7,7 @@ use time::OffsetDateTime;
 use uuid::Uuid;
 
 use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient, ContentBlock, Message};
+use crate::types::ProfileConfig;
 
 use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
 
@@ -23,6 +24,26 @@ fn make_client(options: ClaudeCodeOptions) -> Arc<tokio::sync::Mutex<ClaudeSDKCl
     Arc::new(tokio::sync::Mutex::new(ClaudeSDKClient::new(options)))
 }
 
+fn build_options(profile: &ProfileConfig, cwd: PathBuf, resume: Option<String>) -> ClaudeCodeOptions {
+    let mut options = ClaudeCodeOptions::builder()
+        .setting_sources(vec![cc_sdk::SettingSource::Project])
+        .cwd(cwd)
+        .build();
+
+    // Profile credentials
+    options.env.insert("ANTHROPIC_AUTH_TOKEN".to_string(), profile.api_key.clone());
+    if !profile.base_url.is_empty() {
+        options.env.insert("ANTHROPIC_BASE_URL".to_string(), profile.base_url.clone());
+    }
+    if let Some(proxy) = &profile.proxy_url {
+        options.env.insert("HTTPS_PROXY".to_string(), proxy.clone());
+    }
+    if let Some(session_id) = resume {
+        options.resume = Some(session_id);
+    }
+    options
+}
+
 /// Creates a new chat session for the given profile and working directory.
 pub async fn create_chat_session(
     profile_id: &str,
@@ -35,20 +56,16 @@ pub async fn create_chat_session(
         .lock()
         .map_err(|e| format!("failed to lock store: {}", e))?;
 
-    let _profile = store
+    let profile = store
         .profiles
         .iter()
         .find(|p| p.id == profile_id)
-        .ok_or_else(|| format!("profile not found: {}", profile_id))?;
+        .ok_or_else(|| format!("profile not found: {}", profile_id))?
+        .clone();
 
     drop(store);
 
-    let options = ClaudeCodeOptions::builder()
-        .setting_sources(vec![cc_sdk::SettingSource::Project])
-        .cwd(directory.clone())
-        .build();
-
-    let client = make_client(options);
+    let client = make_client(build_options(&profile, directory.clone(), None));
     let session_id = Uuid::new_v4().to_string();
     let name = format!("session-{}", &session_id[..8]);
 
@@ -231,12 +248,16 @@ pub async fn resume_chat_session(
     app: AppHandle,
 ) -> Result<CreateChatSessionResult, String> {
     let state = app.state::<AppState>();
-    let options = ClaudeCodeOptions::builder()
-        .setting_sources(vec![cc_sdk::SettingSource::Project])
-        .cwd(directory.clone())
-        .resume(sdk_session_id.to_string())
-        .build();
-    let client = make_client(options);
+    let profile = state
+        .store
+        .lock()
+        .map_err(|e| e.to_string())?
+        .profiles
+        .iter()
+        .find(|p| p.id == profile_id)
+        .ok_or_else(|| format!("profile not found: {}", profile_id))?
+        .clone();
+    let client = make_client(build_options(&profile, directory.clone(), Some(sdk_session_id.to_string())));
     let session_id = Uuid::new_v4().to_string();
     let name = format!("session-{}", &session_id[..8]);
     let session = ChatSession {
