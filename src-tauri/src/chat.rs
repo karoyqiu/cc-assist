@@ -142,6 +142,41 @@ pub async fn compact_session(session_id: &str, app: AppHandle) -> Result<(), Str
     send_message(session_id, "/compact".to_string(), None, app).await
 }
 
+/// Resumes an existing cc-sdk session by its session ID.
+pub async fn resume_chat_session(
+    profile_id: &str,
+    sdk_session_id: &str,
+    directory: PathBuf,
+    app: AppHandle,
+) -> Result<CreateChatSessionResult, String> {
+    let state = app.state::<AppState>();
+    let options = ClaudeCodeOptions::builder()
+        .setting_sources(vec![cc_sdk::SettingSource::Project])
+        .cwd(directory.clone())
+        .resume(sdk_session_id.to_string())
+        .build();
+    let client = ClaudeSDKClient::new(options);
+    let session_id = Uuid::new_v4().to_string();
+    let name = format!("session-{}", &session_id[..8]);
+    let session = ChatSession {
+        client,
+        permission_mode: PermissionMode::Default,
+        state: SessionState::Idle,
+        cwd: directory.clone(),
+        session_name: name.clone(),
+        profile_id: profile_id.to_string(),
+        last_used_at: OffsetDateTime::now_utc(),
+        message_count: 0,
+    };
+    state
+        .chat_sessions
+        .sessions
+        .lock()
+        .map_err(|e| e.to_string())?
+        .insert(session_id.clone(), session);
+    Ok(CreateChatSessionResult { session_id, name, cwd: directory })
+}
+
 /// Updates the permission mode for an existing session.
 pub async fn set_permission_mode(
     session_id: &str,

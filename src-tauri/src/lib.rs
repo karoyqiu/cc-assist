@@ -170,6 +170,8 @@ pub fn run() {
             commands_chat::chat_get_allowlist,
             commands_chat::chat_remove_from_allowlist,
             commands_chat::chat_clear_allowlist,
+            commands_chat::chat_list_recent_sessions,
+            commands_chat::chat_resume_session,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

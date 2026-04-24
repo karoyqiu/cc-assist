@@ -5,6 +5,14 @@ use crate::permission_allowlist::AllowlistEntry;
 use crate::state::AppState;
 
 #[derive(serde::Serialize)]
+pub struct RecentSessionDto {
+    pub session_id: String,
+    pub title: String,
+    pub cwd: String,
+    pub last_modified_ms: i64,
+}
+
+#[derive(serde::Serialize)]
 pub struct SessionInfoDto {
     pub session_id: String,
     pub name: String,
@@ -164,4 +172,42 @@ pub async fn chat_clear_allowlist(state: State<'_, AppState>) -> Result<(), Stri
     allowlist.clear();
     allowlist.save(&app_data_dir).ok();
     Ok(())
+}
+
+#[tauri::command]
+pub async fn chat_list_recent_sessions() -> Result<Vec<RecentSessionDto>, String> {
+    let sessions = cc_sdk::sessions::list_sessions(None, Some(10), true)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(sessions
+        .into_iter()
+        .map(|s| {
+            let title = s
+                .custom_title
+                .or_else(|| s.first_prompt.map(|p| p.chars().take(60).collect()))
+                .unwrap_or_else(|| s.session_id[..8.min(s.session_id.len())].to_string());
+            RecentSessionDto {
+                title,
+                cwd: s.cwd.unwrap_or_default(),
+                last_modified_ms: s.last_modified,
+                session_id: s.session_id,
+            }
+        })
+        .collect())
+}
+
+#[tauri::command]
+pub async fn chat_resume_session(
+    profile_id: String,
+    sdk_session_id: String,
+    directory: String,
+    app: AppHandle,
+) -> Result<chat::CreateChatSessionResult, String> {
+    chat::resume_chat_session(
+        &profile_id,
+        &sdk_session_id,
+        std::path::PathBuf::from(directory),
+        app,
+    )
+    .await
 }
