@@ -213,26 +213,33 @@ function ChatAppInner() {
           onClose={handleCloseSession}
           onOpenSettings={() => invoke('toggle_settings_window')}
         />
-        <ChatPanel
-          modelOptions={
-            modelOptions.length > 0 ? modelOptions : [{ key: 'main', label: 'Default' }]
-          }
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          onCompact={handleCompact}
-          contextPct={tokenUsage.contextPct}
-          subscriptionPct={tokenUsage.subscriptionPct}
-          gitBranch=""
-          gitDirty={false}
-          permissionMode={activePermissionMode}
-          sessionState={activeSessionState}
-          pendingPermissions={pendingPermissions.filter((p) => p.sessionId === activeSessionId)}
-          pendingQuestions={pendingQuestions.filter((q) => q.sessionId === activeSessionId)}
-          onAllowPermission={handleAllowPermission}
-          onAllowAlwaysPermission={handleAllowAlwaysPermission}
-          onDenyPermission={handleDenyPermission}
-          onAnswerQuestion={handleAnswerQuestion}
-        />
+        {activeSessionId !== null ? (
+          <ChatPanel
+            modelOptions={
+              modelOptions.length > 0 ? modelOptions : [{ key: 'main', label: 'Default' }]
+            }
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            onCompact={handleCompact}
+            contextPct={tokenUsage.contextPct}
+            subscriptionPct={tokenUsage.subscriptionPct}
+            gitBranch=""
+            gitDirty={false}
+            permissionMode={activePermissionMode}
+            sessionState={activeSessionState}
+            pendingPermissions={pendingPermissions.filter((p) => p.sessionId === activeSessionId)}
+            pendingQuestions={pendingQuestions.filter((q) => q.sessionId === activeSessionId)}
+            onAllowPermission={handleAllowPermission}
+            onAllowAlwaysPermission={handleAllowAlwaysPermission}
+            onDenyPermission={handleDenyPermission}
+            onAnswerQuestion={handleAnswerQuestion}
+          />
+        ) : (
+          <div className="bg-background text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3">
+            <p className="text-sm">No active session</p>
+            <p className="text-xs opacity-60">Select or create a session to start</p>
+          </div>
+        )}
       </ThreadPrimitive.Root>
     </AssistantRuntimeProvider>
   );
