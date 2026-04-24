@@ -1,6 +1,7 @@
-import { useState, type FC } from 'react';
+import type { FC } from 'react';
 
 import type { RecentSessionInfo, SessionInfo } from '../../lib/chatCommands';
+import type { ProfileConfig } from '../../types';
 
 import { SessionPickerDropdown } from './SessionPickerDropdown';
 
@@ -12,6 +13,8 @@ interface SessionListProps {
   onClose: (sessionId: string) => void;
   onOpenSettings: () => void;
   onResumeSession: (session: RecentSessionInfo) => void;
+  profiles: ProfileConfig[];
+  recentSessions: RecentSessionInfo[];
 }
 
 const stateIndicator: Record<SessionInfo['state'], string> = {
@@ -30,6 +33,10 @@ const stateColor: Record<SessionInfo['state'], string> = {
   error: 'text-destructive',
 };
 
+function basename(p: string) {
+  return p.split(/[\\/]/).pop() ?? p;
+}
+
 export const SessionList: FC<SessionListProps> = ({
   sessions,
   activeSessionId,
@@ -38,30 +45,23 @@ export const SessionList: FC<SessionListProps> = ({
   onClose,
   onOpenSettings,
   onResumeSession,
+  profiles,
+  recentSessions,
 }) => {
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const profileName = (profileId: string) =>
+    profiles.find((p) => p.id === profileId)?.name ?? profileId;
+
   return (
     <div className="border-border bg-background flex w-56 shrink-0 flex-col border-r">
       <div className="border-border flex items-center justify-between border-b px-3 py-2.5">
         <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Sessions
         </span>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setPickerOpen((p) => !p)}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-6 w-6 items-center justify-center rounded text-base leading-none"
-            aria-label="New session"
-          >
-            +
-          </button>
-          <SessionPickerDropdown
-            open={pickerOpen}
-            onClose={() => setPickerOpen(false)}
-            onSelectRecent={onResumeSession}
-            onSelectNew={onNew}
-          />
-        </div>
+        <SessionPickerDropdown
+          sessions={recentSessions}
+          onSelectRecent={onResumeSession}
+          onSelectNew={onNew}
+        />
       </div>
       <div className="flex-1 overflow-y-auto py-1">
         {sessions.map((s) => (
@@ -78,7 +78,12 @@ export const SessionList: FC<SessionListProps> = ({
               <span className={`shrink-0 text-xs ${stateColor[s.state]}`}>
                 {stateIndicator[s.state]}
               </span>
-              <span className="text-foreground flex-1 truncate">{s.name}</span>
+              <div className="flex min-w-0 flex-col">
+                <span className="text-foreground truncate text-sm">{s.name}</span>
+                <span className="text-muted-foreground truncate text-xs">
+                  {basename(s.cwd)} · {profileName(s.profileId)}
+                </span>
+              </div>
             </button>
             <button
               type="button"

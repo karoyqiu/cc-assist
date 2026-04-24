@@ -1,74 +1,49 @@
-import { useEffect, useState, type FC } from 'react';
+import type { FC } from 'react';
 
-import { chatCommands, type RecentSessionInfo } from '../../lib/chatCommands';
+import type { RecentSessionInfo } from '../../lib/chatCommands';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface SessionPickerDropdownProps {
-  open: boolean;
-  onClose: () => void;
+  sessions: RecentSessionInfo[];
   onSelectRecent: (session: RecentSessionInfo) => void;
   onSelectNew: () => void;
 }
 
 export const SessionPickerDropdown: FC<SessionPickerDropdownProps> = ({
-  open,
-  onClose,
+  sessions,
   onSelectRecent,
   onSelectNew,
-}) => {
-  const [sessions, setSessions] = useState<RecentSessionInfo[]>([]);
-
-  useEffect(() => {
-    if (!open) {
-      setSessions([]);
-      return;
-    }
-    let cancelled = false;
-    chatCommands
-      .listRecentSessions()
-      .then((result) => {
-        if (!cancelled) setSessions(result);
-      })
-      .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  if (!open) return null;
-
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden="true" />
-      <div className="border-border bg-card absolute top-10 left-2 z-50 w-56 rounded-lg border shadow-lg">
-        <div className="py-1">
-          {sessions.map((s) => (
-            <button
-              key={s.sessionId}
-              type="button"
-              onClick={() => {
-                onSelectRecent(s);
-                onClose();
-              }}
-              className="hover:bg-muted flex w-full flex-col px-3 py-2 text-left"
-            >
-              <span className="text-foreground truncate text-sm">{s.title}</span>
-              <span className="text-muted-foreground truncate text-xs">{s.cwd}</span>
-            </button>
-          ))}
-          {sessions.length > 0 && <div className="border-border my-1 border-t" />}
-          <button
-            type="button"
-            onClick={() => {
-              onSelectNew();
-              onClose();
-            }}
-            className="hover:bg-muted text-foreground flex w-full items-center gap-2 px-3 py-2 text-sm"
-          >
-            <span className="text-base leading-none">+</span>
-            New Session
-          </button>
-        </div>
-      </div>
-    </>
-  );
-};
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger
+      className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-6 w-6 items-center justify-center rounded text-base leading-none"
+      aria-label="New session"
+    >
+      +
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="start">
+      {sessions.map((s) => (
+        <DropdownMenuItem key={s.sessionId} onClick={() => onSelectRecent(s)}>
+          <div className="flex flex-col">
+            <span className="truncate text-sm">{s.title}</span>
+            <span className="text-muted-foreground truncate text-xs">
+              {s.cwd.split(/[\\/]/).pop() ?? s.cwd}
+            </span>
+          </div>
+        </DropdownMenuItem>
+      ))}
+      {sessions.length > 0 && <DropdownMenuSeparator />}
+      <DropdownMenuItem onClick={onSelectNew}>
+        <span className="text-base leading-none">+</span>
+        New Session
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);

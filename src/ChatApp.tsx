@@ -40,6 +40,7 @@ function ChatAppInner() {
   const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
   const [pendingQuestions, setPendingQuestions] = useState<PendingQuestion[]>([]);
   const [selectedModel, setSelectedModel] = useState('main');
+  const [recentSessions, setRecentSessions] = useState<RecentSessionInfo[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'new' | 'resume'>('new');
   const [dialogSdkSessionId, setDialogSdkSessionId] = useState<string | undefined>();
@@ -55,10 +56,13 @@ function ChatAppInner() {
 
   // Load config on mount
   useEffect(() => {
-    invoke<ProfilesStore>('get_config').then((s) => {
-      setStore(s);
-      return i18n.changeLanguage(s.locale);
-    });
+    Promise.all([invoke<ProfilesStore>('get_config'), chatCommands.listRecentSessions()]).then(
+      ([s, recent]) => {
+        setStore(s);
+        setRecentSessions(recent);
+        return i18n.changeLanguage(s.locale);
+      },
+    );
     getCurrentWindow().show().catch(console.error);
   }, [i18n]);
 
@@ -237,6 +241,8 @@ function ChatAppInner() {
           onClose={handleCloseSession}
           onOpenSettings={() => invoke('toggle_settings_window')}
           onResumeSession={openResumeSessionDialog}
+          profiles={store.profiles}
+          recentSessions={recentSessions}
         />
         {activeSessionId !== null ? (
           <ChatPanel
