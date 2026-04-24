@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::sync::Mutex;
+use std::sync::Arc;
 
 use time::OffsetDateTime;
 
@@ -61,7 +62,7 @@ pub enum SessionState {
 
 /// A chat session backed by a cc-sdk client.
 pub struct ChatSession {
-    pub client: ClaudeSDKClient,
+    pub client: Arc<tokio::sync::Mutex<ClaudeSDKClient>>,
     pub permission_mode: PermissionMode,
     pub state: SessionState,
     pub cwd: PathBuf,

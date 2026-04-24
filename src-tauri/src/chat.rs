@@ -1,9 +1,12 @@
 use std::path::PathBuf;
+use std::sync::Arc;
+
+use futures::StreamExt;
 use tauri::{AppHandle, Emitter, Manager};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient};
+use cc_sdk::{ClaudeCodeOptions, ClaudeSDKClient, ContentBlock, Message};
 
 use crate::state::{AppState, ChatSession, PermissionMode, SessionState};
 
@@ -15,13 +18,16 @@ pub struct CreateChatSessionResult {
     pub cwd: PathBuf,
 }
 
+fn make_client(options: ClaudeCodeOptions) -> Arc<tokio::sync::Mutex<ClaudeSDKClient>> {
+    Arc::new(tokio::sync::Mutex::new(ClaudeSDKClient::new(options)))
+}
+
 /// Creates a new chat session for the given profile and working directory.
 pub async fn create_chat_session(
     profile_id: &str,
     directory: PathBuf,
     app: AppHandle,
 ) -> Result<CreateChatSessionResult, String> {
-    // Get the profile config
     let state = app.state::<AppState>();
     let store = state
         .store
@@ -36,20 +42,15 @@ pub async fn create_chat_session(
 
     drop(store);
 
-    // Build ClaudeCodeOptions with project settings
     let options = ClaudeCodeOptions::builder()
         .setting_sources(vec![cc_sdk::SettingSource::Project])
         .cwd(directory.clone())
         .build();
 
-    // Create the cc-sdk client
-    let client = ClaudeSDKClient::new(options);
-
-    // Generate session name and ID
+    let client = make_client(options);
     let session_id = Uuid::new_v4().to_string();
     let name = format!("session-{}", &session_id[..8]);
 
-    // Store the session
     let session = ChatSession {
         client,
         permission_mode: PermissionMode::Default,
@@ -76,10 +77,7 @@ pub async fn create_chat_session(
 }
 
 /// Closes and removes a chat session.
-pub async fn close_chat_session(
-    session_id: &str,
-    app: AppHandle,
-) -> Result<(), String> {
+pub async fn close_chat_session(session_id: &str, app: AppHandle) -> Result<(), String> {
     let state = app.state::<AppState>();
     let mut sessions = state
         .chat_sessions
@@ -94,7 +92,7 @@ pub async fn close_chat_session(
     Ok(())
 }
 
-/// Sends a message on an existing session and streams response via Tauri events.
+/// Sends a message on an existing session and streams the response via Tauri events.
 pub async fn send_message(
     session_id: &str,
     content: String,
@@ -102,29 +100,112 @@ pub async fn send_message(
     app: AppHandle,
 ) -> Result<(), String> {
     let state = app.state::<AppState>();
-    // Mark session as thinking and update usage stats
-    {
+
+    // Lock sessions briefly: update state, grab client Arc, then release.
+    let client_arc = {
         let mut sessions = state.chat_sessions.sessions.lock().map_err(|e| e.to_string())?;
-        if let Some(s) = sessions.get_mut(session_id) {
-            s.state = SessionState::Thinking;
-            s.last_used_at = OffsetDateTime::now_utc();
-            s.message_count += 1;
-        }
-    }
+        let s = sessions
+            .get_mut(session_id)
+            .ok_or_else(|| format!("session not found: {}", session_id))?;
+        s.state = SessionState::Thinking;
+        s.last_used_at = OffsetDateTime::now_utc();
+        s.message_count += 1;
+        Arc::clone(&s.client)
+    };
+
     app.emit(
         "session-state",
         serde_json::json!({ "session_id": session_id, "state": "thinking" }),
     )
     .ok();
 
-    // Spawn streaming task
     let session_id_owned = session_id.to_string();
+    let app_clone = app.clone();
+
     tokio::spawn(async move {
-        log::info!("send_message streaming for session {}", session_id_owned);
-        // TODO: wire actual cc-sdk streaming in a follow-up task
-        let _ = content;
+        // Connect + send, then release the client lock before streaming.
+        let stream = {
+            let mut client = client_arc.lock().await;
+            if let Err(e) = client.connect(None).await {
+                log::error!("[{}] connect failed: {}", session_id_owned, e);
+                emit_error(&app_clone, &session_id_owned);
+                return;
+            }
+            if let Err(e) = client.send_request(content, None).await {
+                log::error!("[{}] send_request failed: {}", session_id_owned, e);
+                emit_error(&app_clone, &session_id_owned);
+                return;
+            }
+            client.receive_messages().await
+        };
+
+        let mut stream = std::pin::pin!(stream);
+        while let Some(msg_result) = stream.next().await {
+            match msg_result {
+                Ok(Message::Assistant { message }) => {
+                    for block in &message.content {
+                        if let ContentBlock::Text(tc) = block {
+                            app_clone
+                                .emit(
+                                    "chat-output",
+                                    serde_json::json!({
+                                        "sessionId": session_id_owned,
+                                        "content": tc.text,
+                                        "partType": "text",
+                                    }),
+                                )
+                                .ok();
+                        }
+                    }
+                }
+                Ok(Message::Result { usage, .. }) => {
+                    app_clone
+                        .emit(
+                            "result",
+                            serde_json::json!({
+                                "sessionId": session_id_owned,
+                                "usage": usage,
+                            }),
+                        )
+                        .ok();
+                    set_session_state(&app_clone, &session_id_owned, SessionState::Idle);
+                    app_clone
+                        .emit(
+                            "session-state",
+                            serde_json::json!({ "session_id": session_id_owned, "state": "idle" }),
+                        )
+                        .ok();
+                    break;
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("[{}] stream error: {}", session_id_owned, e);
+                    emit_error(&app_clone, &session_id_owned);
+                    break;
+                }
+            }
+        }
     });
+
     Ok(())
+}
+
+fn set_session_state(app: &AppHandle, session_id: &str, s: SessionState) {
+    let state = app.state::<AppState>();
+    if let Ok(mut sessions) = state.chat_sessions.sessions.lock() {
+        if let Some(session) = sessions.get_mut(session_id) {
+            session.state = s;
+        }
+    }
+}
+
+fn emit_error(app: &AppHandle, session_id: &str) {
+    set_session_state(app, session_id, SessionState::Error);
+    app.emit(
+        "session-state",
+        serde_json::json!({ "session_id": session_id, "state": "error" }),
+    )
+    .ok();
 }
 
 /// Sends /compact to the active session.
@@ -145,7 +226,7 @@ pub async fn resume_chat_session(
         .cwd(directory.clone())
         .resume(sdk_session_id.to_string())
         .build();
-    let client = ClaudeSDKClient::new(options);
+    let client = make_client(options);
     let session_id = Uuid::new_v4().to_string();
     let name = format!("session-{}", &session_id[..8]);
     let session = ChatSession {

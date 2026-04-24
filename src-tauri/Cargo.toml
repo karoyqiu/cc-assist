@@ -29,6 +29,7 @@ simplelog = "0.12"
 tempfile = "3"
 portable-pty = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util", "macros", "rt"] }
+futures = "0.3"
 time = { version = "0.3", features = ["formatting", "serde", "serde-human-readable"] }
 uuid = { version = "1", features = ["v4"] }
 cc-sdk = "0.8.1"
