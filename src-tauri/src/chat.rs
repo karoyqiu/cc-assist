@@ -30,13 +30,25 @@ fn build_options(profile: &ProfileConfig, cwd: PathBuf, resume: Option<String>) 
         .cwd(cwd)
         .build();
 
-    // Profile credentials
+    // Profile credentials and model overrides
     options.env.insert("ANTHROPIC_AUTH_TOKEN".to_string(), profile.api_key.clone());
     if !profile.base_url.is_empty() {
         options.env.insert("ANTHROPIC_BASE_URL".to_string(), profile.base_url.clone());
     }
     if let Some(proxy) = &profile.proxy_url {
         options.env.insert("HTTPS_PROXY".to_string(), proxy.clone());
+    }
+    if let Some(model) = &profile.models.main {
+        options.env.insert("ANTHROPIC_MODEL".to_string(), model.clone());
+    }
+    if let Some(model) = &profile.models.haiku {
+        options.env.insert("ANTHROPIC_DEFAULT_HAIKU_MODEL".to_string(), model.clone());
+    }
+    if let Some(model) = &profile.models.sonnet {
+        options.env.insert("ANTHROPIC_DEFAULT_SONNET_MODEL".to_string(), model.clone());
+    }
+    if let Some(model) = &profile.models.opus {
+        options.env.insert("ANTHROPIC_DEFAULT_OPUS_MODEL".to_string(), model.clone());
     }
     if let Some(session_id) = resume {
         options.resume = Some(session_id);
