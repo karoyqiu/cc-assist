@@ -59,8 +59,11 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   onAnswerQuestion,
 }) => {
   return (
-    <div className="bg-background flex flex-1 flex-col overflow-hidden">
-      <ThreadPrimitive.Viewport className="flex flex-1 flex-col overflow-y-auto p-4 pt-8">
+    <div data-testid="chat-panel" className="bg-background flex flex-1 flex-col overflow-hidden">
+      <ThreadPrimitive.Viewport
+        data-testid="chat-thread"
+        className="flex flex-1 flex-col overflow-y-auto p-4 pt-8"
+      >
         <ThreadPrimitive.Messages components={{ Message: ChatMessage }} />
         {pendingPermissions.map((p) => (
           <PermissionRequestCard

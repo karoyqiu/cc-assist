@@ -66,7 +66,7 @@ export const SessionDialog: FC<SessionDialogProps> = ({
                 if (v) setProfileId(v);
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger data-testid="session-dialog-profile" className="w-full">
                 <SelectValue placeholder="Select profile">
                   {profiles.find((p) => p.id === profileId)?.name}
                 </SelectValue>
@@ -90,10 +90,14 @@ export const SessionDialog: FC<SessionDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            data-testid="session-dialog-cancel"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button onClick={handleConfirm} disabled={loading}>
+          <Button data-testid="session-dialog-confirm" onClick={handleConfirm} disabled={loading}>
             {mode === 'resume' ? 'Resume' : 'Start'}
           </Button>
         </DialogFooter>

@@ -68,6 +68,7 @@ export const SessionList: FC<SessionListProps> = ({
           <div key={s.sessionId} className="group relative">
             <button
               type="button"
+              data-testid={`session-item-${s.sessionId}`}
               onClick={() => onSelect(s.sessionId)}
               className={`hover:bg-muted flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition ${
                 s.sessionId === activeSessionId
@@ -87,6 +88,7 @@ export const SessionList: FC<SessionListProps> = ({
             </button>
             <button
               type="button"
+              data-testid={`session-close-${s.sessionId}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(s.sessionId);
@@ -102,6 +104,7 @@ export const SessionList: FC<SessionListProps> = ({
       <div className="border-border border-t p-2">
         <button
           type="button"
+          data-testid="settings-button"
           onClick={onOpenSettings}
           className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center justify-center rounded-md py-1.5 text-xs transition"
           aria-label="Settings"

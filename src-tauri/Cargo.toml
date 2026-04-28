@@ -36,6 +36,7 @@ uuid = { version = "1", features = ["v4"] }
 cc-sdk = "0.8.1"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-system-fonts = "2.0.2"
+tauri-plugin-pilot = { git = "https://github.com/mpiton/tauri-pilot" }
 
 [profile.dev]
 incremental = true

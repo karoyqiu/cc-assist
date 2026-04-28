@@ -29,10 +29,11 @@ export const UserQuestionCard: FC<UserQuestionCardProps> = ({
       </div>
       <p className="text-foreground mb-4 text-sm">{question}</p>
       <div className="flex flex-col gap-2">
-        {choices.map((choice) => (
+        {choices.map((choice, i) => (
           <button
             key={choice}
             type="button"
+            data-testid={`question-choice-${i}`}
             disabled={selected !== null}
             onClick={() => handleChoice(choice)}
             className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${

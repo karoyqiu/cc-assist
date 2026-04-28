@@ -38,6 +38,7 @@ export const Composer: FC<ComposerProps> = ({
         <div className="relative">
           <div className="max-h-96 w-full overflow-y-auto">
             <ComposerPrimitive.Input
+              data-testid="composer-input"
               placeholder="How can I help you today?"
               className="text-foreground placeholder:text-muted-foreground block min-h-6 w-full resize-none bg-transparent outline-none"
               onKeyDown={(e) => {
@@ -51,11 +52,12 @@ export const Composer: FC<ComposerProps> = ({
         </div>
         <div className="flex w-full items-center gap-2">
           <div className="flex min-w-0 flex-1 shrink items-center gap-2">
-            <ComposerPrimitive.AddAttachment className={toolBtnClass}>
+            <ComposerPrimitive.AddAttachment data-testid="composer-attach" className={toolBtnClass}>
               <PlusIcon width={16} height={16} />
             </ComposerPrimitive.AddAttachment>
             <button
               type="button"
+              data-testid="composer-compact"
               onClick={handleCompact}
               disabled={compacting}
               className={toolBtnClass}
@@ -65,7 +67,10 @@ export const Composer: FC<ComposerProps> = ({
             </button>
           </div>
           <ModelSelector options={modelOptions} value={selectedModel} onChange={onModelChange} />
-          <ComposerPrimitive.Send className="bg-primary hover:bg-primary/90 flex h-8 w-8 items-center justify-center rounded-lg transition-colors active:scale-95 disabled:pointer-events-none disabled:opacity-50">
+          <ComposerPrimitive.Send
+            data-testid="composer-send"
+            className="bg-primary hover:bg-primary/90 flex h-8 w-8 items-center justify-center rounded-lg transition-colors active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+          >
             <ArrowUpIcon width={16} height={16} className="text-primary-foreground" />
           </ComposerPrimitive.Send>
         </div>
@@ -129,6 +134,7 @@ const ComposerAttachment: FC = () => {
         </div>
       </div>
       <AttachmentPrimitive.Remove
+        data-testid="composer-attachment-remove"
         className="border-border bg-card/90 text-muted-foreground hover:bg-card hover:text-foreground absolute -top-2 -left-2 flex h-5 w-5 items-center justify-center rounded-full border opacity-0 backdrop-blur-sm transition-all group-focus-within/thumbnail:opacity-100 group-hover/thumbnail:opacity-100"
         aria-label="Remove attachment"
       >

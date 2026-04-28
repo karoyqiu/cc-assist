@@ -47,6 +47,7 @@ export const PermissionRequestCard: FC<PermissionRequestCardProps> = ({
         <div className="flex gap-2">
           <button
             type="button"
+            data-testid="permission-deny"
             onClick={() => handle('deny')}
             className="border-destructive text-destructive hover:bg-destructive/10 rounded-md border px-3 py-1.5 text-xs transition"
           >
@@ -54,6 +55,7 @@ export const PermissionRequestCard: FC<PermissionRequestCardProps> = ({
           </button>
           <button
             type="button"
+            data-testid="permission-allow"
             onClick={() => handle('allow')}
             className="border-border bg-muted text-foreground hover:bg-muted/80 rounded-md border px-3 py-1.5 text-xs transition"
           >
@@ -61,6 +63,7 @@ export const PermissionRequestCard: FC<PermissionRequestCardProps> = ({
           </button>
           <button
             type="button"
+            data-testid="permission-allow-always"
             onClick={() => handle('allow-always')}
             className="border-border bg-muted text-foreground hover:bg-muted/80 rounded-md border px-3 py-1.5 text-xs transition"
           >

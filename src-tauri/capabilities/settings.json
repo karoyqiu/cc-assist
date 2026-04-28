@@ -9,6 +9,7 @@
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "core:window:allow-show",
+    "pilot:default",
     "system-fonts:default"
   ]
 }

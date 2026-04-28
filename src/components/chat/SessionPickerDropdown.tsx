@@ -23,6 +23,7 @@ export const SessionPickerDropdown: FC<SessionPickerDropdownProps> = ({
 }) => (
   <DropdownMenu>
     <DropdownMenuTrigger
+      data-testid="session-picker-trigger"
       className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-6 w-6 items-center justify-center rounded text-base leading-none"
       aria-label="New session"
     >
@@ -30,7 +31,11 @@ export const SessionPickerDropdown: FC<SessionPickerDropdownProps> = ({
     </DropdownMenuTrigger>
     <DropdownMenuContent align="start">
       {sessions.map((s) => (
-        <DropdownMenuItem key={s.sessionId} onClick={() => onSelectRecent(s)}>
+        <DropdownMenuItem
+          key={s.sessionId}
+          data-testid={`session-recent-${s.sessionId}`}
+          onClick={() => onSelectRecent(s)}
+        >
           <div className="flex flex-col">
             <span className="truncate text-sm">{s.title}</span>
             <span className="text-muted-foreground truncate text-xs">
@@ -40,7 +45,7 @@ export const SessionPickerDropdown: FC<SessionPickerDropdownProps> = ({
         </DropdownMenuItem>
       ))}
       {sessions.length > 0 && <DropdownMenuSeparator />}
-      <DropdownMenuItem onClick={onSelectNew}>
+      <DropdownMenuItem data-testid="session-new" onClick={onSelectNew}>
         <span className="text-base leading-none">+</span>
         New Session
       </DropdownMenuItem>

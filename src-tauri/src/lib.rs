@@ -72,16 +72,36 @@ pub fn run() {
     init_logging(&early_log_dir);
     log::info!("cc-assist starting");
 
+    // Build and enter a Tokio runtime before Tauri starts.
+    // tauri-plugin-pilot creates a Windows named pipe in its setup hook, which
+    // requires a Tokio reactor on the current thread. Tauri's plugin setup runs
+    // synchronously on the main thread without entering a runtime, so we create
+    // one here, set it as Tauri's async runtime, and hold the enter guard for the
+    // lifetime of the process.
+    let tokio_rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("failed to build Tokio runtime");
+    tauri::async_runtime::set(tokio_rt.handle().clone());
+    let _tokio_guard = tokio_rt.enter();
+
     // Create builder with default store — will be replaced in setup with proper config
     let store = default_store();
 
     let mut builder = tauri::Builder::default();
+
+    #[cfg(debug_assertions)]
+    {
+        builder = builder.plugin(tauri_plugin_pilot::init());
+    }
+
     #[cfg(not(debug_assertions))]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             window::show_main_window(app);
         }));
     }
+
     builder = builder.plugin(tauri_plugin_clipboard_manager::init());
     builder = builder.plugin(tauri_plugin_system_fonts::init());
     builder
