@@ -26,6 +26,12 @@
       "sourceType": "github",
       "computedHash": "88fa9db6e0429bcf6f07c22bb879114b2db07d98c93cf82ee1928634ba74c0c4"
     },
+    "tauri-pilot": {
+      "source": "mpiton/tauri-pilot",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "f375744adfac51fa903948af12ed24e8d03bb51b71d5c1467f1a993a649eaffc"
+    },
     "thread-list": {
       "source": "assistant-ui/skills",
       "sourceType": "github",
