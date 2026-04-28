@@ -37,7 +37,8 @@ fn init_logging(log_dir: &std::path::Path) {
         .append(true)
         .open(&log_path)
         .unwrap_or_else(|_| std::fs::File::create(&log_path).expect("Failed to create log file"));
-    simplelog::WriteLogger::init(simplelog::LevelFilter::Info, simplelog::Config::default(), log_file).ok();
+    simplelog::WriteLogger::init(simplelog::LevelFilter::Debug, simplelog::Config::default(), log_file).ok();
+    tracing_log::LogTracer::init().ok();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

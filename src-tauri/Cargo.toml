@@ -26,6 +26,7 @@ rfd = "0.15"
 dirs = "6"
 log = "0.4"
 simplelog = "0.12"
+tracing-log = "0.2"
 tempfile = "3"
 portable-pty = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "io-util", "macros", "rt"] }

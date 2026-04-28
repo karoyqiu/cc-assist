@@ -177,7 +177,9 @@ pub async fn send_message(
         };
 
         let mut stream = std::pin::pin!(stream);
+        log::info!("[{}] entering stream loop", session_id_owned);
         while let Some(msg_result) = stream.next().await {
+            log::info!("[{}] stream item: ok={}", session_id_owned, msg_result.is_ok());
             match msg_result {
                 Ok(Message::Assistant { message }) => {
                     for block in &message.content {
@@ -195,7 +197,8 @@ pub async fn send_message(
                         }
                     }
                 }
-                Ok(Message::Result { usage, .. }) => {
+                Ok(Message::Result { usage, is_error, result, subtype, .. }) => {
+                    log::info!("[{}] result: subtype={} is_error={} result={:?}", session_id_owned, subtype, is_error, result);
                     app_clone
                         .emit(
                             "result",
@@ -228,7 +231,9 @@ pub async fn send_message(
                         break;
                     }
                 }
-                Ok(_) => {}
+                Ok(msg) => {
+                    log::info!("[{}] unhandled message: {:?}", session_id_owned, msg);
+                }
                 Err(e) => {
                     log::error!("[{}] stream error: {}", session_id_owned, e);
                     emit_error(&app_clone, &session_id_owned);
@@ -236,6 +241,7 @@ pub async fn send_message(
                 }
             }
         }
+        log::info!("[{}] stream loop ended", session_id_owned);
     });
 
     Ok(())
