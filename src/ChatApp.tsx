@@ -227,6 +227,10 @@ function ChatAppInner() {
     setPendingQuestions((prev) => prev.filter((q) => q.sessionId !== sessionId));
   }
 
+  async function handlePermissionModeChange(sessionId: string, mode: PermissionMode) {
+    await chatCommands.setPermissionMode(sessionId, mode);
+  }
+
   const activeSessionState: SessionState = activeSessionId
     ? (sessionStates[activeSessionId]?.state ?? 'idle')
     : 'idle';
@@ -272,12 +276,14 @@ function ChatAppInner() {
             gitDirty={false}
             permissionMode={activePermissionMode}
             sessionState={activeSessionState}
+            sessionId={activeSessionId}
             pendingPermissions={pendingPermissions.filter((p) => p.sessionId === activeSessionId)}
             pendingQuestions={pendingQuestions.filter((q) => q.sessionId === activeSessionId)}
             onAllowPermission={handleAllowPermission}
             onAllowAlwaysPermission={handleAllowAlwaysPermission}
             onDenyPermission={handleDenyPermission}
             onAnswerQuestion={handleAnswerQuestion}
+            onPermissionModeChange={handlePermissionModeChange}
           />
         ) : (
           <div className="bg-background text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3">

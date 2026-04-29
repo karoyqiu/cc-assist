@@ -347,7 +347,7 @@ pub async fn set_permission_mode(
         .get_mut(session_id)
         .ok_or_else(|| format!("session not found: {}", session_id))?;
 
-    session.permission_mode = mode.clone();
+    session.permission_mode = mode;
     drop(sessions);
 
     app.emit(

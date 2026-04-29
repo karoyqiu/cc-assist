@@ -32,12 +32,14 @@ interface ChatPanelProps {
   gitDirty: boolean;
   permissionMode: PermissionMode;
   sessionState: SessionState;
+  sessionId: string;
   pendingPermissions: PendingPermission[];
   pendingQuestions: PendingQuestion[];
   onAllowPermission: (sessionId: string, toolName: string) => void;
   onAllowAlwaysPermission: (sessionId: string, toolName: string) => void;
   onDenyPermission: (sessionId: string, toolName: string) => void;
   onAnswerQuestion: (sessionId: string, answer: string) => void;
+  onPermissionModeChange: (sessionId: string, mode: PermissionMode) => void;
 }
 
 export const ChatPanel: FC<ChatPanelProps> = ({
@@ -51,12 +53,14 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   gitDirty,
   permissionMode,
   sessionState,
+  sessionId,
   pendingPermissions,
   pendingQuestions,
   onAllowPermission,
   onAllowAlwaysPermission,
   onDenyPermission,
   onAnswerQuestion,
+  onPermissionModeChange,
 }) => {
   return (
     <div data-testid="chat-panel" className="bg-background flex flex-1 flex-col overflow-hidden">
@@ -108,6 +112,8 @@ export const ChatPanel: FC<ChatPanelProps> = ({
         gitBranch={gitBranch}
         gitDirty={gitDirty}
         permissionMode={permissionMode}
+        sessionId={sessionId}
+        onPermissionModeChange={onPermissionModeChange}
       />
     </div>
   );

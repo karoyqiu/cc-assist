@@ -36,6 +36,7 @@ pub enum PermissionMode {
     Default,
     #[serde(rename = "auto_accept_edits")]
     AcceptEdits,
+    #[serde(rename = "plan_mode")]
     Plan,
 }
 
