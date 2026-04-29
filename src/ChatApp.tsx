@@ -69,16 +69,29 @@ function ChatAppInner() {
 
   // Listen for session-state events
   useEffect(() => {
-    const unlisten = listen<{ sessionId: string; state: SessionState }>('session-state', (e) => {
-      setSessionStates((prev) => ({
-        ...prev,
-        [e.payload.sessionId]: { ...prev[e.payload.sessionId], state: e.payload.state },
-      }));
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.sessionId === e.payload.sessionId ? { ...s, state: e.payload.state } : s,
-        ),
-      );
+    const unlisten = listen<{
+      sessionId: string;
+      state?: SessionState;
+      permissionMode?: PermissionMode;
+    }>('session-state', (e) => {
+      setSessionStates((prev) => {
+        const cur = prev[e.payload.sessionId] ?? { state: 'idle', permissionMode: 'default' };
+        return {
+          ...prev,
+          [e.payload.sessionId]: {
+            state: e.payload.state ?? cur.state,
+            permissionMode:
+              (e.payload.permissionMode as PermissionMode | undefined) ?? cur.permissionMode,
+          },
+        };
+      });
+      if (e.payload.state) {
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.sessionId === e.payload.sessionId ? { ...s, state: e.payload.state! } : s,
+          ),
+        );
+      }
     });
     return () => {
       unlisten.then((fn) => fn());

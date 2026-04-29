@@ -347,6 +347,13 @@ pub async fn set_permission_mode(
         .get_mut(session_id)
         .ok_or_else(|| format!("session not found: {}", session_id))?;
 
-    session.permission_mode = mode;
+    session.permission_mode = mode.clone();
+    drop(sessions);
+
+    app.emit(
+        "session-state",
+        serde_json::json!({ "sessionId": session_id, "permissionMode": mode }),
+    )
+    .ok();
     Ok(())
 }
