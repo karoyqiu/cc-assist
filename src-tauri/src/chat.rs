@@ -177,6 +177,7 @@ pub async fn send_message(
         };
 
         let mut stream = std::pin::pin!(stream);
+        let mut had_assistant_output = false;
         log::info!("[{}] entering stream loop", session_id_owned);
         while let Some(msg_result) = stream.next().await {
             log::info!("[{}] stream item: ok={}", session_id_owned, msg_result.is_ok());
@@ -184,6 +185,7 @@ pub async fn send_message(
                 Ok(Message::Assistant { message }) => {
                     for block in &message.content {
                         if let ContentBlock::Text(tc) = block {
+                            had_assistant_output = true;
                             app_clone
                                 .emit(
                                     "chat-output",
@@ -199,6 +201,19 @@ pub async fn send_message(
                 }
                 Ok(Message::Result { usage, is_error, result, subtype, .. }) => {
                     log::info!("[{}] result: subtype={} is_error={} result={:?}", session_id_owned, subtype, is_error, result);
+                    // Slash commands and errors return output in result.result with no
+                    // preceding Assistant messages. Surface it as a text chunk so the
+                    // UI always shows something.
+                    if !had_assistant_output
+                        && let Some(text) = &result
+                        && !text.is_empty()
+                    {
+                        app_clone.emit("chat-output", serde_json::json!({
+                            "sessionId": session_id_owned,
+                            "content": text,
+                            "partType": "text",
+                        })).ok();
+                    }
                     app_clone
                         .emit(
                             "result",
@@ -249,10 +264,10 @@ pub async fn send_message(
 
 fn set_session_state(app: &AppHandle, session_id: &str, s: SessionState) {
     let state = app.state::<AppState>();
-    if let Ok(mut sessions) = state.chat_sessions.sessions.lock() {
-        if let Some(session) = sessions.get_mut(session_id) {
-            session.state = s;
-        }
+    if let Ok(mut sessions) = state.chat_sessions.sessions.lock()
+        && let Some(session) = sessions.get_mut(session_id)
+    {
+        session.state = s;
     }
 }
 
