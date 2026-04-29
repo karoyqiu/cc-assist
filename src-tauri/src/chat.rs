@@ -175,6 +175,15 @@ pub async fn send_message(
                 return;
             }
             log::info!("[{}] receiving messages stream", session_id_owned);
+            // Sync permission mode from the init system message (top-level field
+            // that cc-sdk drops from Message::System.data).
+            if let Some(info) = client.get_server_info().await {
+                if let Some(mode_str) = info.get("permissionMode").and_then(|v| v.as_str()) {
+                    if let Some(mode) = parse_permission_mode(mode_str) {
+                        sync_permission_mode(&app_clone, &session_id_owned, mode);
+                    }
+                }
+            }
             client.receive_messages().await
         };
 
@@ -310,15 +319,39 @@ fn parse_permission_mode(s: &str) -> Option<PermissionMode> {
 }
 
 /// Detect permission mode change from assistant response text.
-/// Returns the new mode if a clear mode transition is found.
 fn detect_permission_mode_change(text: &str) -> Option<PermissionMode> {
     let lower = text.to_lowercase();
-    // Entering plan mode
-    if lower.contains("plan mode") && (lower.contains("activated") || lower.contains("now active") || lower.contains("is active") || lower.contains("enabled") || lower.contains("i'm now in") || lower.contains("i am now in") || lower.contains("entering") || lower.contains("switched to") || lower.contains("now in plan")) {
+    const ENTER_PLAN: &[&str] = &[
+        "plan mode active",
+        "plan mode is active",
+        "plan mode activated",
+        "plan mode is now active",
+        "plan mode enabled",
+        "entered plan mode",
+        "entering plan mode",
+        "switching to plan mode",
+        "switched to plan mode",
+        "now in plan mode",
+        "i'm now in plan mode",
+        "i am now in plan mode",
+        "i've entered plan mode",
+        "i have entered plan mode",
+    ];
+    const EXIT_PLAN: &[&str] = &[
+        "exited plan mode",
+        "exiting plan mode",
+        "left plan mode",
+        "leaving plan mode",
+        "plan mode disabled",
+        "plan mode deactivated",
+        "switched from plan mode",
+        "no longer in plan mode",
+        "plan mode off",
+    ];
+    if ENTER_PLAN.iter().any(|p| lower.contains(p)) {
         return Some(PermissionMode::Plan);
     }
-    // Exiting plan mode
-    if lower.contains("plan mode") && (lower.contains("deactivated") || lower.contains("disabled") || lower.contains("exiting") || lower.contains("exited") || lower.contains("leaving") || lower.contains("left plan mode") || lower.contains("no longer in plan")) {
+    if EXIT_PLAN.iter().any(|p| lower.contains(p)) {
         return Some(PermissionMode::Default);
     }
     None
