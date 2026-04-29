@@ -65,6 +65,15 @@ export const ChatPanel: FC<ChatPanelProps> = ({
         className="flex flex-1 flex-col overflow-y-auto p-4 pt-8"
       >
         <ThreadPrimitive.Messages components={{ Message: ChatMessage }} />
+        {sessionState === 'thinking' && (
+          <div className="mx-auto w-full max-w-3xl px-2 py-2">
+            <div className="flex items-center gap-1.5">
+              <span className="bg-muted-foreground/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+              <span className="bg-muted-foreground/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+              <span className="bg-muted-foreground/50 h-1.5 w-1.5 animate-bounce rounded-full" />
+            </div>
+          </div>
+        )}
         {pendingPermissions.map((p) => (
           <PermissionRequestCard
             key={p.id}
@@ -99,7 +108,6 @@ export const ChatPanel: FC<ChatPanelProps> = ({
         gitBranch={gitBranch}
         gitDirty={gitDirty}
         permissionMode={permissionMode}
-        sessionState={sessionState}
       />
     </div>
   );

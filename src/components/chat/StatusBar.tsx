@@ -11,7 +11,6 @@ interface StatusBarProps {
   gitBranch: string;
   gitDirty: boolean;
   permissionMode: PermissionMode;
-  sessionState: SessionState;
 }
 
 const modeLabel: Record<PermissionMode, string> = {
@@ -26,21 +25,12 @@ const modeBadgeClass: Record<PermissionMode, string> = {
   plan_mode: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
 };
 
-const stateLabel: Record<SessionState, string> = {
-  idle: 'idle',
-  thinking: 'thinking',
-  request_input: 'waiting',
-  request_permission: 'permission',
-  error: 'error',
-};
-
 export const StatusBar: FC<StatusBarProps> = ({
   contextPct,
   subscriptionPct,
   gitBranch,
   gitDirty,
   permissionMode,
-  sessionState,
 }) => {
   return (
     <div className="border-border bg-background text-muted-foreground flex h-7 shrink-0 items-center justify-between border-t px-3 text-xs">
@@ -63,7 +53,6 @@ export const StatusBar: FC<StatusBarProps> = ({
         >
           {modeLabel[permissionMode]}
         </span>
-        <span>{stateLabel[sessionState]}</span>
       </div>
     </div>
   );
