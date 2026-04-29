@@ -26,7 +26,7 @@ fn make_client(options: ClaudeCodeOptions) -> Arc<tokio::sync::Mutex<ClaudeSDKCl
 
 fn build_options(profile: &ProfileConfig, cwd: PathBuf, resume: Option<String>) -> ClaudeCodeOptions {
     let mut options = ClaudeCodeOptions::builder()
-        .setting_sources(vec![cc_sdk::SettingSource::Project])
+        .setting_sources(vec![cc_sdk::SettingSource::User, cc_sdk::SettingSource::Project])
         .cwd(cwd)
         .build();
 
