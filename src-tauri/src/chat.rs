@@ -57,6 +57,8 @@ fn build_options(profile: &ProfileConfig, cwd: PathBuf, resume: Option<String>) 
     if let Some(session_id) = resume {
         options.resume = Some(session_id);
     }
+    // Enable control protocol so set_permission_mode works mid-session.
+    options.enable_file_checkpointing = true;
     options
 }
 
@@ -337,18 +339,32 @@ pub async fn set_permission_mode(
     app: AppHandle,
 ) -> Result<(), String> {
     let state = app.state::<AppState>();
-    let mut sessions = state
-        .chat_sessions
-        .sessions
-        .lock()
-        .map_err(|e| format!("failed to lock chat sessions: {}", e))?;
 
-    let session = sessions
-        .get_mut(session_id)
-        .ok_or_else(|| format!("session not found: {}", session_id))?;
+    let client_arc = {
+        let mut sessions = state
+            .chat_sessions
+            .sessions
+            .lock()
+            .map_err(|e| format!("failed to lock chat sessions: {}", e))?;
 
-    session.permission_mode = mode;
-    drop(sessions);
+        let session = sessions
+            .get_mut(session_id)
+            .ok_or_else(|| format!("session not found: {}", session_id))?;
+
+        session.permission_mode = mode;
+        Arc::clone(&session.client)
+    };
+
+    // Map to the SDK string the control protocol expects.
+    let mode_str = match mode {
+        PermissionMode::Default => "default",
+        PermissionMode::AcceptEdits => "acceptEdits",
+        PermissionMode::Plan => "plan",
+    };
+
+    if let Err(e) = client_arc.lock().await.set_permission_mode(mode_str).await {
+        log::warn!("set_permission_mode SDK call failed (may not be connected yet): {e}");
+    }
 
     app.emit(
         "session-state",
