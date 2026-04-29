@@ -180,6 +180,7 @@ pub async fn send_message(
 
         let mut stream = std::pin::pin!(stream);
         let mut had_assistant_output = false;
+        let mut full_text = String::new();
         log::info!("[{}] entering stream loop", session_id_owned);
         while let Some(msg_result) = stream.next().await {
             log::info!("[{}] stream item: ok={}", session_id_owned, msg_result.is_ok());
@@ -188,6 +189,7 @@ pub async fn send_message(
                     for block in &message.content {
                         if let ContentBlock::Text(tc) = block {
                             had_assistant_output = true;
+                            full_text.push_str(&tc.text);
                             app_clone
                                 .emit(
                                     "chat-output",
@@ -216,6 +218,10 @@ pub async fn send_message(
                             "partType": "text",
                         })).ok();
                     }
+                    // Detect plan mode toggling from assistant response text.
+                    if let Some(mode) = detect_permission_mode_change(&full_text) {
+                        sync_permission_mode(&app_clone, &session_id_owned, mode);
+                    }
                     app_clone
                         .emit(
                             "result",
@@ -236,6 +242,12 @@ pub async fn send_message(
                 }
                 Ok(Message::System { subtype, data }) => {
                     log::info!("[{}] system message: subtype={} data={}", session_id_owned, subtype, data);
+                    // Sync permission mode if the CLI reports it in a system message.
+                    if let Some(mode_str) = data.get("permissionMode").and_then(|v| v.as_str()) {
+                        if let Some(mode) = parse_permission_mode(mode_str) {
+                            sync_permission_mode(&app_clone, &session_id_owned, mode);
+                        }
+                    }
                     if subtype == "error" {
                         let detail = data.to_string();
                         log::error!("[{}] CLI system error: {}", session_id_owned, detail);
@@ -284,6 +296,45 @@ fn emit_error(app: &AppHandle, session_id: &str) {
     app.emit(
         "result",
         serde_json::json!({ "sessionId": session_id, "usage": null }),
+    )
+    .ok();
+}
+
+fn parse_permission_mode(s: &str) -> Option<PermissionMode> {
+    match s {
+        "default" => Some(PermissionMode::Default),
+        "acceptEdits" | "auto_accept_edits" => Some(PermissionMode::AcceptEdits),
+        "plan" | "plan_mode" => Some(PermissionMode::Plan),
+        _ => None,
+    }
+}
+
+/// Detect permission mode change from assistant response text.
+/// Returns the new mode if a clear mode transition is found.
+fn detect_permission_mode_change(text: &str) -> Option<PermissionMode> {
+    let lower = text.to_lowercase();
+    // Entering plan mode
+    if lower.contains("plan mode") && (lower.contains("activated") || lower.contains("now active") || lower.contains("is active") || lower.contains("enabled") || lower.contains("i'm now in") || lower.contains("i am now in") || lower.contains("entering") || lower.contains("switched to") || lower.contains("now in plan")) {
+        return Some(PermissionMode::Plan);
+    }
+    // Exiting plan mode
+    if lower.contains("plan mode") && (lower.contains("deactivated") || lower.contains("disabled") || lower.contains("exiting") || lower.contains("exited") || lower.contains("leaving") || lower.contains("left plan mode") || lower.contains("no longer in plan")) {
+        return Some(PermissionMode::Default);
+    }
+    None
+}
+
+/// Update permission mode in state and emit session-state event.
+fn sync_permission_mode(app: &AppHandle, session_id: &str, mode: PermissionMode) {
+    let state = app.state::<AppState>();
+    if let Ok(mut sessions) = state.chat_sessions.sessions.lock()
+        && let Some(session) = sessions.get_mut(session_id)
+    {
+        session.permission_mode = mode;
+    }
+    app.emit(
+        "session-state",
+        serde_json::json!({ "sessionId": session_id, "permissionMode": mode }),
     )
     .ok();
 }

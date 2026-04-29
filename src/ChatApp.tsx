@@ -228,7 +228,26 @@ function ChatAppInner() {
   }
 
   async function handlePermissionModeChange(sessionId: string, mode: PermissionMode) {
-    await chatCommands.setPermissionMode(sessionId, mode);
+    const prev = sessionStates[sessionId]?.permissionMode ?? 'default';
+    setSessionStates((s) => ({
+      ...s,
+      [sessionId]: {
+        ...(s[sessionId] ?? { state: 'idle', permissionMode: 'default' }),
+        permissionMode: mode,
+      },
+    }));
+    try {
+      await chatCommands.setPermissionMode(sessionId, mode);
+    } catch (e) {
+      console.error('setPermissionMode failed:', e);
+      setSessionStates((s) => ({
+        ...s,
+        [sessionId]: {
+          ...(s[sessionId] ?? { state: 'idle', permissionMode: 'default' }),
+          permissionMode: prev,
+        },
+      }));
+    }
   }
 
   const activeSessionState: SessionState = activeSessionId
